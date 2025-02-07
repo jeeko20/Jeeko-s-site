@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique de Vêtements et Accessoires</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- En-tête -->
+    <header>
+        <button onclick="afficherMenu()">Menu</button>
+
+<div id="menu" style="display: none;">
+  <ul>
+    <li><a href="#">Option 1</a></li>
+    <li><a href="#">Option 2</a></li>
+    <li><a href="#">Option 3</a></li>
+  </ul>
+</div>
+
+<script>
+  function afficherMenu() {
+    var menu = document.getElementById("menu");
+    if (menu.style.display === "none") {
+      menu.style.display = "block";
+    } else {
+      menu.style.display = "none";
+    }
+  }
+</script>
+
+        <div class="logo">
+            <h1>Boutique Élégance</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#produits">Produits</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Section Accueil -->
+    <section id="accueil" class="hero">
+        <div class="hero-content">
+            <h2>Découvrez notre collection exclusive</h2>
+            <p>Des vêtements, draps, rideaux et sous-vêtements de qualité supérieure.</p>
+            <a href="#produits" class="btn">Voir nos produits</a>
+        </div>
+    </section>
+
+    <!-- Section Produits -->
+    <section id="produits" class="products">
+        <h2>Nos Produits</h2>
+        <div class="product-grid">
+            <div class="product-card">
+                <img src="draps.jpg" alt="Drap en coton">
+                <h3>Drap en Coton</h3>
+                <p>Prix : 25€</p>
+                <button>Ajouter au panier</button>
+            </div>
+            <div class="product-card">
+                <img src="images/rideau.jpg" alt="Rideau élégant">
+                <h3>Rideau Élégant</h3>
+                <p>Prix : 40€</p>
+                <button>Ajouter au panier</button>
+            </div>
+            <div class="product-card">
+                <img src="images/sous-vetements.jpg" alt="Sous-vêtements confortables">
+                <h3>Sous-Vêtements</h3>
+                <p>Prix : 15€</p>
+                <button>Ajouter au panier</button>
+            </div>
+            <div class="product-card">
+                <img src="images/vetement.jpg" alt="Vêtement tendance">
+                <h3>Vêtement Tendance</h3>
+                <p>Prix : 35€</p>
+                <button>Ajouter au panier</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Contact -->
+    <section id="contact" class="contact">
+        <h2>Contactez-nous</h2>
+        <form action="#" method="post">
+            <label for="name">Nom :</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="email">Email :</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="message">Message :</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+            
+            <button type="submit">Envoyer</button>
+        </form>
+    </section>
+
+    <!-- Pied de page -->
+    <footer>
+        <p>&copy; 2023 Boutique Élégance. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>
