@@ -1,0 +1,210 @@
+{%extends 'base.html'%}
+{%block extra_css%}
+<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+{%endblock%}
+{%block content%}
+
+ <!-- ================= HEADER ================= -->
+  <header class="header">
+    <div class="header-content">
+      <h1>Partagez vos connaissances</h1>
+      <p>La plateforme collaborative pour les étudiants en informatique de 2ème année</p>
+
+      <!-- Barre de recherche -->
+      <input type="search" class="input-search" placeholder="Rechercher des notes, des tutoriels...">
+
+      <!-- Boutons d'action -->
+      <div class="search">
+        <a href="#" class="learn-more">En savoir plus</a>
+        <a href="#" class="join-button">Rejoindre la communauté</a>
+      </div>
+    </div>
+
+    <!-- Statistiques info-matière -->
+    <div class="info-matiere">
+      <div>
+        <span class="info">150+</span>
+        <span>Notes partagees</span>
+      </div>
+      <div>
+        <span class="info">45</span>
+        <span>Etudiants actifs</span>
+      </div>
+      <div>
+        <span class="info">8</span>
+        <span>Matieres couvertes</span>
+      </div>
+      <div >
+        <span class="info">95%</span>
+        <span>Satisfaction</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+
+    <!-- Séparateur et titre matières -->
+    <div class="separator">
+      <h2 class="titre-matiere">Explorez les matieres</h2>
+      <p>Découvrez toutes les ressources disponibles organisées par matière pour votre formation en informatique</p>
+    </div>
+
+    <!-- Liste des matières -->
+    <div class="matiere">
+
+      <!-- Carte HTML -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="{{url_for('static', filename='img/html-5.png')}}" alt="HTML & CSS">
+          <div>
+            <span class="titre">HTML</span><br>
+            <span class="ressources">24 ressources</span>
+          </div>
+        </div>
+        <p>Apprenez les bases du développement web avec HTML et CSS.</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span> 
+          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Carte C++ -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="{{url_for('static', filename='img/c-.png')}}" alt="C++">
+          <div>
+            <span class="titre">C++</span><br>
+            <span class="ressources">20 ressources</span>
+          </div>
+        </div>
+        <p>Apprenez la programmation orientée objet avec C++.</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span> 
+          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Carte JS -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="{{url_for('static',filename='img/js.png')}}" alt="JavaScript">
+          <div>
+            <span class="titre">JS</span><br>
+            <span class="ressources">24 ressources</span>
+          </div>
+        </div>
+        <p>Rendez vos pages web dynamiques avec JavaScript.</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span> 
+          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Carte Systèmes d'exploitation -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="{{url_for('static',filename='img/system-vulnerability.png')}}" alt="Systèmes d'exploitation">
+          <div>
+            <span class="titre">Systèmes d'exploitation</span><br>
+            <span class="ressources">15 ressources</span>
+          </div>
+        </div>
+        <p>Découvrez le fonctionnement des OS et leur gestion des ressources.</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span> 
+          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Carte Base de données -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="{{url_for('static',filename='img/sql-server.png')}}" alt="SQL">
+          <div>
+            <span class="titre">Base de donnee</span><br>
+            <span class="ressources">19 ressources</span>
+          </div>
+        </div>
+        <p>SQL, NoSQL et conception de bases de donnees</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span> 
+          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Carte Algorithmes -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="{{url_for('static', filename='img/algorithms.png')}}" alt="Algorithmes">
+          <div>
+            <span class="titre">Algorithmes</span><br>
+            <span class="ressources">27 ressources</span>
+          </div>
+        </div>
+        <p>Complexite algorithmique et structures de donnees</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span> 
+          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FONCTIONNALITÉS ================= -->
+    <div class="fonctionalite">
+      <h2 class="titre-matiere">Fonctionnalites principales</h2>
+      <p>Des outils concrets pour faciliter votre apprentissage et le partage de connaissances</p>
+
+      <div class="fonctionalite-content">
+        <div class="fonctionalite-card">
+          <i class="fa-solid fa-book"></i>
+          <h3>Bibliotheque de ressources</h3>
+          <p>Accedez a une vaste collection de notes, tutoriels et projets partages par la communaute.</p>
+        </div>
+
+        <div class="fonctionalite-card">
+          <i class="fa-solid fa-users"></i>
+          <h3>Communauté active</h3>
+          <p>Rejoignez des forums de discussion, collaborez sur des projets et echangez avec d'autres etudiants.</p>
+        </div>
+
+        <div class="fonctionalite-card">
+          <i class="fa-solid fa-upload"></i>
+          <h3>Partage facile</h3>
+          <p>Téléchargez et partagez vos propres notes et ressources en quelques clics.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= REJOINDRE LA COMMUNAUTÉ ================= -->
+    <h2>Rejoignez la communaute</h2>
+    <p>Échangez avec d'autres étudiants et enrichissez vos connaissances</p>
+
+    <div class="join-communaute">
+      <div class="discussion">
+        <i class="fa-solid fa-comments"></i>
+        <h3>Discussions actives</h3>
+        <p>Posez vos questions, participez aux débats et aidez les autres étudiants.</p>
+        <a href="#" class="join-button">Voir les discussions</a>
+      </div>
+
+      <div class="partage">
+        <i class="fa-solid fa-share-nodes"></i>
+        <h3>Partagez vos ressources</h3>
+        <p>Découvrez les dernières ressources partagées par la communauté.</p>
+        <a href="#" class="join-button">Explorez les partages</a>
+      </div>
+    </div>
+
+    <!-- ================= CALL TO ACTION ================= -->
+    <div class="call-to-action">
+      <h2>Prêt à commencer ?</h2>
+      <p>Rejoignez Edushare aujourd'hui et boostez votre apprentissage en informatique !</p>
+      <br>
+      <a href="#" class="join-button">En savoir plus</a>
+      <a href="#" class="login">S'inscrire maintenant</a>
+    </div>
+  </main>
+
+
+{%endblock%}

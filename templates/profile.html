@@ -1,0 +1,296 @@
+{%extends 'base.html'%} {%block extra_css%}
+<link
+  rel="stylesheet"
+  href="{{url_for('static',filename='css/profile.css')}}"
+/>
+{%endblock%} {%block content%}
+
+<!-- ================= HEADER ================= -->
+<header class="header">
+  <div class="header-content">
+  {% if profile %}
+  <div class="profile-details">
+    <img
+      src="{{ url_for('static', filename=profile.avatar_path) if profile.avatar_path else 'https://via.placeholder.com/150' }}"
+      alt="Photo de profil"
+    />
+    <h2>{{ profile.complete_name }}</h2>
+    <span>{{ profile.year_of_study}} année</span>
+  </div>
+  <p>{{ profile.bio }}</p>
+  <a href="#" class="btn-edit-profile">Modifier le profil</a>
+  {% else %}
+  <div class="profile-details">
+    <img
+      src="https://media.istockphoto.com/id/1386479313/photo/happy-millennial-afro-american-business-woman-posing-isolated-on-white.jpg?s=1024x1024&w=is&k=20&c=5OK7djfD3cnNmQ-DR0iQzF-vmA-iTNN1TbuEyCG1DfA="
+      alt="Photo de profil"
+    />
+    <h2>David</h2>
+  </div>
+  <p>
+    Lorem ipsum dolor sit amet consectetur adipisicing elit. Cum inventore
+    libero a voluptates earum dolorem fugiat error, delectus iste iusto
+    architecto laudantium blanditiis aspernatur. Et fugit aperiam ducimus
+    excepturi expedita.
+  </p>
+  <a href="#" class="btn-edit-profile">Modifier le profil</a>
+  {% endif %}
+</div>
+
+
+  <!-- Statistiques info-matière -->
+  <div class="info-matiere">
+    <div>
+      <span class="info">150+</span>
+      <span>Notes partagees</span>
+    </div>
+    <div>
+      <span class="info">45</span>
+      <span>Etudiants actifs</span>
+    </div>
+    <div>
+      <span class="info">8</span>
+      <span>Matieres couvertes</span>
+    </div>
+    <div>
+      <span class="info">95%</span>
+      <span>Satisfaction</span>
+    </div>
+  </div>
+</header>
+<!-- ================= MAIN ================= -->
+
+<nav>
+  <button class="tab active" data-page="overview">
+    <i class="fas fa-chart-line"></i> Vue d’ensemble
+  </button>
+  <button class="tab" data-page="resources">
+    <i class="fas fa-folder-open"></i> Mes ressources
+  </button>
+  <button class="tab" data-page="saved">
+    <i class="fas fa-bookmark"></i> Sauvegardées
+  </button>
+  <button class="tab" data-page="settings">
+    <i class="fas fa-cog"></i> Paramètres
+  </button>
+</nav>
+
+<!-- Contenu dynamique -->
+<main>
+  <!-- OVERVIEW -->
+  <section id="overview" class="page active">
+    <!-- Colonne gauche : activités récentes -->
+    <div class="section1">
+      <div class="recent-ativities">
+        <h3>Dernières activités</h3>
+        <ul>
+          <li>
+            Vous avez partagé une nouvelle ressource: "Algorithmes de tri"
+          </li>
+          <li>
+            Vous avez sauvegardé la ressource: "Structures de données avancées"
+          </li>
+          <li>
+            Vous avez commenté la ressource: "Introduction à la programmation en
+            C++"
+          </li>
+        </ul>
+      </div>
+
+      <!-- Colonne droite : actions rapides -->
+      <div class="action-rapides">
+        <h2>Actions rapides</h2>
+        <div class="cards">
+          <div class="action-card">
+            <i class="fas fa-upload"></i>
+            <span>Partager une nouvelle ressource</span>
+          </div>
+
+          <div class="action-card">
+            <i class="fas fa-users"></i>
+            <span>Voir les étudiants actifs</span>
+          </div>
+
+          <div class="action-card">
+            <i class="fas fa-star"></i>
+            <span>Voir les ressources populaires</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESOURCES -->
+  <section id="resources" class="page">
+    <div class="head-section">
+      <h2>Mes ressources</h2>
+      <p><a href="#">Nouvelles ressources</a></p>
+    </div>
+    <div class="section2">
+      <div class="ressources-list">
+        <div class="ressource-head">
+          <span>Notes de cours</span>
+          <span>Publie</span>
+        </div>
+        <h3>Notes sur les designs patterns</h3>
+        <p>C++</p>
+        <div>
+          <i class="fa-solid fa-arrow-up-from-bracket"></i
+          ><span style="padding: 0 10px 0 15px">45</span
+          ><i style="color: yellow" class="fa-solid fa-star"></i
+          ><span>3.9</span>
+        </div>
+
+        <div class="lien-icon">
+          <a href="#"><i class="fa-solid fa-pen-to-square"></i>modifier</a>
+          <a><i class="fa-chisel fa-regular fa-truck"></i></a>
+        </div>
+      </div>
+      <div class="ressources-list">
+        <div class="ressource-head">
+          <span>Projets</span>
+          <span>Publie</span>
+        </div>
+        <h3>Projet Final -Application Web Complete</h3>
+        <p>JavaScript</p>
+        <div>
+          <i class="fa-solid fa-arrow-up-from-bracket"></i
+          ><span style="padding: 0 10px 0 15px">45</span
+          ><i style="color: yellow" class="fa-solid fa-star"></i
+          ><span>3.9</span>
+        </div>
+        <div class="lien-icon">
+          <a href="#"><i class="fa-solid fa-pen-to-square"></i>modifier</a>
+          <a><i class="fa-chisel fa-regular fa-truck"></i></a>
+        </div>
+      </div>
+      <div class="ressources-list">
+        <div class="ressource-head">
+          <span>Aide memoire</span>
+          <span>Publie</span>
+        </div>
+        <h3>Guide des bonnes pratiques CSS</h3>
+        <p>HTML/CSS</p>
+        <div>
+          <i class="fa-solid fa-arrow-up-from-bracket"></i
+          ><span style="padding: 0 10px 0 0px">45</span
+          ><i style="color: yellow" class="fa-solid fa-star"></i
+          ><span>3.9</span>
+        </div>
+        <div class="lien-icon">
+          <a href="#"><i class="fa-solid fa-pen-to-square"></i>modifier</a>
+          <a><i class="fa-chisel fa-regular fa-truck"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAVED -->
+  <section id="saved" class="page">
+    <h2>Ressources sauvegardées</h2>
+    <div class="section3">
+      <div class="save-ressources">
+        <div class="text">
+          <h3>Algorithmes de tri-Comparaisons et performances</h3>
+          <p>Par Emma simmons-Algorithmes -sauvegrades le 16/01/2024</p>
+        </div>
+        <div class="lien">
+          <a href="">Telecharger</a>
+          <i class="fa-solid fa-bookmark" style="color: rgb(255, 208, 0)"></i>
+        </div>
+      </div>
+      <div class="save-ressources">
+        <div class="text">
+          <h3>Algorithmes de tri-Comparaisons et performances</h3>
+          <p>Par Emma simmons-Algorithmes -sauvegrades le 16/01/2024</p>
+        </div>
+        <div>
+          <a href="">Telecharger</a>
+          <i class="fa-solid fa-bookmark" style="color: rgb(255, 208, 0)"></i>
+        </div>
+      </div>
+      <div class="save-ressources">
+        <div class="text">
+          <h3>Algorithmes de tri-Comparaisons et performances</h3>
+          <p>Par Emma simmons-Algorithmes -sauvegrades le 16/01/2024</p>
+        </div>
+        <div>
+          <a href="">Telecharger</a>
+          <i class="fa-solid fa-bookmark" style="color: rgb(255, 208, 0)"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="settings" class="page">
+    <h2>Paramètres</h2>
+    <form action="{{ url_for('profile') }}" method="POST" class="settings-form" enctype="multipart/form-data">
+      <label for="fullname">Nom complet :</label>
+      <input
+        type="text"
+        id="fullname"
+        name="complete_name"
+        placeholder="Votre nom complet"
+        required
+        value="{{profile.complete_name}}"
+      />
+
+      <label for="email">Email :</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="exemple@mail.com"
+        required
+        value="{{profile.email}}"
+      />
+
+      <label for="year">Année d’étude :</label>
+      <select id="year" name="year_of_study" required>
+        <option value="">-- Sélectionnez --</option>
+        <option value="1">1ère année</option>
+        <option value="2">2ème année</option>
+        <option value="3">3ème année</option>
+        <option value="4">4ème année</option>
+        <option value="5">5ème année</option>
+      </select>
+      <label for="avatar">Photo de profil :</label>
+      <input type="file" id="avatar" name="avatar" accept="image/*" />
+
+      <label for="bio">Bio :</label>
+      <textarea
+        id="bio"
+        name="bio"
+        rows="4"
+        placeholder="Écrivez une courte description..."
+      >{{profile.bio}}</textarea>
+
+      <button type="submit">Sauvegarder</button>
+    </form>
+  </section>
+</main>
+{%endblock%} {%block script%}
+<script>
+  /*=====================script SPA=======================*/
+  // Sélectionner tous les boutons de navigation
+  const tabs = document.querySelectorAll(".tab");
+  const pages = document.querySelectorAll(".page");
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      // Retirer l'activation de tous les boutons
+      tabs.forEach((t) => t.classList.remove("active"));
+      // Activer le bouton cliqué
+      tab.classList.add("active");
+
+      // Masquer toutes les sections
+      pages.forEach((page) => page.classList.remove("active"));
+      // Afficher la section correspondante
+      const target = tab.getAttribute("data-page");
+      document.getElementById(target).classList.add("active");
+    });
+  });
+</script>
+
+{%endblock%}

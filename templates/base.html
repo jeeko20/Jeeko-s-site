@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navbar Responsive</title>
+  <link rel="stylesheet" href="{{url_for('static',filename='css/base.css')}}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
+  {%block extra_css%}
+    {%endblock%}
+  <style>
+    /* ================= MODAL ================= */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal.show { display: flex; }
+
+    .modal-content {
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      width: 380px;
+      max-width: 95%;
+      padding: 40px 30px;
+      border-radius: 20px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9);}
+      to {opacity: 1; transform: scale(1);}
+    }
+
+    .close-btn {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      font-size: 20px;
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    h2 { text-align: center; margin-bottom: 25px; }
+
+    .form-group { position: relative; margin-bottom: 20px; }
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      font-size: 14px;
+      color: #333;
+      box-sizing: border-box;
+    }
+    .form-group i {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: bold;
+      background: #fff;
+      color: #6c5ce7;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: 0.3s;
+    }
+    .btn-submit:hover { background: #f1f1f1; }
+
+    .toggle-link { text-align: center; margin-top: 15px; cursor: pointer; text-decoration: underline; color: #fff; }
+
+    .form-wrapper {
+      display: none;
+      opacity: 0;
+      transform: translateX(30px);
+      transition: all 0.3s ease;
+    }
+    .form-wrapper.active {
+      display: block;
+      opacity: 1;
+      transform: translateX(0);
+    }
+  </style>
+</head>
+<body>
+
+ 
+  <!-- ================= NAVBAR ================= -->
+  <nav class="custom-navbar">
+    <!-- Logo -->
+    <h3>Logo</h3> 
+
+    <!-- Menu Desktop -->
+    <div class="menu">
+      <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
+      <a href="#" class="navbar-menu">Communauté</a>
+      <a href="#" class="navbar-menu">Mes notes</a>
+      <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
+    </div>
+
+    <!-- Boutons connexion / inscription -->
+    <p>
+      {%if username%}
+      <a href="{{url_for('logout')}}" class="btn-signup">Déconnexion</a>
+      {%else%}
+      <a class="btn-connexion" id="openLogin">Connexion</a>
+      <a class="btn-signup" id="openRegister">S'inscrire</a>
+      {%endif%}
+    </p>
+
+    <!-- Menu Mobile (caché au départ) -->
+    <div class="menu-hamburger" id="menu-hamburger">
+      <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
+      <a href="#" class="navbar-menu">Communauté</a>
+      <a href="#" class="navbar-menu">Mes notes</a>
+      <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
+      {%if username%}
+      <a href="{{url_for('logout')}}" class="btn-signup">Déconnexion</a>
+      {%else%}
+      <a  class="btn-connexion" id="openLogin">Connexion</a>
+      <a  class="btn-signup" id="openRegister">S'inscrire</a>
+      {%endif%}
+    </div>
+
+    <!-- Bouton hamburger -->
+    <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
+  </nav>
+ <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div id="flash-messages">
+            {% for category, message in messages %}
+              {% set bs_class = 'success' if category=='success' else 'danger' %}
+              <div class="alert alert-{{ bs_class }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+  <!-- ================= MODAL ================= -->
+  <div class="modal" id="authModal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">&times;</button>
+
+      <!-- LOGIN -->
+      <form method="post" action="{{url_for('login')}}" class="form-wrapper" id="loginForm">
+        <h2>Connexion</h2>
+        <div class="form-group">
+          <input type="email" name="email" placeholder="Email" required>
+          <i class="fa fa-envelope"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" name="password" placeholder="Mot de passe" required>
+          <i class="fa fa-lock"></i>
+        </div>
+        <button type="submit" class="btn-submit">Se connecter <i class="fa fa-arrow-right"></i></button>
+        <div class="toggle-link" id="toRegister">Pas de compte ? Créez-en un</div>
+      </form>
+
+      <!-- REGISTER -->
+      <form method="post" action="{{url_for('register')}}" class="form-wrapper" id="registerForm">
+        <h2>S’inscrire</h2>
+        <div class="form-group">
+          <input type="text" name="username" placeholder="Nom d’utilisateur" required>
+          <i class="fa fa-user"></i>
+        </div>
+        <div class="form-group">
+          <input type="email" name="email" placeholder="Email" required>
+          <i class="fa fa-envelope"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" name="password" placeholder="Mot de passe" required>
+          <i class="fa fa-lock"></i>
+        </div>
+        <button class="btn-submit" type="submit">Créer un compte <i class="fa fa-arrow-right"></i></button>
+        <div class="toggle-link" id="toLogin">Déjà inscrit ? Connectez-vous</div>
+      </form>
+    </div>
+  </div>
+
+{%block content%}
+{%endblock%}
+
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-col">
+        <h3>Edushare</h3>
+        <p>La plateforme de partage de connaissances pour les étudiants en informatique</p>
+      </div>
+
+      <div class="footer-col">
+        <h3>Matières</h3>
+        <p>C++</p>
+        <p>HTML / CSS</p>
+        <p>JavaScript</p>
+        <p>Systèmes</p>
+      </div>
+
+      <div class="footer-col">
+        <h3>Ressources</h3>
+        <p>Notes et cours</p>
+        <p>Devoirs</p>
+        <p>Projets</p>
+        <p>Astuces</p>
+      </div>
+
+      <div class="footer-col">
+        <h3>Support</h3>
+        <p>Aide</p>
+        <p>Contact</p>
+        <p>FAQ</p>
+        <p>Made by David</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2025 Edushare. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+
+  <!-- ================= SCRIPT ================= -->
+  
+  <script>
+    /*menu hamburger*/
+    const hamburger = document.getElementById('hamburger');
+    const menu_hamburger = document.getElementById('menu-hamburger');
+
+    hamburger.addEventListener('click', () => {
+      menu_hamburger.classList.toggle('open');
+
+      // Change l'icône
+      hamburger.classList.toggle('fa-bars');
+      hamburger.classList.toggle('fa-xmark');
+    });
+    /*..................................*/
+  // Sélection de tous les boutons Connexion
+const openLoginButtons = document.querySelectorAll(".btn-connexion");
+// Sélection de tous les boutons S'inscrire
+const openRegisterButtons = document.querySelectorAll(".btn-signup");
+
+const modal = document.getElementById("authModal");
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const closeModal = document.getElementById("closeModal");
+const toRegister = document.getElementById("toRegister");
+const toLogin = document.getElementById("toLogin");
+
+// Fonction pour ouvrir le modal et afficher login
+function showLogin() {
+  modal.classList.add("show");
+  loginForm.classList.add("active");
+  registerForm.classList.remove("active");
+}
+
+// Fonction pour ouvrir le modal et afficher register
+function showRegister() {
+  modal.classList.add("show");
+  registerForm.classList.add("active");
+  loginForm.classList.remove("active");
+}
+
+// Ajoute l'événement à tous les boutons Connexion
+openLoginButtons.forEach(btn => btn.addEventListener("click", showLogin));
+
+// Ajoute l'événement à tous les boutons S'inscrire
+openRegisterButtons.forEach(btn => btn.addEventListener("click", showRegister));
+
+// Fermer le modal
+closeModal.addEventListener("click", () => modal.classList.remove("show"));
+window.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("show"); });
+
+// Toggle Login <-> Register
+toRegister.addEventListener("click", () => {
+  loginForm.classList.remove("active");
+  registerForm.classList.add("active");
+});
+toLogin.addEventListener("click", () => {
+  registerForm.classList.remove("active");
+  loginForm.classList.add("active");
+});
+
+ // Faire disparaître les messages flash après 3 secondes
+  setTimeout(function() {
+    const flash = document.getElementById('flash-messages');
+    if (flash) {
+      flash.style.transition = "opacity 0.5s ease";
+      flash.style.opacity = 0;
+      setTimeout(() => flash.remove(), 500); // supprime après fade out
+    }
+  }, 2000);
+
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  {%block script%}
+    {%endblock%}
+</body>
+</html>

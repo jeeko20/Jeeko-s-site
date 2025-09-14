@@ -1,0 +1,364 @@
+
+
+/* ================= HEADER ================= */
+.header{
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  padding-top: 70px;
+  background-color: white;
+  color: white;
+}
+
+/* Contenu du header */
+.header-content{
+  height: 700px;
+  background-image: linear-gradient(rgba(99,112,168,0.5), rgba(81,91,233,0.5)), url('../img/istockphoto-1759628359-1024x1024.jpg');
+  display: flex;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Titres header */
+.header-content h1{
+  font-size: 8vh;
+  margin: 0;
+  padding: 0;
+}
+
+.header-content p{
+  font-size: 25px;
+  margin: 10px 0 20px 0;
+  padding: 50px 0 0 0;
+}
+
+/* Barre de recherche et boutons */
+.search{
+  display: flex;
+  padding-top: 30px;
+  gap: 20px;  
+}
+
+.input-search{
+  padding: 20px 30px;
+  width: 40%;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  font-size: large;
+  color: grey;
+}
+
+.search a{
+  text-decoration: none;
+  padding: 15px 20px;
+  color: white;
+  border-radius: 10px;
+  width: 300px;
+}
+
+.search a:hover{
+  background-color: white;
+  color: blueviolet;
+  transition: 0.3s;
+  border: none;
+}
+
+.search .join-button{
+  color: white;
+  border: 2px solid white;
+}
+
+.search .learn-more{
+  background-color: blueviolet;
+  border: none;
+}
+
+/* Statistiques info-matière */
+.info-matiere{
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  color: black;
+  flex-wrap: wrap;
+  padding: 40px;
+}
+
+.info ~ span{
+  color: gray;
+  font-size: 14px;
+}
+
+.info-matiere .info{
+  text-align: center;
+  font-size: 20px;
+  font-weight: bolder;
+  color: royalblue;
+}
+
+.info-matiere span{
+  display: block;
+}
+
+/* ================= MAIN ================= */
+/* Séparateur et titre matières */
+.separator{
+  text-align: center;
+  padding: 100px 20px 0 20px;
+}
+
+/* Liste matières */
+.matiere {
+  padding: 50px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 cartes sur grand écran */
+  gap: 30px;
+}
+
+/* Carte matière */
+.matiere .card {
+  background-color: white;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  border-radius: 20px;
+  padding: 20px;
+  text-align: left;
+  transition: transform 0.3s;
+}
+
+.matiere .card:hover {
+  transform: translateY(-5px);
+}
+
+/* Image + titre côte à côte */
+.logo-image {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.card .titre{
+  margin: 0;
+  font-size: 22px;
+  color: rgba(0, 0, 0, 0.856);
+  font-weight: bold;
+}
+
+.logo-image img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.logo-image h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Mise à jour de la carte */
+.card .mise-a-jour{
+  display: flex;
+  justify-content: space-between;
+}
+
+.card .ressources, .mise-a-jour span,.card p {
+  color: gray;
+  font-size: 14px;
+}
+
+/* ================= FONCTIONNALITÉS ================= */
+.fonctionalite{
+  padding: 50px 20px;
+  background-color: rgb(240, 240, 240);
+  text-align: center;
+}
+
+.fonctionalite-content{
+  display: flex;
+  justify-content: space-around;
+  padding-top: 30px;
+  flex-wrap: wrap;
+}
+
+.fonctionalite-card{
+  width: 200px;
+}
+
+.fonctionalite-card p{
+  color: gray;
+  font-size: 14px;
+}
+
+.fonctionalite-card h3{
+  color: rgba(0, 0, 0, 0.856);
+  font-size: 18px;
+}
+
+.fonctionalite-card i{
+  font-size: 40px;
+  color: blueviolet;
+  padding: 10px;
+  background-color: rgba(215, 233, 250, 0.466);
+  border-radius: 50%;
+}
+
+.fonctionalite + h2{
+  text-align: center;
+  padding: 50px 20px 0 20px;
+}
+
+.fonctionalite ~ p{
+  text-align: center;
+  color: gray;
+  font-size: 14px;
+  padding: 0 20px 50px 20px;
+}
+
+/* ================= JOIN COMMUNAUTÉ ================= */
+.join-communaute {
+  display: flex;
+  justify-content: space-evenly;
+  padding: 20px;
+  margin: 20px auto;
+  flex-wrap: wrap;
+}
+
+.join-communaute .discussion,
+.join-communaute .partage {
+  flex: 1 1 40%; /* 2 colonnes sur grand écran */
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 10px;
+  transition: transform 0.3s ease;
+  text-align: left;
+}
+
+/* Couleurs spécifiques */
+.discussion {
+  background-color: rgba(127, 255, 212, 0.08);
+}
+
+.partage {
+  background-color: rgba(236, 135, 250, 0.15);
+}
+
+/* Icônes */
+.discussion i,
+.partage i {
+  font-size: 40px;
+  color: blueviolet;
+  padding: 12px;
+  background-color: white;
+  border-radius: 50%;
+  margin-bottom: 15px;
+}
+
+/* Boutons */
+.join-communaute a {
+  display: inline-block;
+  text-decoration: none;
+  color: blueviolet;
+  padding: 8px 14px;
+  border: 2px solid blueviolet;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.join-communaute a:hover {
+  background-color: blueviolet;
+  color: white;
+}
+
+/* Textes */
+.join-communaute p {
+  color: gray;
+  font-size: 14px;
+  margin: 10px 0 15px;
+}
+
+/* Effet hover cartes */
+.join-communaute .discussion:hover,
+.join-communaute .partage:hover {
+  transform: translateY(-5px);
+}
+
+/* ================= CALL TO ACTION ================= */
+.call-to-action {
+  background-color: rgb(43, 86, 226);
+  color: white;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.call-to-action a{
+  text-decoration: none;
+  color:white;
+  padding: 10px 20px;
+  border: 2px solid white;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.call-to-action a:hover{
+  background-color: white;
+  color: blueviolet;
+  transition: 0.3s;
+}
+
+
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1200px) {
+  .matiere {
+    grid-template-columns: repeat(3, 1fr); /* 3 cartes */
+  }
+}
+
+@media (max-width: 900px) {
+  .matiere {
+    grid-template-columns: repeat(2, 1fr); /* 2 cartes */
+  }
+
+
+  .join-communaute {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .join-communaute .discussion,
+  .join-communaute .partage {
+    flex: 1 1 80%;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 600px) {
+  .matiere {
+    grid-template-columns: 1fr; /* 1 carte */
+  }
+
+  .join-communaute .discussion,
+  .join-communaute .partage {
+    flex: 1 1 100%;
+  }
+}
+
+/* ================= NAVBAR RESPONSIVE ================= */
+@media (max-width: 861px) {
+ 
+  /* Header responsive */
+  .search {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-search {
+    width: 80%;
+  }
+}

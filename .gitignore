@@ -1,0 +1,36 @@
+# Variables d'environnement
+.env
+.env.local
+
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+python/
+pip-selfcheck.json
+
+# Fichiers de build
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sessions locales
+session.*
+
+# Gunicorn
+*.pid
