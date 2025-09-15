@@ -367,5 +367,15 @@ main {
     display: grid;
     grid-template-columns: 1fr;
   }
+  nav{
+    overflow: scroll;
+    width: 100vw;
+    padding-left: 100px;
+  }
+  .head-section{
+    flex-direction: column;
+    align-items: center;
+
+  }
 }
 /*====================end section=====================*/
