@@ -17,10 +17,11 @@ load_dotenv()
 
 # Activer les logs
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# 🔧 Récupérer et corriger DATABASE_URL
+# 🔧 Récupérer et corriger DATABASE_URL (postgres:// → postgresql://)
 database_url = os.environ.get("DATABASE_URL")
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -52,7 +53,7 @@ class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(256), nullable=False)  # ✅ Augmenté à 256
     email = db.Column(db.String(150), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -86,7 +87,7 @@ def upload_avatar_to_cloudinary(file):
         result = cloudinary.uploader.upload(file)
         return result.get("secure_url")
     except Exception as e:
-        app.logger.error(f"Erreur Cloudinary: {e}")
+        logger.error(f"Erreur Cloudinary: {e}")
         flash("Échec de l'upload de l'image.", "danger")
         return None
 
@@ -129,7 +130,7 @@ def register():
 
         if not username or not email or not password:
             flash('Tous les champs sont obligatoires.', 'danger')
-            return render_template('register.html')  # ← Important : register.html
+            return render_template('register.html')
 
         if User.query.filter_by(email=email).first():
             flash('Cet email est déjà utilisé.', 'danger')
@@ -139,11 +140,16 @@ def register():
             hash_password = generate_password_hash(password)
             new_user = User(username=username, email=email, password=hash_password)
             db.session.add(new_user)
-            db.session.commit()
-            flash('Inscription réussie ! Connectez-vous.', 'success')
-            return redirect(url_for('login'))
+            try:
+                db.session.commit()
+                flash('Inscription réussie ! Connectez-vous.', 'success')
+                return redirect(url_for('login'))
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Erreur lors de l'inscription : {e}")
+                flash("Une erreur est survenue. Veuillez réessayer.", "danger")
 
-    return render_template('register.html')  # ← Affiche le formulaire
+    return render_template('register.html')
 
 
 @app.route('/logout')
@@ -178,7 +184,6 @@ def profile():
         avatar_path = profile.avatar_path if profile else None
         if avatar_file and avatar_file.filename != '':
             if allowed_file(avatar_file.filename):
-                filename = secure_filename(avatar_file.filename)
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
                 if upload_result:
                     avatar_path = upload_result
@@ -206,8 +211,14 @@ def profile():
             )
             db.session.add(new_profile)
 
-        db.session.commit()
-        flash('Profil mis à jour avec succès !', 'success')
+        try:
+            db.session.commit()
+            flash('Profil mis à jour avec succès !', 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erreur lors de la mise à jour du profil : {e}")
+            flash("Erreur lors de la sauvegarde.", "danger")
+
         return redirect(url_for('profile'))
 
     return render_template('profile.html', user=user, profile=profile)
@@ -226,7 +237,7 @@ def test_db():
 
 
 # --------------------
-# Démarrage (ne sert qu'en local)
+# Démarrage (local uniquement)
 # --------------------
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
