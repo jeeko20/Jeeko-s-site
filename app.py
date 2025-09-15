@@ -37,9 +37,7 @@ cloudinary.config(
 # --------------------
 db = SQLAlchemy(app)
 
-# ✅ Créer automatiquement les tables si elles n’existent pas
-with app.app_context():
-    db.create_all()
+
 
 class User(db.Model):
     __tablename__ = "user"
@@ -60,6 +58,10 @@ class Profile(db.Model):
     complete_name = db.Column(db.String(100))
     email = db.Column(db.String(150))
     year_of_study = db.Column(db.String(50))
+
+# ✅ Créer automatiquement les tables si elles n’existent pas
+with app.app_context():
+    db.create_all()
 
 # --------------------
 # Helpers
