@@ -165,7 +165,7 @@ def profile():
     if 'user_id' not in session:
         flash('Veuillez vous connecter pour accéder à votre profil.', 'warning')
         return redirect(url_for('login'))
-
+    username = session.get('username')
     user = User.query.get(session['user_id'])
     if not user:
         flash('Utilisateur introuvable.', 'danger')
@@ -221,7 +221,7 @@ def profile():
 
         return redirect(url_for('profile'))
 
-    return render_template('profile.html', user=user, profile=profile)
+    return render_template('profile.html', username=username ,user=user, profile=profile)
 
 
 # --------------------
