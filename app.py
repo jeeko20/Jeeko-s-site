@@ -96,7 +96,7 @@ def login():
             return redirect(url_for('home'))
         else:
             flash('Invalid email or password.', 'danger')
-    return render_template('login.html')
+    return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -121,7 +121,7 @@ def register():
             flash('Sign up successful! Please log in.', 'success')
             return redirect(url_for('login'))
 
-    return render_template('register.html')
+    return render_template('index.html')
 
 @app.route('/logout')
 def logout():
