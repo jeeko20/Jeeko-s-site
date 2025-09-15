@@ -3,41 +3,37 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta, datetime
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-from supabase import create_client, Client
 import os
 import uuid
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
 
-load_dotenv()  # Charge le .env
+# --------------------
+# Load environment variables
+# --------------------
+load_dotenv()
 
+# --------------------
+# Flask App
+# --------------------
 app = Flask(__name__)
-
-# --------------------
-# Config
-# --------------------
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 app.permanent_session_lifetime = timedelta(days=7)
 
 # --------------------
-# Supabase Storage
+# Cloudinary config
 # --------------------
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-SUPABASE_BUCKET = "avatars"
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def upload_avatar_to_supabase(file_content, filename):
-    """Upload un fichier avatar vers Supabase Storage et retourne l'URL publique."""
-    result = supabase.storage.from_(SUPABASE_BUCKET).upload(filename, file_content)
-    if result:
-        return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
-    return None
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET")
+)
 
 # --------------------
-# DB
+# Database
 # --------------------
 db = SQLAlchemy(app)
 
@@ -65,8 +61,18 @@ class Profile(db.Model):
 # Helpers
 # --------------------
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_avatar_to_cloudinary(file):
+    """Upload un fichier vers Cloudinary et retourne l'URL publique."""
+    try:
+        result = cloudinary.uploader.upload(file)
+        return result.get("secure_url")
+    except Exception as e:
+        print("Erreur Cloudinary:", e)
+        return None
 
 # --------------------
 # Routes
@@ -138,13 +144,12 @@ def profile():
         email = request.form['email']
         bio = request.form['bio']
         avatar_file = request.files.get('avatar')
-        year_of_study = request.form.get('year_of_study')   
+        year_of_study = request.form.get('year_of_study')
 
         avatar_path = profile.avatar_path if profile else None
         if avatar_file and avatar_file.filename != '':
             if allowed_file(avatar_file.filename):
-                avatar_filename = f"{uuid.uuid4().hex}_{secure_filename(avatar_file.filename)}"
-                avatar_path = upload_avatar_to_supabase(avatar_file.read(), avatar_filename)
+                avatar_path = upload_avatar_to_cloudinary(avatar_file)
                 if not avatar_path:
                     flash("Erreur lors de l'upload de l'image.", "danger")
                     return redirect(url_for("profile"))
