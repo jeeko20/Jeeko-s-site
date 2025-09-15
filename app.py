@@ -149,7 +149,7 @@ def register():
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
 
-    return render_template('register.html')
+    return render_template('index.html')
 
 
 @app.route('/logout')
