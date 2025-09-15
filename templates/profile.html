@@ -11,9 +11,10 @@
   {% if profile %}
   <div class="profile-details">
     <img
-      src="{{ url_for('static', filename=profile.avatar_path) if profile.avatar_path else 'https://via.placeholder.com/150' }}"
-      alt="Photo de profil"
-    />
+  src="{{ profile.avatar_path if profile.avatar_path else 'https://via.placeholder.com/150' }}"
+  alt="Photo de profil"
+/>
+
     <h2>{{ profile.complete_name }}</h2>
     <span>{{ profile.year_of_study}} année</span>
   </div>
