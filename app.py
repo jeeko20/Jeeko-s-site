@@ -150,7 +150,7 @@ def register():
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
     return render_template('index.html')
-
+    
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -217,6 +217,15 @@ def profile():
         return redirect(url_for('profile'))
 
     return render_template('profile.html', username=username ,user=user, profile=profile)
+
+
+@app.route('/notes')
+def notes():
+    return render_template('note.html')
+
+@app.route('/communaute')
+def communaute():
+    return render_template('communaute.html')
 
 # --------------------
 # Démarrage

@@ -1,0 +1,251 @@
+{%extends 'base.html'%}
+{%block extra_css%}
+<link rel="stylesheet" href="{{url_for('static', filename='css/communaute.css')}}">
+{%endblock%}
+
+{%block content%}
+  <!-- ================= HEADER ================= -->
+  <header class="header">
+    <div class="header-content">
+      <h1>Communauté Edushare</h1>
+      <p>Echangez, discutez et partagez vos connaissances avec la communauté</p>
+    </div>
+    <!-- Navigation -->
+    <nav>
+      <button class="tab active" data-page="discussion">
+        <i class="fas fa-chart-line"></i> Discussion
+      </button>
+      <button class="tab" data-page="partages">
+        <i class="fas fa-folder-open"></i> Partages recentes
+      </button>
+    </nav>
+
+  </header>
+
+  <!-- Contenu dynamique -->
+  <main>
+    <!-- Section DISCUSSION -->
+    <section id="discussion" class="page active">
+      <div class="discussion">
+  
+        <!-- Colonne principale -->
+        <div class="info-discussion">
+          <div class="start-discussion">
+            <h2>Nouvelle discussion</h2>
+            <div id="area-1">
+              <img src="https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg" alt="photo">
+              <form method="post" class="form-control">
+                <textarea required placeholder="Poser une question ou commencer une discussion"></textarea>
+                <div id="area-3">
+                  <select id="matiere" name="matiere">
+                    <option value="">-- Choisir une matière --</option>
+                    <option value="C++">C++</option>
+                    <option value="HTML">HTML</option>
+                    <option value="CSS">CSS</option>
+                    <option value="Javascript">Javascript</option>
+                    <option value="Algorithme">Algorithme</option>
+                  </select>
+                  <button type="submit">Publier</button>
+                </div>
+              </form>
+            </div>
+          </div>
+  
+          <!-- Discussion exemple -->
+          <div class="discussion-list">
+            <div class="discussion-head">
+              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
+              <div class="discussion-list-info">
+                <p class="p1">
+                  <span>Comment optimiser les performances en C++</span>
+                  <span>C++</span>
+                  <span><i class="fa-solid fa-heart"></i> 15</span>
+                </p>
+                <p>J'ai des questions sur l'utilisation des pointeurs en C++</p>
+                <p>
+                  <span>par Marie Dubois</span>
+                  <span>il y a 2h</span>
+                  <span><i class="fa-solid fa-comment"></i> 8 réponses</span>
+                </p>
+              </div>
+            </div>
+          </div>
+  
+          <div class="discussion-list">
+            <div class="discussion-head">
+              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
+              <div class="discussion-list-info">
+                <p class="p1">
+                  <span>Projet HTML/CSS - Besoin d'aide pour le responsive</span>
+                  <span>HTML/CSS</span>
+                  <span><i class="fa-solid fa-heart"></i> 23</span>
+                </p>
+                <p>Mon site ne s'affiche pas correctement sur mobile, quelqu’un peut m'aider avec les media queries ?</p>
+                <p>
+                  <span>par Lucas</span>
+                  <span>il y a 4h</span>
+                  <span><i class="fa-solid fa-comment"></i> 12 réponses</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- fin discussions -->
+        </div>
+  
+        <!-- Colonne droite -->
+        <div class="block-2">
+          <div class="action-rapide">
+            <h2>Actions rapides</h2>
+            <ul>
+              <li>Partager une ressource</li>
+              <li>Poser une question</li>
+              <li>Rejoindre un groupe</li>
+            </ul>
+          </div>
+  
+          <div class="sujet-populaire">
+            <h2>Sujets populaires</h2>
+            <ul>
+              <li><span>Optimisation C++</span><span>24</span></li>
+              <li><span>CSS Grid</span><span>18</span></li>
+              <li><span>Algorithme de tri</span><span>15</span></li>
+              <li><span>Gestion mémoire</span><span>12</span></li>
+              <li><span>JavaScript async</span><span>10</span></li>
+            </ul>
+          </div>
+  
+          <div class="statistique">
+            <h2>Statistiques</h2>
+            <ul>
+              <li><span>Membres actifs</span><span>24</span></li>
+              <li><span>Discussions ouvertes</span><span>18</span></li>
+              <li><span>Ressources partagées</span><span>15</span></li>
+              <li><span>Messages aujourd'hui</span><span>12</span></li>
+            </ul>
+          </div>
+        </div>
+  
+      </div>
+    </section>
+  
+    <!-- Section PARTAGES -->
+    <section id="partages" class="page">
+      <div class="discussion">
+  
+        <!-- Colonne principale -->
+        <div class="info-discussion">
+  
+          <div class="discussion-list">
+            <div class="discussion-head">
+              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
+              <div class="discussion-list-info">
+                <p class="p1">
+                  <span>Comment optimiser les performances en C++</span>
+                  <span>C++</span>
+                  <span><i class="fa-solid fa-heart"></i> 15</span>
+                </p>
+                <p>J'ai des questions sur l'utilisation des pointeurs en C++</p>
+                <p class="p2">
+                  <span>par Marie Dubois</span>
+                  <span>il y a 2h</span>
+                  <span><i class="fa-solid fa-download"></i> 8 telechargements</span>
+                </p>
+  
+                <div class="btn-footer">
+                  <a href="#"><i class="fa-solid fa-download"></i> Télécharger</a>
+                  <a href="#"><i class="fa-solid fa-eye"></i> Aperçu</a>
+                  <a href="#"><i class="fa-solid fa-save"></i> Sauvegarder</a>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <div class="discussion-list">
+            <div class="discussion-head">
+              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
+              <div class="discussion-list-info">
+                <p class="p1">
+                  <span>Projet HTML/CSS - Besoin d'aide pour le responsive</span>
+                  <span>HTML/CSS</span>
+                  <span><i class="fa-solid fa-heart"></i> 23</span>
+                </p>
+                <p>Mon site ne s'affiche pas correctement sur mobile, quelqu’un peut m'aider avec les media queries ?</p>
+                <p class="p2">
+                  <span>par Lucas</span>
+                  <span>il y a 4h</span>
+                  <span><i class="fa-solid fa-download"></i> 12 telechargements</span>
+                </p>
+  
+                <div class="btn-footer">
+                  <a href="#"><i class="fa-solid fa-download"></i> Télécharger</a>
+                  <a href="#"><i class="fa-solid fa-eye"></i> Aperçu</a>
+                  <a href="#"><i class="fa-solid fa-save"></i> Sauvegarder</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- fin discussions -->
+        </div>
+  
+        <!-- Colonne droite -->
+        <div class="block-2">
+          <div class="action-rapide">
+            <h2>Actions rapides</h2>
+            <ul>
+              <li>Partager une ressource</li>
+              <li>Poser une question</li>
+              <li>Rejoindre un groupe</li>
+            </ul>
+          </div>
+  
+          <div class="sujet-populaire">
+            <h2>Sujets populaires</h2>
+            <ul>
+              <li><span>Optimisation C++</span><span>24</span></li>
+              <li><span>CSS Grid</span><span>18</span></li>
+              <li><span>Algorithme de tri</span><span>15</span></li>
+              <li><span>Gestion mémoire</span><span>12</span></li>
+              <li><span>JavaScript async</span><span>10</span></li>
+            </ul>
+          </div>
+  
+          <div class="statistique">
+            <h2>Statistiques</h2>
+            <ul>
+              <li><span>Membres actifs</span><span>24</span></li>
+              <li><span>Discussions ouvertes</span><span>18</span></li>
+              <li><span>Ressources partagées</span><span>15</span></li>
+              <li><span>Messages aujourd'hui</span><span>12</span></li>
+            </ul>
+          </div>
+        </div>
+  
+      </div>
+    </section>
+  </main>
+  
+{%endblock%}
+
+{%block script%}
+  <script>
+    // Sélectionner tous les boutons de navigation
+    const tabs = document.querySelectorAll(".tab");
+    const pages = document.querySelectorAll(".page");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        // Retirer l'activation de tous les boutons
+        tabs.forEach(t => t.classList.remove("active"));
+        // Activer le bouton cliqué
+        tab.classList.add("active");
+
+        // Masquer toutes les sections
+        pages.forEach(page => page.classList.remove("active"));
+        // Afficher la section correspondante
+        const target = tab.getAttribute("data-page");
+        document.getElementById(target).classList.add("active");
+      });
+    });
+
+  </script>
+{%endblock%}

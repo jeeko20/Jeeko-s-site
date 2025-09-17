@@ -1,0 +1,184 @@
+/* ================ VARIABLES (facile à personnaliser) ================ */
+:root{
+    --nav-height: 72px;
+    --accent: #6c5ce7;
+    --accent-2: #574fd6;
+    --muted: #f1f1f1;
+    --card-shadow: 0 8px 24px rgba(149,157,165,0.15);
+  }
+
+  
+/* ================= HEADER ================= */
+.header { padding-top: var(--nav-height); background: #fff; }
+.header-content {
+  min-height: 620px;
+  background-image:
+    linear-gradient(rgba(99,112,168,0.45), rgba(81,91,233,0.35)),
+    url("https://media.istockphoto.com/id/2162383464/photo/top-view-of-a-a-heart-shape-of-people-showing-unity-and-teamwork.jpg?s=1024x1024&w=is&k=20&c=BRgFe51VzW6xDXz1VjGkLenXHuamhm1XRiEvbCx4Ol0=");
+  background-size: cover; background-position: center;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  text-align:center; padding: 36px 14px; gap: 16px; color: #fff;
+}
+.header-content h1 { font-size: clamp(1.6rem, 3.6vw, 2.4rem); margin: 0; line-height: 1.05; }
+.header-content p { max-width: 900px; margin: 0; font-size: clamp(.95rem, 2.2vw, 1.1rem); }
+
+/* ================ NAV TABS ================= */
+nav { display:flex; justify-content:center; gap:6px; background:#f6f6f6; border-bottom:1px solid #e6e6e6; }
+nav button {
+  background:none; border:none; padding:12px 16px; cursor:pointer; font-weight:600; color:#333; transition: .18s;
+}
+nav button.active { border-bottom: 3px solid #ea00ff; color: #ea00ff; }
+
+/* ================= MAIN & PAGES ================= */
+main { padding: 18px; max-width: 1200px; margin: 0 auto; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ================= DISCUSSION LAYOUT ================= */
+.discussion { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items:start; }
+.info-discussion { display:flex; flex-direction:column; gap:18px; min-width:0; }
+
+/* start discussion card */
+.start-discussion {
+  background:#fff; box-shadow:var(--card-shadow); padding:18px; border-radius:10px;
+  transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+/* small avatar + textarea */
+#area-1 { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+#area-1 img { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #eee; }
+
+/* formulaire */
+.form-control { display:flex; flex-direction:column; gap:10px; width:100%; max-width:100%; }
+.form-control textarea {
+  width:100%; min-height:100px; padding:10px; border:1px solid #ddd; border-radius:10px; resize:vertical;
+  font-size: .98rem; outline: none;
+}
+
+/* area-3 (select + button) */
+#area-3 { display:flex; gap: 12px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+#area-3 select { padding:10px; border-radius:8px; border:1px solid #ddd; min-width:140px; background:#fff; }
+#area-3 button { padding:10px 16px; border-radius:20px; border:none; background: #c2c2fa; color:#fff; cursor:pointer; }
+#area-3 button:hover { background: var(--accent); }
+
+/* discussion list card */
+.discussion-list { background:#fff; box-shadow:var(--card-shadow); padding:14px; border-radius:10px; transition: transform .18s ease, box-shadow .18s ease; }
+.discussion-head { display:flex; gap:14px; align-items:flex-start; }
+.discussion-head img { width:52px; height:52px; border-radius:50%; object-fit:cover; }
+
+/* infos textuelles: on autorise le wrapping pour éviter overflow */
+.discussion-list-info { min-width:0; flex:1; }
+.discussion-list-info p { margin:6px 0; }
+.discussion-list-info .p1 { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding-bottom: 15px; font-size: larger; font-weight: bolder;}
+.discussion-list-info .p1 span { flex: 0 1 auto; min-width: 0; }
+.discussion-list-info p:last-child { display:flex; gap:8px; color:gray; flex-wrap:wrap; }
+.discussion-list-info .p2 { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding-bottom: 15px; color: gray;}
+.discussion-list-info .p2 span { flex: 0 1 auto; min-width: 0; }
+
+/* ================= BLOCK-2 (aside) ================= */
+.block-2 { display:grid; grid-template-rows: auto auto auto; gap:12px; }
+.action-rapide, .sujet-populaire, .statistique {
+  background:#fff; box-shadow:var(--card-shadow); padding:12px; border-radius:8px;
+}
+.action-rapide ul { padding:0; margin:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+.action-rapide li { padding:10px; border-radius:8px; border:1px solid #eee; text-align:center; list-style: none; margin: 10px; cursor: pointer; transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease; }
+.sujet-populaire ul li, .statistique ul li { display: flex; justify-content: space-between; padding: 10px; border-radius:8px; transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease; cursor: pointer; }
+
+.btn-footer{ display: flex; justify-content: space-evenly; }
+.btn-footer a:first-child{ padding: 10px 20px; border-radius: 20px; border: 1px solid #ddd; color: var(--accent); background: white; transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease; }
+.btn-footer a:first-child:hover{ background: var(--accent); color: #fff; transform: translateY(-2px); box-shadow: var(--card-shadow); }
+.btn-footer a:last-child{ padding: 10px 20px; border-radius: 20px; border: 1px solid #ddd; color: #fff; background: var(--accent); transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease; }
+.btn-footer a:last-child:hover{ background: #fff; color: var(--accent); transform: translateY(-2px); box-shadow: var(--card-shadow); }
+.btn-footer a:nth-child(2){ padding: 10px; border-radius: 20px; border: 1px solid #ddd; color: #fff; background: var(--accent); transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease; }
+.btn-footer a:nth-child(2):hover{ background: #fff; color: var(--accent); transform: translateY(-2px); box-shadow: var(--card-shadow); }
+
+/* ===================== RESPONIVE BREAKPOINTS ===================== */
+@media (max-width: 1200px) {
+    .discussion { grid-template-columns: 1fr 300px; }
+  }
+  
+  /* small / tablet */
+  @media (max-width: 900px) {
+    .discussion { grid-template-columns: 1fr; } /* stack columns */
+    .block-2 { order: 2; }      /* aside goes below content */
+    .info-discussion { order: 1; }
+    .menu { display: none; }    /* hide desktop menu */
+    .navbar p { display: none; } /* hide desktop right buttons */
+    .navbar .hamburger { display: block; } /* show burger */
+    nav { padding: 0 8px; overflow:auto; }
+    .footer-content { grid-template-columns: repeat(2, 1fr); }
+  }
+  
+  /* small phones */
+  @media (max-width: 600px) {
+    .header-content { min-height: 320px; padding: 26px 12px; }
+    .header-content h1 { font-size: 1.4rem; }
+    .header-content p { font-size: .95rem; padding: 0 6px; }
+    #area-1 { gap:12px; align-items:center; }
+    #area-1 img { width:48px; height:48px; }
+    .form-control { width: 100%; }
+    #area-3 { justify-content: space-between; }
+    #area-3 select { min-width: 120px; flex: 1 1 45%; }
+    #area-3 button { flex: 1 1 45%; min-width: 120px; }
+    .footer-content { grid-template-columns: 1fr 1fr; }
+    .btn-footer a{ font-size: 10px; padding: 1px; border:none;}
+    .btn-footer a:last-child{ margin-right: 80px; }
+  }
+  
+  /* extra small phones (<=500px) */
+  @media (max-width: 500px) {
+    .navbar { padding: 0 12px; height: 64px; }
+    .navbar h3 { font-size: 1rem; }
+    .header-content { min-height: 260px; padding: 22px 12px; gap:12px; }
+    .header-content h1 { font-size: 1.25rem; }
+    .header-content p { font-size: .9rem; }
+    .discussion { grid-template-columns: 1fr; gap: 12px; }
+    .info-discussion { width: 100%; max-width: 100%; padding: 0; }
+    .form-control { width: 100%; max-width: 100%; }
+    #area-1 { flex-direction: row; gap: 10px; }
+    #area-3 { flex-direction: column; align-items: stretch; gap:8px; }
+    #area-3 select, #area-3 button { width: 100%; }
+    .discussion-list-info .p1 { font-size: .95rem; }
+    .discussion-list-info p { font-size:.92rem; line-height:1.25; }
+    .action-rapide, .sujet-populaire, .statistique { padding:10px; font-size:.95rem; }
+    .menu-hamburger { width: 82%; max-width: 320px; }
+  }
+  
+  /* ================= HOVER EFFECTS (desktop / devices with hover) ================= */
+  /* Apply hover only for devices with hover capability */
+  @media (hover: hover) and (pointer: fine) {
+    /* subtle lift for main cards */
+    .start-discussion:hover,
+    .discussion-list:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px rgba(149,157,165,0.18);
+    }
+  
+    /* actions / list items hover */
+    .action-rapide li:hover,
+    .sujet-populaire ul li:hover,
+    .statistique ul li:hover {
+      background: #fbfbff;
+      transform: translateX(6px);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.06);
+    }
+  
+    /* title hover in discussion list */
+    .discussion-list-info .p1 span:first-child:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+  
+    /* nav tab hover */
+    nav button:hover { transform: translateY(-3px); }
+  
+    /* buttons subtle hover already exist; ensure smooth */
+    .btn-signup:hover { background: var(--accent-2); }
+    .btn-connexion:hover { background: #fafafa; }
+  }
+  
+  /* Accessibility: visible focus state for keyboard navigation */
+  :focus-visible {
+    outline: 3px solid rgba(106,90,255,0.22);
+    outline-offset: 3px;
+  }
+  

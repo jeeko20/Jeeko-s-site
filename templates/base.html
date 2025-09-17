@@ -115,8 +115,8 @@
     <!-- Menu Desktop -->
     <div class="menu">
       <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
-      <a href="#" class="navbar-menu">Communauté</a>
-      <a href="#" class="navbar-menu">Mes notes</a>
+      <a href="{{url_for('communaute')}}" class="navbar-menu">Communauté</a>
+      <a href="{{url_for('notes')}}" class="navbar-menu">Mes notes</a>
       <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
     </div>
 
@@ -133,8 +133,8 @@
     <!-- Menu Mobile (caché au départ) -->
     <div class="menu-hamburger" id="menu-hamburger">
       <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
-      <a href="#" class="navbar-menu">Communauté</a>
-      <a href="#" class="navbar-menu">Mes notes</a>
+      <a href="{{url_for('communaute')}}" class="navbar-menu">Communauté</a>
+      <a href="{{url_for('notes')}}" class="navbar-menu">Mes notes</a>
       <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
       {%if username%}
       <a href="{{url_for('logout')}}" class="btn-signup">Déconnexion</a>

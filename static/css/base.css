@@ -1,17 +1,7 @@
-/* ================= BODY ================= */
-* {
-  box-sizing: border-box;
-}
-
-html, body {
-  overflow-x: hidden;
-  width: 100%;
-}
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-}
+/* ================= RESET & BASE ================= */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; font-family: Arial, sans-serif; }
+a { text-decoration: none; color: inherit; }
 
 /* ================= NAVBAR ================= */
 .custom-navbar {

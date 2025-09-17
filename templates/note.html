@@ -1,0 +1,432 @@
+{%extends 'base.html'%}
+{%block extra_css%}
+<link rel="stylesheet" href="{{url_for('static', filename='css/note.css')}}">
+{%endblock%}
+
+{%block content%}
+ <!-- ================= HEADER ================= -->
+ <header class="header">
+    <div class="header-content">
+      <h1>Bienvenue sur votre espace de notes</h1>
+      <p>Gérez et partagez vos notes facilement</p>
+      <div class="header-buttons">
+        <a href="#">Ajouter une note</a>
+        <label class="custom-file-upload">
+          Choisir un fichier
+          <input type="file" id="file-input">
+        </label>
+      </div>
+    </div>
+
+    <!-- Statistiques info-matière -->
+    <div class="info-matiere">
+      <div>
+        <span class="info">8</span>
+        <span>Notes Totales</span>
+      </div>
+      <div>
+        <span class="info">4</span>
+        <span>Favories</span>
+      </div>
+      <div>
+        <span class="info">3</span>
+        <span>Partages</span>
+      </div>
+      <div>
+        <span class="info">7</span>
+        <span>Matieres</span>
+      </div>
+    </div>
+  </header>
+  <!-- Navigation -->
+  <nav>
+    <button class="tab active" data-page="all_note"><i class="fa-solid fa-file"></i>&nbsp;Tous les notes</button>
+    <button class="tab" data-page="Recentes"><i class="fa-solid fa-clock"></i>&nbsp;Recentes</button>
+    <button class="tab" data-page="Favories"><i class="fa-solid fa-heart"></i>&nbsp;Favories</button>
+    <button class="tab" data-page="Partagees"><i class="fa-solid fa-share-nodes"></i>&nbsp;Partagees</button>
+  </nav>
+  <div class="filter">
+    <div>
+      <label for="matiere">Matière :</label>
+      <select name="matiere" id="matiere">
+        <option value="">Toutes</option>
+        <option value="javascript">JavaScript</option>
+        <option value="HTML">HTML</option>
+        <option value="CSS">CSS</option>
+        <option value="Algorithme">Algorithme</option>
+        <option value="C++">C++</option>
+        <option value="systeme">Système</option>
+      </select>
+  
+      <label for="tri">Trier par :</label>
+      <select name="tri" id="tri">
+        <option value="">Matière</option>
+        <option value="recentes">Récentes</option>
+        <option value="favories">Favoris</option>
+        <option value="partage">Partagées</option>
+      </select>
+    </div>
+  
+    <div class="search-box">
+      <label for="search"><i class="fa-solid fa-magnifying-glass"></i></label>
+      <input type="search" id="search" placeholder="Rechercher dans mes notes">
+    </div>
+  </div>
+  
+  <!-- Contenu dynamique -->
+  <main>
+    <section id="all_note" class="page active">
+      <div class="section1">
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+
+
+        
+      </div>
+
+    </section>
+
+    <section id="Recentes" class="page">
+      <div class="section2">
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+
+
+        
+      </div>
+    </section>
+
+    <section id="Favories" class="page">
+      <div class="section3">
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+
+
+        
+      </div>
+    </section>
+
+    <section id="Partagees" class="page">
+      <div class="section4">
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>
+        <div class="ressources-list">
+          <div class="ressource-head">
+            <i class="fa-solid fa-file fa-2x"></i>
+            <p>
+              <i class="fa-regular fa-heart fa-2x"></i>
+              <i class="fa-solid fa-ellipsis fa-2x"></i>
+            </p>
+          </div>
+          <h3>Algorithme de tri-Bubble sort et quict sort</h3>
+          <p class="p1">
+            <span>Algebre</span>
+            <span>Notes de cours</span>
+          </p>
+          <p class="p2"><span>#tri</span><span>#complexite</span><span>#performance</span></p>
+          <div class="ressource-info">
+            <p>14/01/2024</p>
+            <p>2.7 MB</p>
+            <p>18 pages</p>
+          </div>
+          <div class="ressource-footer">
+            <button>ouvrir</button>
+            <i class="fa-regular fa-heart fa-2x"></i>
+            <i class="fa-solid fa-share-nodes fa-2x"></i>
+          </div>
+        </div>      
+      </div>
+    </section>
+  </main>
+
+{%endblock%}
+{%block script%}
+<script>
+    // Sélectionner tous les boutons de navigation
+    const tabs = document.querySelectorAll(".tab");
+    const pages = document.querySelectorAll(".page");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        // Retirer l'activation de tous les boutons
+        tabs.forEach(t => t.classList.remove("active"));
+        // Activer le bouton cliqué
+        tab.classList.add("active");
+
+        // Masquer toutes les sections
+        pages.forEach(page => page.classList.remove("active"));
+        // Afficher la section correspondante
+        const target = tab.getAttribute("data-page");
+        document.getElementById(target).classList.add("active");
+      });
+    });
+
+</script>
+{%endblock%}
