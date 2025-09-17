@@ -104,7 +104,7 @@
 /* Statistiques info-matière */
 .info-matiere {
   display: flex;
-  justify-content: center;
+  justify-content: space-evenly;
   gap: 60px;
   color: black;
   flex-wrap: wrap;
@@ -133,7 +133,7 @@
 /* NAVIGATION */
 nav {
   display: flex;
-  justify-content: center;
+  justify-content: space-evenly;
   background: white;
   border-bottom: 1px solid #ccc;
   border-top: 1px solid #ccc;

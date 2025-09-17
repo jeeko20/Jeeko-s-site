@@ -9,33 +9,46 @@ import logging
 from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 # --------------------
 # Configuration de base
 # --------------------
 load_dotenv()
 
-# Activer les logs
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# 🔧 Récupérer et corriger DATABASE_URL (postgres:// → postgresql://)
+# 🔧 DATABASE_URL
 database_url = os.environ.get("DATABASE_URL")
-if database_url and database_url.startswith("postgres://"):
+if not database_url:
+    raise RuntimeError("❌ DATABASE_URL introuvable ! Vérifie ton fichier .env")
+if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+# --------------------
+# SQLAlchemy avec pool limité à 5 connexions (plan gratuit Neon)
+# --------------------
+engine = create_engine(
+    database_url,
+    pool_size=5,       # max 5 connexions simultanées
+    max_overflow=0,    # pas de connexions supplémentaires
+    pool_timeout=30,   # attendre 30s si toutes les connexions occupées
+)
+db_session = scoped_session(sessionmaker(bind=engine))
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key_change_in_prod")
 app.permanent_session_lifetime = timedelta(days=7)
 
-# --------------------
-# Initialisation des extensions
-# --------------------
+# SQLAlchemy Flask extension
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # 👈 IMPORTANT : après db
+db.session = db_session
+migrate = Migrate(app, db)
 
 # --------------------
 # Cloudinary config
@@ -53,7 +66,7 @@ class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(256), nullable=False)  # ✅ Augmenté à 256
+    password = db.Column(db.String(256), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -70,19 +83,15 @@ class Profile(db.Model):
     email = db.Column(db.String(150))
     year_of_study = db.Column(db.String(50))
 
-
 # --------------------
 # Helpers
 # --------------------
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 def upload_avatar_to_cloudinary(file):
-    """Upload un fichier vers Cloudinary et retourne l'URL publique."""
     try:
         result = cloudinary.uploader.upload(file)
         return result.get("secure_url")
@@ -90,7 +99,6 @@ def upload_avatar_to_cloudinary(file):
         logger.error(f"Erreur Cloudinary: {e}")
         flash("Échec de l'upload de l'image.", "danger")
         return None
-
 
 # --------------------
 # Routes
@@ -100,15 +108,12 @@ def home():
     username = session.get('username')
     return render_template('index.html', username=username)
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-
         user = User.query.filter_by(email=email).first()
-
         if user and user.is_active and check_password_hash(user.password, password):
             session.permanent = True
             session['user_id'] = user.id
@@ -117,9 +122,7 @@ def login():
             return redirect(url_for('home'))
         else:
             flash('Email ou mot de passe incorrect.', 'danger')
-
     return render_template('index.html')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -127,11 +130,9 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-
         if not username or not email or not password:
             flash('Tous les champs sont obligatoires.', 'danger')
             return render_template('register.html')
-
         if User.query.filter_by(email=email).first():
             flash('Cet email est déjà utilisé.', 'danger')
         elif User.query.filter_by(username=username).first():
@@ -148,9 +149,7 @@ def register():
                 db.session.rollback()
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
-
     return render_template('index.html')
-
 
 @app.route('/logout')
 def logout():
@@ -158,7 +157,6 @@ def logout():
     session.pop('username', None)
     flash('Vous êtes déconnecté.', 'info')
     return redirect(url_for('home'))
-
 
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
@@ -172,16 +170,14 @@ def profile():
         return redirect(url_for('login'))
 
     profile = user.profile
-
     if request.method == 'POST':
         complete_name = request.form['complete_name']
         email = request.form['email']
         bio = request.form['bio']
         year_of_study = request.form.get('year_of_study')
         avatar_file = request.files.get('avatar')
-
-        # Gestion de l'avatar
         avatar_path = profile.avatar_path if profile else None
+
         if avatar_file and avatar_file.filename != '':
             if allowed_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
@@ -193,7 +189,6 @@ def profile():
                 flash('Seules les images (png, jpg, jpeg, gif) sont autorisées.', 'danger')
                 return redirect(url_for('profile'))
 
-        # Mise à jour du profil
         if profile:
             profile.complete_name = complete_name
             profile.email = email
@@ -223,21 +218,8 @@ def profile():
 
     return render_template('profile.html', username=username ,user=user, profile=profile)
 
-
 # --------------------
-# Route de test (optionnelle)
-# --------------------
-@app.route('/test-db')
-def test_db():
-    try:
-        db.session.execute('SELECT 1')
-        return "<h1>✅ Base de données connectée !</h1>"
-    except Exception as e:
-        return f"<h1>❌ Erreur DB : {str(e)}</h1>"
-
-
-# --------------------
-# Démarrage (local uniquement)
+# Démarrage
 # --------------------
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

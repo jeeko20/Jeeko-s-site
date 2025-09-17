@@ -339,6 +339,9 @@
 }
 
 @media (max-width: 600px) {
+   .header-content h1{
+    font-size: 50px;
+  }
   .matiere {
     grid-template-columns: 1fr; /* 1 carte */
   }
