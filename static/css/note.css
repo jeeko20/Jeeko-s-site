@@ -189,10 +189,9 @@
       .ressources-list {
         background-color: white;
         border: 1px solid #ddd;
-        margin: 10px;
-  
+        margin: auto;
         border-radius: 8px;
-        padding: 20px;
+        padding: 20px 4px 20px 20px;
         box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
       }
       .ressource-head{
@@ -259,6 +258,14 @@
 /* ==========================================================
    ======================= MEDIA QUERIES ==================
    ========================================================== */
+   @media (max-width:400px){
+    .ressource-footer button {
+        padding: 10px 30px;
+    }
+    .ressources-list{
+        font-size: small;
+    }
+   }
 
 /* Responsive Header */
 @media (max-width: 768px) {
