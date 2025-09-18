@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours HTML Complet</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/learn_html.css')}}">
+    <style>
+        /* Pour la SPA */
+        section {
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        nav a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: blue;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>📘 Cours HTML Complet</h1>
+        <p>Apprenez toutes les balises HTML et leurs utilisations</p>
+    </header>
+
+    <nav>
+        <a href="#structure">Structure</a>
+        <a href="#textes">Textes</a>
+        <a href="#liens">Liens</a>
+        <a href="#listes">Listes</a>
+        <a href="#tableaux">Tableaux</a>
+        <a href="#formulaires">Formulaires</a>
+        <a href="#medias">Médias</a>
+        <a href="#ressources">ressources</a>
+    </nav>
+
+
+    <div class="container">
+
+        <!-- ===== 1. Structure HTML ===== -->
+        <section id="structure">
+            <h2>1. Structure de base</h2>
+            <p>Une page HTML commence toujours par cette structure :</p>
+            <pre><!DOCTYPE html>
+&lthtml lang="fr"&gt
+&lthead&gt
+    &ltmeta charset="UTF-8"&gt
+    &lttitle&gtMon site&lt/title&gt
+    &ltlink rel="stylesheet" href="<i style="color: blueviolet;">le nom du fichier css</i>"&gt 
+&lt/head&gt
+&ltbody&gt
+    <i style="color: rgb(0, 255, 13);">du code a l'interieur</i>
+&lt/body&gt
+&lt/html&gt&lt</pre>
+            <div class="example">
+                <strong>Explication :</strong><br>
+                - <code>&lt;!DOCTYPE html&gt;</code> : Déclare que c’est du HTML5.<br>
+                - <code>&lt;html&gt;</code> : Racine du document.<br>
+                - <code>&lt;head&gt;</code> : Métadonnées, titre, CSS, scripts.<br>
+                - <code>&lt;body&gt;</code> : Contenu visible de la page..qui contient tout le code html<br>
+                -<code>&ltlink&gt></code>code : pour lie le html etle css.
+            </div>
+        </section>
+
+
+        <!-- ===== 2. Textes ===== -->
+        <section id="textes">
+            <h2>2. Titres et paragraphes</h2>
+            <p>Les balises de texte servent à structurer l’information :</p>
+
+            <h3>Balises de titres</h3>
+            <pre>
+            &lt!DOCTYPE html&gt;
+            &lthtml lang="en"&gt;
+            &lthead&gt
+                &ltmeta charset="UTF-8"&gt;
+                &ltmeta name="viewport" content="width=device-width, initial-scale=1.0">
+                &lttitle&gtDocument&lt/title&gt
+            &lt/head&gt
+            &ltbody&gt
+                &lth1&gtTitre principal&lt/h1&gt
+                &lth2&gtSous-titre&lt/h2&gt
+                &lth3&gtSous-sous-titre&lt/h3&gt
+                ...
+                &lth6&gtTitre niveau 6&lt/h6&gt
+            &lt/body&gt
+            &lt/html&gt</pre>
+            <h1>Titre principal</h1>
+            <h2>Sous-titre</h2>
+            <h3>Sous-sous-titre</h3>
+            ...
+            <h6>Titre niveau 6</h6>
+            <div class="example">
+                Plus le chiffre est grand, plus le titre est petit.
+            </div>
+
+            <h3>Paragraphes</h3>
+            <pre>
+        &ltp&gtCeci est un paragraphe.&lt/p&gt
+        &ltp&gtUn autre paragraphe ici.&lt/p&gt
+    </pre>
+            <p>Ceci est un paragraphe.</p>
+            <p>Un autre paragraphe ici.</p>
+            </pre>
+            <div class="example">
+                Le texte dans <code>&lt;p&gt;</code> crée un paragraphe séparé.
+            </div>
+            <div class="example">
+                --<code>A Note que 1:</code> les balises &lth1&gt, &lth2&gt, &lth3&gt, ... &lth6&gt sont des balises de
+                titre, le chiffre est le niveau du titre.<br>
+                --<code>A note que 2 :</code> le balise &ltp&gt est une balise de paragraphe.<br>
+                --<code>Important</code>ces balises sont de types block, elles prennent toute la largeur disponible.
+            </div>
+            <h3>Autres balises de texte</h3>
+            <pre>
+            &ltstrong&gtTexte important&lt/strong&gt
+            &ltem&gtTexte en italique&lt/em&gt
+            &ltmark&gtTexte surligné&lt/mark&gt
+            &ltsmall&gtTexte petit&lt/small&gt
+            &ltbr&gt pour aller a la ligne
+            &lti&gtTexte en italique&lt/i&gt
+            &ltb&gtTexte en gras&lt/b&gt
+            &ltu&gtTexte en souligne&lt/u&gt
+            &lthr&gtTracer une ligne&lt/hr&gt
+            &ltsub&gtTexte en bas ex: H<sub>2</sub>O&lt/sub&gt
+            &ltsup&gtTexte en haut...ex: x<sup>2</sup>&lt/sup&gt
+            &ltpre&gt     &lt/pre&gt
+        </pre>
+            <strong>Texte important</strong><br>
+            <em>Texte en italique</em><br>
+            <mark>Texte surligné</mark><br>
+            <small>Texte petit</small><br>
+            <br>
+            <i>Texte en italique</i><br>
+            <b>Texte en gras</b><br>
+            <u>Texte en souligne</u><br>
+            <hr>Texte en souligne</hr><br>
+            <sub>Texte en bas</sub><br>
+            <sup>Texte en haut</sup><br>
+            <pre>Texte en pre</pre><br>
+            <div class="example">
+                Utilisez <code>&lt;strong&gt;</code> pour l’importance, <code>&lt;em&gt;</code> pour l’emphase,
+                <code>&lt;mark&gt;</code> pour surligner, et <code>&lt;small&gt;</code> pour du texte secondaire.
+                <code>&lt;br&gt;</code> pour aller a la ligne.
+                <code>&lt;i&gt;</code> pour italique.
+                <code>&lt;b&gt;</code> pour gras.
+                <code>&lt;u&gt;</code> pour souligner.
+                <code>&lt;hr&gt;</code> pour une ligne horizontale.
+                <code>&lt;sub&gt;</code> pour un texte en bas.
+                <code>&lt;sup&gt;</code> pour un texte en haut.
+                <code>&lt;pre&gt;</code> pour un texte en pre.
+            </div>
+        </section>
+
+
+        <!-- ===== 3. Liens ===== -->
+        <section id="liens">
+            <h2>7. Liens</h2>
+            <p>Les liens permettent de naviguer entre différentes pages ou sections d’un site web.</p>
+        
+            <h3>Lien externe</h3>
+            <pre>
+        &lt;a href="https://www.google.com" target="_blank"&gt;Aller sur Google&lt;/a&gt;
+            </pre>
+        
+            <a href="https://www.google.com" target="_blank">Aller sur Google</a>
+            <div class="example">
+                <code>&lt;a&gt;</code> = balise de lien.  
+                Attribut <code>href</code> = adresse de destination.  
+                Attribut <code>target="_blank"</code> = ouvre le lien dans un nouvel onglet.  
+            </div>
+        
+            <h3>Lien interne (vers une autre page du site)</h3>
+            <pre>
+        &lt;a href="page2.html"&gt;Aller à la page 2&lt;/a&gt;
+            </pre>
+        
+            <a href="page2.html">Aller à la page 2</a>
+            <div class="example">
+                Un **lien interne** pointe vers une page qui fait partie du même site (exemple : <code>page2.html</code>).  
+                On utilise un chemin relatif ou absolu selon l’organisation des fichiers.  
+            </div>
+        
+            <h3>Lien vers une ancre (dans la même page)</h3>
+            <pre>
+        &lt;a href="#section2"&gt;Aller à la section 2&lt;/a&gt;
+        
+        &lt;h2 id="section2"&gt;Section 2&lt;/h2&gt;
+        &lt;p&gt;Contenu de la section 2...&lt;/p&gt;
+            </pre>
+        
+            <a href="#section2">Aller à la section 2</a>
+            <h2 id="section2">Section 2</h2>
+            <p>Contenu de la section 2...</p>
+            <div class="example">
+                <code>&lt;a href="#id"&gt;</code> permet de sauter directement à un élément identifié par <code>id</code>.  
+                Exemple : <code>&lt;a href="#bas"&gt;Aller en bas&lt;/a&gt;</code> et plus loin <code>&lt;div id="bas"&gt;</code>.  
+            </div>
+        
+            <h3>Autres utilisations courantes</h3>
+            <pre>
+        &lt;a href="mailto:exemple@email.com"&gt;Envoyer un email&lt;/a&gt;
+        &lt;a href="tel:+123456789"&gt;Appeler ce numéro&lt;/a&gt;
+            </pre>
+        
+            <a href="mailto:exemple@email.com">Envoyer un email</a><br>
+            <a href="tel:+123456789">Appeler ce numéro</a>
+            <div class="example">
+                - <code>mailto:</code> ouvre le logiciel de messagerie avec un email pré-rempli.  
+                - <code>tel:</code> permet de lancer un appel téléphonique (pratique sur mobile).  
+            </div>
+        
+            <h3>Notes importantes</h3>
+            <div class="example">
+                --<code>Note 1 :</code> <code>&lt;a&gt;</code> = balise de lien hypertexte.<br>
+                --<code>Note 2 :</code> <code>href</code> est obligatoire pour indiquer la cible.<br>
+                --<code>Note 3 :</code> Un lien peut être **externe** (vers un autre site), 
+                **interne** (dans le même site) ou **ancre** (dans la même page).<br>
+                --<code>Important :</code> Les liens sont de type <strong>inline</strong>, 
+                ils s’affichent dans le flux du texte.  
+            </div>
+        </section>
+        
+        <!-- ===== 5. Listes ===== -->
+        <section id="listes">
+            <h2>3. Listes</h2>
+            <p>Les listes servent à organiser du contenu sous forme d’éléments successifs.</p>
+        
+            <h3>Liste non ordonnée</h3>
+            <pre>
+        &lt;ul&gt;
+            &lt;li&gt;Premier élément&lt;/li&gt;
+            &lt;li&gt;Deuxième élément&lt;/li&gt;
+            &lt;li&gt;Troisième élément&lt;/li&gt;
+        &lt;/ul&gt;
+            </pre>
+            <ul>
+                <li>Premier élément</li>
+                <li>Deuxième élément</li>
+                <li>Troisième élément</li>
+            </ul>
+            <div class="example">
+                La balise <code>&lt;ul&gt;</code> crée une liste à puces.  
+                Les éléments de liste sont définis par <code>&lt;li&gt;</code>.
+            </div>
+        
+            <h3>Liste ordonnée</h3>
+            <pre>
+        &lt;ol&gt;
+            &lt;li&gt;Étape 1&lt;/li&gt;
+            &lt;li&gt;Étape 2&lt;/li&gt;
+            &lt;li&gt;Étape 3&lt;/li&gt;
+        &lt;/ol&gt;
+            </pre>
+            <ol>
+                <li>Étape 1</li>
+                <li>Étape 2</li>
+                <li>Étape 3</li>
+            </ol>
+            <div class="example">
+                La balise <code>&lt;ol&gt;</code> crée une liste numérotée.  
+                Chaque élément est aussi défini par <code>&lt;li&gt;</code>.
+            </div>
+        
+            <h3>Liste de définition</h3>
+            <pre>
+        &lt;dl&gt;
+            &lt;dt&gt;HTML&lt;/dt&gt;
+            &lt;dd&gt;Langage de balisage utilisé pour structurer une page Web.&lt;/dd&gt;
+        
+            &lt;dt&gt;CSS&lt;/dt&gt;
+            &lt;dd&gt;Langage servant à mettre en forme le contenu d'une page.&lt;/dd&gt;
+        &lt;/dl&gt;
+            </pre>
+            <dl>
+                <dt>HTML</dt>
+                <dd>Langage de balisage utilisé pour structurer une page Web.</dd>
+                <dt>CSS</dt>
+                <dd>Langage servant à mettre en forme le contenu d'une page.</dd>
+            </dl>
+            <div class="example">
+                La balise <code>&lt;dl&gt;</code> définit une liste de définitions.  
+                <code>&lt;dt&gt;</code> sert au terme à définir.  
+                <code>&lt;dd&gt;</code> sert à la description du terme.
+            </div>
+        
+            <h3>Notes importantes</h3>
+            <div class="example">
+                --<code>Note 1 :</code> <code>&lt;ul&gt;</code> = unordered list (liste à puces).<br>
+                --<code>Note 2 :</code> <code>&lt;ol&gt;</code> = ordered list (liste numérotée).<br>
+                --<code>Note 3 :</code> <code>&lt;dl&gt;</code> = definition list (liste de définitions).<br>
+                --<code>Important :</code> Les balises <code>&lt;ul&gt;</code>, <code>&lt;ol&gt;</code> et <code>&lt;dl&gt;</code> 
+                sont de type <strong>block</strong>, elles occupent toute la largeur disponible.
+            </div>
+        </section>
+        
+
+        <!-- ===== 6. Tableaux ===== -->
+        <section id="tableaux">
+            <h2>4. Tableaux</h2>
+            <p>Les tableaux permettent d’organiser des données en lignes et colonnes.</p>
+        
+            <h3>Tableau simple</h3>
+            <pre>
+        &lt;table border="1"&gt;
+            &lt;tr&gt;
+                &lt;th&gt;Nom&lt;/th&gt;
+                &lt;th&gt;Âge&lt;/th&gt;
+                &lt;th&gt;Ville&lt;/th&gt;
+            &lt;/tr&gt;
+            &lt;tr&gt;
+                &lt;td&gt;Alice&lt;/td&gt;
+                &lt;td&gt;25&lt;/td&gt;
+                &lt;td&gt;Paris&lt;/td&gt;
+            &lt;/tr&gt;
+            &lt;tr&gt;
+                &lt;td&gt;Bob&lt;/td&gt;
+                &lt;td&gt;30&lt;/td&gt;
+                &lt;td&gt;Lyon&lt;/td&gt;
+            &lt;/tr&gt;
+        &lt;/table&gt;
+            </pre>
+        
+            <table border="1">
+                <tr>
+                    <th>Nom</th>
+                    <th>Âge</th>
+                    <th>Ville</th>
+                </tr>
+                <tr>
+                    <td>Alice</td>
+                    <td>25</td>
+                    <td>Paris</td>
+                </tr>
+                <tr>
+                    <td>Bob</td>
+                    <td>30</td>
+                    <td>Lyon</td>
+                </tr>
+            </table>
+            <div class="example">
+                <code>&lt;table&gt;</code> crée un tableau.  
+                <code>&lt;tr&gt;</code> = ligne (table row).  
+                <code>&lt;th&gt;</code> = cellule d’en-tête (table header).  
+                <code>&lt;td&gt;</code> = cellule normale (table data).  
+            </div>
+        
+            <h3>Avec en-tête, corps et pied de tableau</h3>
+            <pre>
+        &lt;table border="1"&gt;
+            &lt;thead&gt;
+                &lt;tr&gt;
+                    &lt;th&gt;Produit&lt;/th&gt;
+                    &lt;th&gt;Prix&lt;/th&gt;
+                    &lt;th&gt;Quantité&lt;/th&gt;
+                &lt;/tr&gt;
+            &lt;/thead&gt;
+            &lt;tbody&gt;
+                &lt;tr&gt;
+                    &lt;td&gt;Livre&lt;/td&gt;
+                    &lt;td&gt;15€&lt;/td&gt;
+                    &lt;td&gt;2&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                    &lt;td&gt;Stylo&lt;/td&gt;
+                    &lt;td&gt;2€&lt;/td&gt;
+                    &lt;td&gt;5&lt;/td&gt;
+                &lt;/tr&gt;
+            &lt;/tbody&gt;
+            &lt;tfoot&gt;
+                &lt;tr&gt;
+                    &lt;td colspan="2"&gt;Total&lt;/td&gt;
+                    &lt;td&gt;19€&lt;/td&gt;
+                &lt;/tr&gt;
+            &lt;/tfoot&gt;
+        &lt;/table&gt;
+            </pre>
+        
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Prix</th>
+                        <th>Quantité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Livre</td>
+                        <td>15€</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Stylo</td>
+                        <td>2€</td>
+                        <td>5</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Total</td>
+                        <td>19€</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="example">
+                <code>&lt;thead&gt;</code> = en-tête du tableau.  
+                <code>&lt;tbody&gt;</code> = corps du tableau.  
+                <code>&lt;tfoot&gt;</code> = pied du tableau (souvent pour un résumé ou total).  
+                <code>colspan</code> permet à une cellule de s’étendre sur plusieurs colonnes.
+            </div>
+        
+            <h3>Notes importantes</h3>
+            <div class="example">
+                --<code>Note 1 :</code> Utiliser <code>&lt;th&gt;</code> pour les en-têtes (texte en gras et centré par défaut).<br>
+                --<code>Note 2 :</code> Par défaut, un tableau n’a pas de bordures. On ajoute <code>border="1"</code> 
+                (ou mieux en CSS).<br>
+                --<code>Note 3 :</code> Les balises <code>&lt;table&gt;</code>, <code>&lt;tr&gt;</code>, <code>&lt;th&gt;</code>, 
+                <code>&lt;td&gt;</code> sont de type block mais s’affichent en grille.  
+            </div>
+        </section>
+        
+
+        <!-- ===== 7. Formulaires ===== -->
+        <section id="formulaires">
+            <h2>5. Formulaires</h2>
+            <p>Les formulaires permettent de recueillir des données saisies par l’utilisateur.</p>
+        
+            <h3>Formulaire simple</h3>
+            <pre>
+        &lt;form action="/traitement" method="post"&gt;
+            &lt;label for="nom"&gt;Nom :&lt;/label&gt;
+            &lt;input type="text" id="nom" name="nom"&gt;&lt;br&gt;&lt;br&gt;
+        
+            &lt;label for="email"&gt;Email :&lt;/label&gt;
+            &lt;input type="email" id="email" name="email"&gt;&lt;br&gt;&lt;br&gt;
+        
+            &lt;input type="submit" value="Envoyer"&gt;
+        &lt;/form&gt;
+            </pre>
+        
+            <form action="/traitement" method="post">
+                <label for="nom">Nom :</label>
+                <input type="text" id="nom" name="nom"><br><br>
+        
+                <label for="email">Email :</label>
+                <input type="email" id="email" name="email"><br><br>
+        
+                <input type="submit" value="Envoyer">
+            </form>
+            <div class="example">
+                <code>&lt;form&gt;</code> définit un formulaire.  
+                <code>action</code> = où envoyer les données.  
+                <code>method</code> = méthode HTTP (GET ou POST).  
+                <code>&lt;label&gt;</code> associe un texte à un champ.  
+                <code>&lt;input&gt;</code> crée un champ de saisie.  
+            </div>
+        
+            <h3>Différents types de champs</h3>
+            <pre>
+        &lt;form&gt;
+            Texte : &lt;input type="text"&gt;&lt;br&gt;
+            Mot de passe : &lt;input type="password"&gt;&lt;br&gt;
+            Email : &lt;input type="email"&gt;&lt;br&gt;
+            Nombre : &lt;input type="number"&gt;&lt;br&gt;
+            Date : &lt;input type="date"&gt;&lt;br&gt;
+            Couleur : &lt;input type="color"&gt;&lt;br&gt;
+            Fichier : &lt;input type="file"&gt;&lt;br&gt;
+        &lt;/form&gt;
+            </pre>
+        
+            <form>
+                Texte : <input type="text"><br>
+                Mot de passe : <input type="password"><br>
+                Email : <input type="email"><br>
+                Nombre : <input type="number"><br>
+                Date : <input type="date"><br>
+                Couleur : <input type="color"><br>
+                Fichier : <input type="file"><br>
+            </form>
+            <div class="example">
+                Les formulaires supportent plusieurs types de champs grâce à <code>type="..."</code>.  
+                Exemple : text, password, email, number, date, color, file, etc.
+            </div>
+        
+            <h3>Boutons radio et cases à cocher</h3>
+            <pre>
+        &lt;form&gt;
+            Sexe : 
+            &lt;input type="radio" name="sexe" value="Homme"&gt; Homme
+            &lt;input type="radio" name="sexe" value="Femme"&gt; Femme &lt;br&gt;&lt;br&gt;
+        
+            Centres d’intérêt : 
+            &lt;input type="checkbox" name="sport"&gt; Sport
+            &lt;input type="checkbox" name="musique"&gt; Musique
+            &lt;input type="checkbox" name="lecture"&gt; Lecture
+        &lt;/form&gt;
+            </pre>
+        
+            <form>
+                Sexe :
+                <input type="radio" name="sexe" value="Homme"> Homme
+                <input type="radio" name="sexe" value="Femme"> Femme <br><br>
+        
+                Centres d’intérêt :
+                <input type="checkbox" name="sport"> Sport
+                <input type="checkbox" name="musique"> Musique
+                <input type="checkbox" name="lecture"> Lecture
+            </form>
+            <div class="example">
+                <code>&lt;input type="radio"&gt;</code> = choix unique (même <code>name</code>).  
+                <code>&lt;input type="checkbox"&gt;</code> = choix multiple indépendant.  
+            </div>
+        
+            <h3>Zone de texte et menu déroulant</h3>
+            <pre>
+        &lt;form&gt;
+            Commentaire : &lt;br&gt;
+            &lt;textarea rows="4" cols="30"&gt;&lt;/textarea&gt;&lt;br&gt;&lt;br&gt;
+        
+            Choix d’un pays : 
+            &lt;select&gt;
+                &lt;option&gt;France&lt;/option&gt;
+                &lt;option&gt;Canada&lt;/option&gt;
+                &lt;option&gt;Haïti&lt;/option&gt;
+            &lt;/select&gt;
+        &lt;/form&gt;
+            </pre>
+        
+            <form>
+                Commentaire : <br>
+                <textarea rows="4" cols="30"></textarea><br><br>
+        
+                Choix d’un pays :
+                <select>
+                    <option>France</option>
+                    <option>Canada</option>
+                    <option>Haïti</option>
+                </select>
+            </form>
+            <div class="example">
+                <code>&lt;textarea&gt;</code> = zone de texte multi-lignes.  
+                <code>&lt;select&gt;</code> = liste déroulante.  
+                <code>&lt;option&gt;</code> = chaque choix du menu.  
+            </div>
+        
+            <h3>Notes importantes</h3>
+            <div class="example">
+                --<code>Note 1 :</code> Les formulaires s’utilisent toujours avec une balise <code>&lt;form&gt;</code>. <br>
+                --<code>Note 2 :</code> Toujours utiliser <code>&lt;label for="id"&gt;</code> pour l’accessibilité.<br>
+                --<code>Note 3 :</code> Les attributs <code>required</code>, <code>placeholder</code>, <code>value</code> 
+                améliorent l’expérience utilisateur.<br>
+                --<code>Important :</code> Pour que les données soient envoyées, il faut un bouton 
+                <code>&lt;input type="submit"&gt;</code> ou <code>&lt;button type="submit"&gt;</code>.
+            </div>
+        </section>
+        
+        <section id="medias">
+            <h2>6. Médias (images, audio et vidéo)</h2>
+            <p>Les balises médias permettent d’insérer des contenus visuels et sonores dans une page HTML.</p>
+        
+            <h3>Image</h3>
+            <pre>
+        &lt;img src="https://cdn.pixabay.com/photo/2023/12/04/17/16/woman-8429860_1280.jpg" alt="Description de l'image" width="300" height="200"&gt;
+            </pre>
+        
+            <img src="https://cdn.pixabay.com/photo/2023/12/04/17/16/woman-8429860_1280.jpg" alt="Exemple d'image" width="200" height="200">
+            <div class="example">
+                <code>&lt;img&gt;</code> insère une image.  
+                Attributs importants :  
+                - <code>src</code> = chemin de l’image.  
+                - <code>alt</code> = description (accessibilité et affichée si l’image ne charge pas).  
+                - <code>width</code> et <code>height</code> = dimensions.  
+            </div>
+        
+            <h3>Audio</h3>
+            <pre>
+        &lt;audio controls&gt;
+            &lt;source src="musique.mp3" type="audio/mpeg"&gt;
+            &lt;source src="musique.ogg" type="audio/ogg"&gt;
+            Votre navigateur ne supporte pas l'audio.
+        &lt;/audio&gt;
+            </pre>
+        
+            <audio controls>
+                <source src="htt" type="audio/mpeg">
+                <source src="musique.ogg" type="audio/ogg">
+                Votre navigateur ne supporte pas l'audio.
+            </audio>
+            <div class="example">
+                <code>&lt;audio&gt;</code> intègre un fichier audio.  
+                Attribut <code>controls</code> affiche les boutons lecture/pause/volume.  
+                On peut fournir plusieurs formats (<code>.mp3</code>, <code>.ogg</code>) pour compatibilité.  
+            </div>
+        
+            <h3>Vidéo</h3>
+            <pre>
+        &lt;video controls width="400" height="250"&gt;
+            &lt;source src="video.mp4" type="video/mp4"&gt;
+            &lt;source src="video.webm" type="video/webm"&gt;
+            Votre navigateur ne supporte pas la vidéo.
+        &lt;/video&gt;
+            </pre>
+            <video controls width="400" height="250">
+                <source src="video.mp4" type="video/mp4">
+                <source src="video.webm" type="video/webm">
+                Votre navigateur ne supporte pas la vidéo.
+            </video>
+            <h3>pour une video qui est sur youtube met la balise &ltiframe&gt;</h3>
+            <pre>
+            &lt;iframe width="377" height="277" src="https://www.youtube.com/embed/X_jX3D9lCCM?list=RDX_jX3D9lCCM" title="FATIMA ALTIERI- HELLO- ( OFFICIAL MUSIC VIDEO)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </pre>
+            <iframe class="if" width="377" height="277" src="https://www.youtube.com/embed/X_jX3D9lCCM?list=RDX_jX3D9lCCM" title="FATIMA ALTIERI- HELLO- ( OFFICIAL MUSIC VIDEO)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            <div class="example">
+                <code>&lt;video&gt;</code> intègre un fichier vidéo.  
+                Attributs principaux :  
+                - <code>controls</code> pour les boutons de lecture.  
+                - <code>autoplay</code> pour lecture automatique.  
+                - <code>loop</code> pour lecture en boucle.  
+                - <code>muted</code> pour commencer en silencieux.  
+                - <code>poster</code> pour afficher une image d’attente.  
+            </div>
+        
+            <h3>Notes importantes</h3>
+            <div class="example">
+                --<code>Note 1 :</code> Toujours fournir un <code>alt</code> pour les images (accessibilité).<br>
+                --<code>Note 2 :</code> Les balises <code>&lt;audio&gt;</code> et <code>&lt;video&gt;</code> 
+                doivent avoir l’attribut <code>controls</code> pour permettre la lecture.<br>
+                --<code>Note 3 :</code> Il est recommandé de fournir plusieurs formats (<code>mp3/ogg</code> pour audio, 
+                <code>mp4/webm</code> pour vidéo) afin d’assurer une compatibilité entre navigateurs.<br>
+                --<code>Important :</code> Ces balises sont de type <strong>inline-block</strong>, 
+                elles prennent seulement la place nécessaire.  
+            </div>
+        </section>
+        
+        <section id="ressources">
+            <h2>🚀 Ressources</h2>
+            <p>Voici quelques ressources utiles pour approfondir votre compréhension du html:</p>
+            <ul>
+                <li><a href="https://developer.mozilla.org/fr/docs/Web/HTML" target="_blank">MDN Web Docs - HTML</a></li>
+                <li><a href="https://www.w3schools.com/html/default.asp" target="_blank">W3Schools - HTML</a></li>
+                <li><a href="https://html.com/" target="_blank">HTML.com</a></li>
+                <li><a href="https://www.youtube.com/playlist?list=PLillGF-RfJtTcDdI5w89qQXoUo4JNzQz" target="_blank">Playlist HTML sur YouTube</a></li>
+            </ul>
+          </section>
+    </div>
+
+    <footer>
+        &copy; 2025 Mon Site d'Apprentissage | Cours HTML complet
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const sections = document.querySelectorAll("section");
+            const links = document.querySelectorAll("nav a");
+
+            links.forEach(link => {
+                link.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute("href").substring(1);
+
+                    sections.forEach(section => {
+                        section.classList.toggle("active", section.id === targetId);
+                    });
+                });
+            });
+        });
+    </script>
+
+
+
+</body>
+
+</html>

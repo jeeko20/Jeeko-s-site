@@ -8,7 +8,7 @@
   <header class="header">
     <div class="header-content">
       <h1>Partagez vos connaissances</h1>
-      <p>La plateforme collaborative pour les étudiants en informatique de 2ème année</p>
+      <p>La plateforme collaborative pour les étudiants ou les passionnés de la programmation</p>
 
       <!-- Barre de recherche -->
       <input type="search" class="input-search" placeholder="Rechercher des notes, des tutoriels...">
@@ -59,13 +59,29 @@
           <img src="{{url_for('static', filename='img/html-5.png')}}" alt="HTML & CSS">
           <div>
             <span class="titre">HTML</span><br>
-            <span class="ressources">24 ressources</span>
+            <span class="ressources">4 ressources</span>
           </div>
         </div>
         <p>Apprenez les bases du développement web avec HTML et CSS.</p>
         <div class="mise-a-jour">
           <span>Mis à jour récemment</span> 
-          <a href="#"><i class="fa-solid fa-arrow-right"></i></a>
+          <a href="{{url_for('learn_html')}}"><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <!-- Carte CSS -->
+      <div class="card">
+        <div class="logo-image">
+          <img src="https://www.bing.com/images/search?view=detailV2&ccid=yUIb5S%2fk&id=8FA4D3F2348C63B9A029104D6B9CEDFB2D4D7C99&thid=OIP.yUIb5S_kj98Eg5tT-Onx1AHaHa&mediaurl=https%3a%2f%2fcdn.freebiesupply.com%2flogos%2flarge%2f2x%2fcss3-logo-png-transparent.png&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.c9421be52fe48fdf04839b53f8e9f1d4%3frik%3dmXxNLfvtnGtNEA%26pid%3dImgRaw%26r%3d0&exph=2400&expw=2400&q=logo+css&FORM=IRPRST&ck=FD21CA27F062AA8656FD43FC334ADF25&selectedIndex=5&itb=1" alt="CSS" />
+          <div>
+            <span class="titre">CSS</span><br />
+            <span class="ressources">30 ressources</span>
+          </div>
+        </div>
+        <p>Améliorez l'apparence de vos pages web avec CSS.</p>
+        <div class="mise-a-jour">
+          <span>Mis à jour récemment</span>
+          <a href="{{url_for('learn_css')}}"><i class="fa-solid fa-arrow-right"></i></a>
         </div>
       </div>
 

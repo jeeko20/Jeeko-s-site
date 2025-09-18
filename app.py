@@ -227,6 +227,14 @@ def notes():
 def communaute():
     return render_template('communaute.html')
 
+@app.route('/learn_html')
+def learn_html():
+    return render_template('learn_html.html')
+
+@app.route('/learn_css')
+def learn_css():
+    return render_template('learn_css.html')
+
 # --------------------
 # Démarrage
 # --------------------
