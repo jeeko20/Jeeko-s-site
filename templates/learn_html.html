@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cours HTML Complet</title>
     <link rel="stylesheet" href="{{url_for('static', filename='css/learn_html.css')}}">
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+   
+   <style>
         /* Pour la SPA */
         section {
             display: none;
@@ -26,12 +28,21 @@
         nav a:hover {
             text-decoration: underline;
         }
+        header i{
+            font-size: 30px;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: blue;
+            font-weight: bolder;
+        }
     </style>
 </head>
 
 <body>
 
     <header>
+        <a href="{{url_for('home')}}"><i class="fa-solid fa-arrow-right"></i></a>
         <h1>📘 Cours HTML Complet</h1>
         <p>Apprenez toutes les balises HTML et leurs utilisations</p>
     </header>
@@ -655,6 +666,13 @@
                 <li><a href="https://html.com/" target="_blank">HTML.com</a></li>
                 <li><a href="https://www.youtube.com/playlist?list=PLillGF-RfJtTcDdI5w89qQXoUo4JNzQz" target="_blank">Playlist HTML sur YouTube</a></li>
             </ul>
+            <h2>Quelque pdf utiles</h2>
+            <a href="">html_css.pdf</a>
+            <br><a href="">cours-langage-css.pdf</a>
+            <p>clik here to download</p>
+            <a href="{{url_for('static',filename='1-html_css.pdf')}}" download=>html_css.pdf</a>
+            <br><a href="{{url_for('static',filename='0056-cours-langage-css.pdf')}}" download>cours-langage-css.pdf</a>
+       
           </section>
     </div>
 

@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cours HTML Complet</title>
     <link rel="stylesheet" href="{{url_for('static', filename='css/learn_html.css')}}">
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+   
+   <style>
         /* Pour la SPA */
         section {
             display: none;
@@ -26,12 +28,21 @@
         nav a:hover {
             text-decoration: underline;
         }
+        header i{
+            font-size: 30px;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: blue;
+            font-weight: bolder;
+        }
     </style>
 </head>
 
 <body>
 
     <header>
+        <a href="{{url_for('home')}}"><i class="fa-solid fa-arrow-right"></i></a>
         <h1>📘 Cours CSS</h1>
         <p>Apprenez toutes les balises HTML et leurs utilisations</p>
     </header>
@@ -6127,7 +6138,7 @@ index.html
     → Joue avec les cubic-bezier, les délais, les états dynamiques… et donne de la vie à ton interface.<br>
     <strong>Une bonne transition, c’est ce qui transforme un site statique en une expérience vivante.</strong> 🌀✨
   </div>
-</section>
+        </section>
         <section id="css-scroll-snap">
   <h2>🧭 CSS Scroll Snap — Défilement contrôlé (carrousels, sections pleine page)</h2>
   <p>
@@ -7044,7 +7055,7 @@ style.css
     → Joue avec les combinaisons, les variables, les blend modes… et transforme ton site en œuvre d’art interactive.<br>
     <strong>Le CSS, ce n’est plus juste du style — c’est de la magie visuelle.</strong> ✨🎨
   </div>
-</section>
+        </section>
 
         <section id="ressources">
             <h2>🚀 Ressources en ligne</h2>
@@ -7060,8 +7071,8 @@ style.css
             <a href="">html_css.pdf</a>
             <br><a href="">cours-langage-css.pdf</a>
             <p>clik here to download</p>
-            <a href="" download=>html_css.pdf</a>
-            <br><a href="" download>cours-langage-css.pdf</a>
+            <a href="{{url_for('static',filename='1-html_css.pdf')}}" download=>html_css.pdf</a>
+            <br><a href="{{url_for('static',filename='0056-cours-langage-css.pdf')}}" download>cours-langage-css.pdf</a>
         </section>
     </div>
 
