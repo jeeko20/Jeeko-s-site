@@ -13,9 +13,10 @@ from telegram import Bot, Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import requests
 from dotenv import load_dotenv
+import pytz
 
 # --------------------
-# Config de base
+# Configuration de base
 # --------------------
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -84,7 +85,7 @@ class Profile(db.Model):
     avatar_path = db.Column(db.String(200))
 
 # --------------------
-# Telegram Bot
+# Telegram bot config
 # --------------------
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 if not BOT_TOKEN:
@@ -122,10 +123,13 @@ def fetch_stats():
         return {"error": str(e)}
 
 # --------------------
-# Bot Handlers
+# Bot handlers
 # --------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Bienvenue sur le bot !", reply_markup=get_main_menu())
+    await update.message.reply_text(
+        "👋 Bienvenue sur le bot !",
+        reply_markup=get_main_menu()
+    )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
@@ -177,7 +181,7 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await help_command(update, context)
 
 # --------------------
-# Initialiser l'application Telegram
+# Création de l'application Telegram (une seule fois)
 # --------------------
 application = ApplicationBuilder().token(BOT_TOKEN).build()
 application.add_handler(CommandHandler("start", start))
@@ -185,15 +189,27 @@ application.add_handler(CommandHandler("help", help_command))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu))
 
 # --------------------
-# Fonctions critiques pour Render
+# Initialisation SYNCHRONE de l'application Telegram (CRUCIAL)
 # --------------------
-async def initialize_application():
-    """Initialise l'application Telegram (OBLIGATOIRE avant tout traitement)."""
-    await application.initialize()
-    logger.info("✅ Application Telegram initialisée")
+def initialize_telegram_app_sync():
+    """Initialise l'application Telegram de manière synchrone AU DÉMARRAGE."""
+    logger.info("🔄 Initialisation synchrone de l'application Telegram...")
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(application.initialize())
+        logger.info("✅ Application Telegram initialisée avec succès")
+    except Exception as e:
+        logger.error(f"❌ Échec initialisation Telegram : {e}")
+        raise
 
-async def set_webhook():
-    """Définit le webhook Telegram."""
+# Appel IMMÉDIAT — avant même Flask
+initialize_telegram_app_sync()
+
+# --------------------
+# Fonction pour définir le webhook
+# --------------------
+async def set_webhook_async():
     external_url = os.getenv("RENDER_EXTERNAL_URL")
     if not external_url:
         logger.error("❌ RENDER_EXTERNAL_URL non défini !")
@@ -209,21 +225,29 @@ async def set_webhook():
         notify_admin(f"✅ Bot redémarré. Webhook activé : {webhook_url}")
     except Exception as e:
         logger.error(f"❌ Échec webhook : {e}")
-        notify_admin(f"❌ ERREUR webhook : {e}")
+
+def set_webhook_sync():
+    """Définit le webhook de manière synchrone."""
+    logger.info("🔗 Configuration du webhook Telegram...")
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(set_webhook_async())
+    except Exception as e:
+        logger.error(f"❌ Échec configuration webhook : {e}")
 
 # --------------------
-# Flask webhook pour Telegram
+# Endpoint webhook Telegram
 # --------------------
 @app.route(f"/telegram_webhook/{BOT_TOKEN}", methods=["POST"])
 def telegram_webhook():
-    """Endpoint appelé par Telegram."""
+    """Reçoit les mises à jour de Telegram."""
     logger.info("📩 Reçu une mise à jour de Telegram")
     try:
         update_data = request.get_json(force=True)
         logger.debug(f"Update brut: {update_data}")
 
         update = Update.de_json(update_data, bot)
-        # ⚠️ On utilise l'application déjà initialisée
+        # ⚠️ L'application est déjà initialisée → on peut traiter
         asyncio.run(application.process_update(update))
 
         return jsonify({"status": "ok"}), 200
@@ -232,7 +256,7 @@ def telegram_webhook():
         return jsonify({"error": str(e)}), 500
 
 # --------------------
-# Endpoint de debug
+# Endpoint debug
 # --------------------
 @app.route('/webhook_status')
 def webhook_status():
@@ -400,7 +424,7 @@ def api_stats():
     })
 
 # --------------------
-# Lancement (CORRIGÉ pour Render)
+# Lancement (MODIFIÉ POUR RENDER)
 # --------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
@@ -408,13 +432,9 @@ if __name__ == "__main__":
 
     if not debug:
         logger.info("🚀 Démarrage en mode production (Render)...")
-        # ⚡ INITIALISATION OBLIGATOIRE AVANT TOUT
-        asyncio.run(initialize_application())
-        asyncio.run(set_webhook())
+        set_webhook_sync()  # Définir le webhook après initialisation
     else:
         logger.info("🧪 Démarrage en mode développement (local)...")
-        # Optionnel : pour test local en polling
-        # asyncio.run(initialize_application())
-        # application.run_polling()
 
+    # Lance Flask — l'application Telegram est déjà initialisée
     app.run(debug=debug, host="0.0.0.0", port=port)
