@@ -87,15 +87,21 @@ class Profile(db.Model):
 # Telegram Bot
 # --------------------
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+if not BOT_TOKEN:
+    raise RuntimeError("❌ TELEGRAM_BOT_TOKEN manquant dans .env")
+
 ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
-API_URL = os.getenv("API_URL")
-API_TOKEN = os.getenv("API_SECRET_TOKEN")
+API_URL = os.getenv("API_URL", "http://localhost:5000/api/stats")
+API_TOKEN = os.getenv("API_SECRET_TOKEN", "fallbacktoken")
 
 bot = Bot(token=BOT_TOKEN)
 
 def notify_admin(message: str):
     if ADMIN_CHAT_ID:
-        bot.send_message(chat_id=ADMIN_CHAT_ID, text=message)
+        try:
+            bot.send_message(chat_id=ADMIN_CHAT_ID, text=message)
+        except Exception as e:
+            logger.error(f"❌ Échec notification admin: {e}")
 
 def get_main_menu():
     keyboard = [
@@ -134,6 +140,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     stats = fetch_stats()
+
     if text == "📊 Voir les stats":
         if "error" in stats:
             await update.message.reply_text(f"❌ {stats['error']}")
@@ -146,6 +153,7 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✅ Tâches terminées : {stats.get('completed_tasks',0)}"
         )
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_main_menu())
+
     elif text == "👥 Derniers inscrits":
         if "error" in stats or not stats.get("last_registered"):
             await update.message.reply_text("Aucun utilisateur récent.")
@@ -154,6 +162,7 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for u in stats["last_registered"]:
             msg += f"👤 {u['username']} ({u['email']}) - {u['date']}\n"
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_main_menu())
+
     elif text == "✅ Dernières tâches":
         if "error" in stats or not stats.get("last_tasks"):
             await update.message.reply_text("Aucune tâche récente.")
@@ -163,52 +172,85 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status = "✅" if t["completed"] else "🕒"
             msg += f"{status} {t['title']} — @{t['user']} ({t['date']})\n"
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_main_menu())
+
     elif text == "ℹ️ Help":
         await help_command(update, context)
 
 # --------------------
-# Webhook Telegram Flask
+# Initialiser l'application Telegram
 # --------------------
 application = ApplicationBuilder().token(BOT_TOKEN).build()
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("help", help_command))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu))
 
-@app.route(f"/telegram_webhook/{BOT_TOKEN}", methods=["POST"])
-def telegram_webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    asyncio.run(application.process_update(update))
-    return "OK"
+# --------------------
+# Fonctions critiques pour Render
+# --------------------
+async def initialize_application():
+    """Initialise l'application Telegram (OBLIGATOIRE avant tout traitement)."""
+    await application.initialize()
+    logger.info("✅ Application Telegram initialisée")
+
+async def set_webhook():
+    """Définit le webhook Telegram."""
+    external_url = os.getenv("RENDER_EXTERNAL_URL")
+    if not external_url:
+        logger.error("❌ RENDER_EXTERNAL_URL non défini !")
+        return
+
+    webhook_path = f"/telegram_webhook/{BOT_TOKEN}"
+    webhook_url = external_url.rstrip("/") + webhook_path
+
+    try:
+        await application.bot.deleteWebhook()
+        await application.bot.setWebhook(webhook_url)
+        logger.info(f"✅ Webhook défini : {webhook_url}")
+        notify_admin(f"✅ Bot redémarré. Webhook activé : {webhook_url}")
+    except Exception as e:
+        logger.error(f"❌ Échec webhook : {e}")
+        notify_admin(f"❌ ERREUR webhook : {e}")
 
 # --------------------
-# Routes Flask
+# Flask webhook pour Telegram
+# --------------------
+@app.route(f"/telegram_webhook/{BOT_TOKEN}", methods=["POST"])
+def telegram_webhook():
+    """Endpoint appelé par Telegram."""
+    logger.info("📩 Reçu une mise à jour de Telegram")
+    try:
+        update_data = request.get_json(force=True)
+        logger.debug(f"Update brut: {update_data}")
+
+        update = Update.de_json(update_data, bot)
+        # ⚠️ On utilise l'application déjà initialisée
+        asyncio.run(application.process_update(update))
+
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        logger.error(f"❌ Erreur traitement webhook : {e}")
+        return jsonify({"error": str(e)}), 500
+
+# --------------------
+# Endpoint de debug
+# --------------------
+@app.route('/webhook_status')
+def webhook_status():
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo"
+        response = requests.get(url).json()
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --------------------
+# Routes Flask (inchangées)
 # --------------------
 @app.route('/')
 def home():
     username = session.get('username')
     return render_template('index.html', username=username)
 
-@app.route('/api/stats')
-def api_stats():
-    total_users = User.query.count()
-    active_users = User.query.filter_by(is_active=True).count()
-    last_registered = [
-        {"username": u.username, "email": u.email, "date": u.created_at.strftime("%Y-%m-%d %H:%M")}
-        for u in User.query.order_by(User.created_at.desc()).limit(5)
-    ]
-    last_tasks = []  # Remplir si tu as des tâches
-    return jsonify({
-        "total_users": total_users,
-        "active_users": active_users,
-        "last_registered": last_registered,
-        "total_tasks": len(last_tasks),
-        "completed_tasks": sum(1 for t in last_tasks if t.get("completed")),
-        "last_tasks": last_tasks
-    })
-
-# --------------------
-# Login / Register
-# --------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -251,7 +293,7 @@ def register():
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
     return render_template('index.html')
-
+    
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -259,26 +301,26 @@ def logout():
     flash('Vous êtes déconnecté.', 'info')
     return redirect(url_for('home'))
 
-# --------------------
-# Profile
-# --------------------
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
         flash('Veuillez vous connecter pour accéder à votre profil.', 'warning')
         return redirect(url_for('login'))
+    username = session.get('username')
     user = User.query.get(session['user_id'])
     if not user:
         flash('Utilisateur introuvable.', 'danger')
         return redirect(url_for('login'))
+
     profile = user.profile
     if request.method == 'POST':
-        complete_name = request.form.get('complete_name')
-        email = request.form.get('email')
-        bio = request.form.get('bio')
+        complete_name = request.form['complete_name']
+        email = request.form['email']
+        bio = request.form['bio']
         year_of_study = request.form.get('year_of_study')
         avatar_file = request.files.get('avatar')
         avatar_path = profile.avatar_path if profile else None
+
         if avatar_file and avatar_file.filename != '':
             if allowed_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
@@ -289,6 +331,7 @@ def profile():
             else:
                 flash('Seules les images (png, jpg, jpeg, gif) sont autorisées.', 'danger')
                 return redirect(url_for('profile'))
+
         if profile:
             profile.complete_name = complete_name
             profile.email = email
@@ -305,6 +348,7 @@ def profile():
                 user_id=user.id
             )
             db.session.add(new_profile)
+
         try:
             db.session.commit()
             flash('Profil mis à jour avec succès !', 'success')
@@ -312,12 +356,12 @@ def profile():
             db.session.rollback()
             logger.error(f"Erreur lors de la mise à jour du profil : {e}")
             flash("Erreur lors de la sauvegarde.", "danger")
-        return redirect(url_for('profile'))
-    return render_template('profile.html', user=user, profile=profile)
 
-# --------------------
-# Autres pages
-# --------------------
+        return redirect(url_for('profile'))
+
+    return render_template('profile.html', username=username ,user=user, profile=profile)
+
+
 @app.route('/notes')
 def notes():
     return render_template('note.html')
@@ -335,7 +379,42 @@ def learn_css():
     return render_template('learn_css.html')
 
 # --------------------
-# Lancement Flask
+# API Stats
+# --------------------
+@app.route('/api/stats')
+def api_stats():
+    total_users = User.query.count()
+    active_users = User.query.filter_by(is_active=True).count()
+    last_registered = [
+        {"username": u.username, "email": u.email, "date": u.created_at.strftime("%Y-%m-%d %H:%M")}
+        for u in User.query.order_by(User.created_at.desc()).limit(5)
+    ]
+    last_tasks = []  # À remplir si tu as un modèle Task
+    return jsonify({
+        "total_users": total_users,
+        "active_users": active_users,
+        "last_registered": last_registered,
+        "total_tasks": len(last_tasks),
+        "completed_tasks": sum(1 for t in last_tasks if t.get("completed")),
+        "last_tasks": last_tasks
+    })
+
+# --------------------
+# Lancement (CORRIGÉ pour Render)
 # --------------------
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_ENV") == "development"
+
+    if not debug:
+        logger.info("🚀 Démarrage en mode production (Render)...")
+        # ⚡ INITIALISATION OBLIGATOIRE AVANT TOUT
+        asyncio.run(initialize_application())
+        asyncio.run(set_webhook())
+    else:
+        logger.info("🧪 Démarrage en mode développement (local)...")
+        # Optionnel : pour test local en polling
+        # asyncio.run(initialize_application())
+        # application.run_polling()
+
+    app.run(debug=debug, host="0.0.0.0", port=port)
