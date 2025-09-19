@@ -67,6 +67,7 @@ class User(db.Model):
     password = db.Column(db.String(256), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     profile = db.relationship('Profile', backref='user', uselist=False)
 
 class Profile(db.Model):
@@ -81,6 +82,15 @@ class Profile(db.Model):
 # --------------------
 # Routes Flask
 # --------------------
+@app.before_request
+def update_last_seen():
+    """Met à jour last_seen à chaque requête pour les utilisateurs connectés"""
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        if user:
+            user.last_seen = datetime.utcnow()
+            db.session.commit()
+
 @app.route('/')
 def home():
     username = session.get('username')
@@ -89,7 +99,10 @@ def home():
 @app.route('/api/stats')
 def api_stats():
     total_users = User.query.count()
-    active_users = User.query.filter_by(is_active=True).count()
+    # Considérer en ligne si last_seen < 5 minutes
+    threshold = datetime.utcnow() - timedelta(minutes=5)
+    active_users = User.query.filter(User.last_seen >= threshold).count()
+    
     last_registered = [
         {"username": u.username, "email": u.email, "date": u.created_at.strftime("%Y-%m-%d %H:%M")}
         for u in User.query.order_by(User.created_at.desc()).limit(5)
@@ -114,6 +127,9 @@ def login():
             session.permanent = True
             session['user_id'] = user.id
             session['username'] = user.username
+            # Update last_seen au login
+            user.last_seen = datetime.utcnow()
+            db.session.commit()
             flash('Connecté avec succès !', 'success')
             return redirect(url_for('home'))
         else:
@@ -146,7 +162,7 @@ def register():
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
     return render_template('index.html')
-    
+
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -213,7 +229,6 @@ def profile():
         return redirect(url_for('profile'))
 
     return render_template('profile.html', username=username ,user=user, profile=profile)
-
 
 @app.route('/notes')
 def notes():
