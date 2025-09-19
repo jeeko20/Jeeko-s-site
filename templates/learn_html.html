@@ -667,12 +667,13 @@
                 <li><a href="https://www.youtube.com/playlist?list=PLillGF-RfJtTcDdI5w89qQXoUo4JNzQz" target="_blank">Playlist HTML sur YouTube</a></li>
             </ul>
             <h2>Quelque pdf utiles</h2>
-            <a href="../static/file/1-html_css.pdf">html_css.pdf</a>
-            <br><a href="../static/file/0056-cours-langage-css.pdf">cours-langage-css.pdf</a>
-            <p>clik here to download</p>
-            <a href="../static/file/1-html_css.pdf" download></a>html_css.pdf</a>
-            <br><a href="../static/file/0056-cours-langage-css.pdf" download>cours-langage-css.pdf</a>
-       
+            <a href="{{ url_for('static', filename='file/1-html_css.pdf') }}">html_css.pdf</a>
+           <br> <a href="{{ url_for('static', filename='file/0056-cours-langage-css.pdf') }}">cours-langage-css.pdf</a>
+
+            <p>click here to download</p>
+            <a href="{{ url_for('static', filename='file/1-html_css.pdf') }}" download>html_css.pdf</a>
+            <br> <a href="{{ url_for('static', filename='file/0056-cours-langage-css.pdf') }}" download>cours-langage-css.pdf</a>
+
           </section>
     </div>
 
