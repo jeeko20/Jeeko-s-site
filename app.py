@@ -1,7 +1,6 @@
 import os
 import logging
 import asyncio
-import threading
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -11,13 +10,13 @@ from werkzeug.utils import secure_filename
 import cloudinary
 import cloudinary.uploader
 from telegram import Bot, Update, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import requests
 from dotenv import load_dotenv
-import pytz  # ✅ obligatoire pour apscheduler
+import pytz
 
 # --------------------
-# Configuration de base
+# Config de base
 # --------------------
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -86,11 +85,11 @@ class Profile(db.Model):
     avatar_path = db.Column(db.String(200))
 
 # --------------------
-# Telegram bot config
+# Telegram Bot
 # --------------------
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")  # ton chat perso pour notifications
-API_URL = os.getenv("API_URL")              # ton site API stats
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+API_URL = os.getenv("API_URL")
 API_TOKEN = os.getenv("API_SECRET_TOKEN")
 
 bot = Bot(token=BOT_TOKEN)
@@ -118,13 +117,10 @@ def fetch_stats():
         return {"error": str(e)}
 
 # --------------------
-# Bot handlers
+# Bot Handlers
 # --------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 Bienvenue sur le bot !",
-        reply_markup=get_main_menu()
-    )
+    await update.message.reply_text("👋 Bienvenue sur le bot !", reply_markup=get_main_menu())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
@@ -175,24 +171,19 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "ℹ️ Help":
         await help_command(update, context)
 
-def run_bot():
-    # ⚡ Crée une boucle asyncio pour ce thread
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+# --------------------
+# Flask webhook pour Telegram
+# --------------------
+application = ApplicationBuilder().token(BOT_TOKEN).build()
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("help", help_command))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu))
 
-    # ⚡ Crée l'application Telegram
-    application = Application.builder().token(BOT_TOKEN).build()
-
-    # ⚡ Force UTC pour JobQueue (évite l'erreur timezone)
-    if application.job_queue:
-        application.job_queue._scheduler.timezone = pytz.UTC
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu))
-
-    print("🤖 Bot Telegram démarré...")
-    loop.run_until_complete(application.run_polling())
+@app.route(f"/telegram_webhook/{BOT_TOKEN}", methods=["POST"])
+def telegram_webhook():
+    update = Update.de_json(request.get_json(force=True), bot)
+    asyncio.run(application.process_update(update))
+    return "OK"
 
 # --------------------
 # Routes Flask
@@ -210,7 +201,7 @@ def api_stats():
         {"username": u.username, "email": u.email, "date": u.created_at.strftime("%Y-%m-%d %H:%M")}
         for u in User.query.order_by(User.created_at.desc()).limit(5)
     ]
-    last_tasks = []  # si tu as une table Task, remplis ici
+    last_tasks = []  # à remplir si tu as des tâches
     return jsonify({
         "total_users": total_users,
         "active_users": active_users,
@@ -219,6 +210,11 @@ def api_stats():
         "completed_tasks": sum(1 for t in last_tasks if t.get("completed")),
         "last_tasks": last_tasks
     })
+
+# Routes login/register/profile/notes/communaute/learn_html/learn_css identiques à ton code actuel
+# Tu peux copier-coller celles que tu as déjà
+
+
 # --------------------
 # Exemple route login/register avec notification
 # --------------------
@@ -350,8 +346,8 @@ def learn_css():
     return render_template('learn_css.html')
 
 # --------------------
-# Lancement Flask + Bot
+# --------------------
+# Lancement Flask
 # --------------------
 if __name__ == "__main__":
-    threading.Thread(target=run_bot, daemon=True).start()
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
