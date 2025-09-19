@@ -13,7 +13,6 @@ from telegram import Bot, Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import requests
 from dotenv import load_dotenv
-import pytz
 
 # --------------------
 # Config de base
@@ -135,7 +134,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     stats = fetch_stats()
-
     if text == "📊 Voir les stats":
         if "error" in stats:
             await update.message.reply_text(f"❌ {stats['error']}")
@@ -148,7 +146,6 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✅ Tâches terminées : {stats.get('completed_tasks',0)}"
         )
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_main_menu())
-
     elif text == "👥 Derniers inscrits":
         if "error" in stats or not stats.get("last_registered"):
             await update.message.reply_text("Aucun utilisateur récent.")
@@ -157,7 +154,6 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for u in stats["last_registered"]:
             msg += f"👤 {u['username']} ({u['email']}) - {u['date']}\n"
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_main_menu())
-
     elif text == "✅ Dernières tâches":
         if "error" in stats or not stats.get("last_tasks"):
             await update.message.reply_text("Aucune tâche récente.")
@@ -167,12 +163,11 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status = "✅" if t["completed"] else "🕒"
             msg += f"{status} {t['title']} — @{t['user']} ({t['date']})\n"
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=get_main_menu())
-
     elif text == "ℹ️ Help":
         await help_command(update, context)
 
 # --------------------
-# Flask webhook pour Telegram
+# Webhook Telegram Flask
 # --------------------
 application = ApplicationBuilder().token(BOT_TOKEN).build()
 application.add_handler(CommandHandler("start", start))
@@ -201,7 +196,7 @@ def api_stats():
         {"username": u.username, "email": u.email, "date": u.created_at.strftime("%Y-%m-%d %H:%M")}
         for u in User.query.order_by(User.created_at.desc()).limit(5)
     ]
-    last_tasks = []  # à remplir si tu as des tâches
+    last_tasks = []  # Remplir si tu as des tâches
     return jsonify({
         "total_users": total_users,
         "active_users": active_users,
@@ -211,12 +206,8 @@ def api_stats():
         "last_tasks": last_tasks
     })
 
-# Routes login/register/profile/notes/communaute/learn_html/learn_css identiques à ton code actuel
-# Tu peux copier-coller celles que tu as déjà
-
-
 # --------------------
-# Exemple route login/register avec notification
+# Login / Register
 # --------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -260,7 +251,7 @@ def register():
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
     return render_template('index.html')
-    
+
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -268,26 +259,26 @@ def logout():
     flash('Vous êtes déconnecté.', 'info')
     return redirect(url_for('home'))
 
+# --------------------
+# Profile
+# --------------------
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
         flash('Veuillez vous connecter pour accéder à votre profil.', 'warning')
         return redirect(url_for('login'))
-    username = session.get('username')
     user = User.query.get(session['user_id'])
     if not user:
         flash('Utilisateur introuvable.', 'danger')
         return redirect(url_for('login'))
-
     profile = user.profile
     if request.method == 'POST':
-        complete_name = request.form['complete_name']
-        email = request.form['email']
-        bio = request.form['bio']
+        complete_name = request.form.get('complete_name')
+        email = request.form.get('email')
+        bio = request.form.get('bio')
         year_of_study = request.form.get('year_of_study')
         avatar_file = request.files.get('avatar')
         avatar_path = profile.avatar_path if profile else None
-
         if avatar_file and avatar_file.filename != '':
             if allowed_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
@@ -298,7 +289,6 @@ def profile():
             else:
                 flash('Seules les images (png, jpg, jpeg, gif) sont autorisées.', 'danger')
                 return redirect(url_for('profile'))
-
         if profile:
             profile.complete_name = complete_name
             profile.email = email
@@ -315,7 +305,6 @@ def profile():
                 user_id=user.id
             )
             db.session.add(new_profile)
-
         try:
             db.session.commit()
             flash('Profil mis à jour avec succès !', 'success')
@@ -323,12 +312,12 @@ def profile():
             db.session.rollback()
             logger.error(f"Erreur lors de la mise à jour du profil : {e}")
             flash("Erreur lors de la sauvegarde.", "danger")
-
         return redirect(url_for('profile'))
+    return render_template('profile.html', user=user, profile=profile)
 
-    return render_template('profile.html', username=username ,user=user, profile=profile)
-
-
+# --------------------
+# Autres pages
+# --------------------
 @app.route('/notes')
 def notes():
     return render_template('note.html')
@@ -345,7 +334,6 @@ def learn_html():
 def learn_css():
     return render_template('learn_css.html')
 
-# --------------------
 # --------------------
 # Lancement Flask
 # --------------------
