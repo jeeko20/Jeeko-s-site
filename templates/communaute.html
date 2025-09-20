@@ -4,248 +4,335 @@
 {%endblock%}
 
 {%block content%}
-  <!-- ================= HEADER ================= -->
-  <header class="header">
-    <div class="header-content">
-      <h1>Communauté Edushare</h1>
-      <p>Echangez, discutez et partagez vos connaissances avec la communauté</p>
+<!-- ================= HEADER ================= -->
+<header class="header">
+  <div class="header-content">
+    <h1>Communauté Edushare</h1>
+    <p>Echangez, discutez et partagez vos connaissances avec la communauté</p>
+  </div>
+  <!-- Navigation -->
+  <nav>
+    <button class="tab active" data-page="discussion">
+      <i class="fas fa-chart-line"></i> Discussion
+    </button>
+    <button class="tab" data-page="partages">
+      <i class="fas fa-folder-open"></i> Partages recentes
+    </button>
+  </nav>
+
+</header>
+
+<!-- Contenu dynamique -->
+<main>
+  <!-- Section DISCUSSION -->
+  <section id="discussion" class="page active">
+    <div class="discussion">
+
+      <!-- Colonne principale -->
+      <div class="info-discussion">
+        <div class="start-discussion">
+          <h2>Nouvelle discussion</h2>
+          <div id="area-1">
+            <img src="https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg" alt="photo">
+            <form method="post" class="form-control">
+              <textarea required placeholder="Poser une question ou commencer une discussion"></textarea>
+              <div id="area-3">
+                <select id="matiere" name="matiere">
+                  <option value="">-- Choisir une matière --</option>
+                  <option value="C++">C++</option>
+                  <option value="HTML">HTML</option>
+                  <option value="CSS">CSS</option>
+                  <option value="Javascript">Javascript</option>
+                  <option value="Algorithme">Algorithme</option>
+                </select>
+                <button type="submit">Publier</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Discussion exemple -->
+        <div class="discussion-list">
+          <div class="discussion-head">
+            <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
+            <div class="discussion-list-info">
+              <p class="p1">
+                <span>Comment optimiser les performances en C++</span>
+                <span>C++</span>
+                <span><i class="fa-solid fa-heart"></i> 15</span>
+              </p>
+              <p>J'ai des questions sur l'utilisation des pointeurs en C++</p>
+              <p>
+                <span>par Marie Dubois</span>
+                <span>il y a 2h</span>
+                <span><i class="fa-solid fa-comment"></i> 8 réponses</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="discussion-list">
+          <div class="discussion-head">
+            <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
+            <div class="discussion-list-info">
+              <p class="p1">
+                <span>Projet HTML/CSS - Besoin d'aide pour le responsive</span>
+                <span>HTML/CSS</span>
+                <span><i class="fa-solid fa-heart"></i> 23</span>
+              </p>
+              <p>Mon site ne s'affiche pas correctement sur mobile, quelqu’un peut m'aider avec les media queries ?</p>
+              <p>
+                <span>par Lucas</span>
+                <span>il y a 4h</span>
+                <span><i class="fa-solid fa-comment"></i> 12 réponses</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- fin discussions -->
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="block-2">
+        <div class="action-rapide">
+          <h2>Actions rapides</h2>
+          <ul>
+            <li class="share-ressource">Partager une ressource</li>
+            <li><a href="#" style="color: black; text-decoration: none;">Poser une question</a></li>
+            <li class="join-group">Rejoindre un groupe</li>
+          </ul>
+        </div>
+
+        <div class="sujet-populaire">
+          <h2>Sujets populaires</h2>
+          <ul>
+            <li><span>Optimisation C++</span><span>24</span></li>
+            <li><span>CSS Grid</span><span>18</span></li>
+            <li><span>Algorithme de tri</span><span>15</span></li>
+            <li><span>Gestion mémoire</span><span>12</span></li>
+            <li><span>JavaScript async</span><span>10</span></li>
+          </ul>
+        </div>
+
+        <div class="statistique">
+          <h2>Statistiques</h2>
+          <ul>
+            <li><span>Membres actifs</span><span>24</span></li>
+            <li><span>Discussions ouvertes</span><span>18</span></li>
+            <li><span>Ressources partagées</span><span>15</span></li>
+            <li><span>Messages aujourd'hui</span><span>12</span></li>
+          </ul>
+        </div>
+      </div>
+
     </div>
-    <!-- Navigation -->
-    <nav>
-      <button class="tab active" data-page="discussion">
-        <i class="fas fa-chart-line"></i> Discussion
-      </button>
-      <button class="tab" data-page="partages">
-        <i class="fas fa-folder-open"></i> Partages recentes
-      </button>
-    </nav>
+  </section>
 
-  </header>
+  <!-- Section PARTAGES -->
+  <section id="partages" class="page">
+    <div class="discussion">
 
-  <!-- Contenu dynamique -->
-  <main>
-    <!-- Section DISCUSSION -->
-    <section id="discussion" class="page active">
-      <div class="discussion">
-  
-        <!-- Colonne principale -->
-        <div class="info-discussion">
-          <div class="start-discussion">
-            <h2>Nouvelle discussion</h2>
-            <div id="area-1">
-              <img src="https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg" alt="photo">
-              <form method="post" class="form-control">
-                <textarea required placeholder="Poser une question ou commencer une discussion"></textarea>
-                <div id="area-3">
-                  <select id="matiere" name="matiere">
-                    <option value="">-- Choisir une matière --</option>
-                    <option value="C++">C++</option>
-                    <option value="HTML">HTML</option>
-                    <option value="CSS">CSS</option>
-                    <option value="Javascript">Javascript</option>
-                    <option value="Algorithme">Algorithme</option>
-                  </select>
-                  <button type="submit">Publier</button>
-                </div>
-              </form>
-            </div>
-          </div>
-  
-          <!-- Discussion exemple -->
-          <div class="discussion-list">
-            <div class="discussion-head">
-              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
-              <div class="discussion-list-info">
-                <p class="p1">
-                  <span>Comment optimiser les performances en C++</span>
-                  <span>C++</span>
-                  <span><i class="fa-solid fa-heart"></i> 15</span>
-                </p>
-                <p>J'ai des questions sur l'utilisation des pointeurs en C++</p>
-                <p>
-                  <span>par Marie Dubois</span>
-                  <span>il y a 2h</span>
-                  <span><i class="fa-solid fa-comment"></i> 8 réponses</span>
-                </p>
+      <!-- Colonne principale -->
+      <div class="info-discussion">
+        <!-- Dans la section partages -->
+        {% for res in ressources %}
+        <div class="discussion-list">
+          <div class="discussion-head">
+            <img src="{{ res.user_avatar }}" alt="Avatar de {{ res.user.username }}"
+              onerror="this.src='https://via.placeholder.com/150'">
+            <div class="discussion-list-info">
+              <p class="p1">
+                <span>{{ res.title }}</span>
+                <span>{{ res.subject }}</span>
+                <a href="#" onclick="likeRessource({{ res.id }}); return false;"
+                  style="text-decoration: none; color: inherit;">
+                  <i class="fa-solid fa-thumbs-up"></i> <span id="like-count-{{ res.id }}">{{ res.likes }}</span>
+                </a>
+              </p>
+              <p>
+                Type: {{ res.file_type }}
+                {% if res.page_count > 0 %} ({{ res.page_count }} pages) {% endif %}
+              </p>
+              <p class="p2">
+                <span>par {{ res.user.username }}</span>
+                <span>il y a {{ res.created_at|time_ago }}</span>
+              </p>
+              <div class="btn-footer">
+                {% if res.file_type == 'pdf' %}
+                  {% set voir_url = res.file_url.replace('/fl_attachment/', '/') + '?#view=fitH' %}
+                  <a href="{{ voir_url }}" target="_blank">
+                    <i class="fa-solid fa-eye"></i> Voir
+                  </a>
+                {% else %}
+                  <a href="{{ res.file_url }}" target="_blank">
+                    <i class="fa-solid fa-eye"></i> Voir
+                  </a>
+                {% endif %}
+                
+                {# Pour télécharger, on garde l'URL originale (avec fl_attachment si présent) #}
+                <a href="{{ res.file_url }}" download>
+                  <i class="fa-solid fa-download"></i> Télécharger
+                </a>
               </div>
             </div>
           </div>
-  
-          <div class="discussion-list">
-            <div class="discussion-head">
-              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
-              <div class="discussion-list-info">
-                <p class="p1">
-                  <span>Projet HTML/CSS - Besoin d'aide pour le responsive</span>
-                  <span>HTML/CSS</span>
-                  <span><i class="fa-solid fa-heart"></i> 23</span>
-                </p>
-                <p>Mon site ne s'affiche pas correctement sur mobile, quelqu’un peut m'aider avec les media queries ?</p>
-                <p>
-                  <span>par Lucas</span>
-                  <span>il y a 4h</span>
-                  <span><i class="fa-solid fa-comment"></i> 12 réponses</span>
-                </p>
-              </div>
-            </div>
-          </div>
-          <!-- fin discussions -->
         </div>
-  
-        <!-- Colonne droite -->
-        <div class="block-2">
-          <div class="action-rapide">
-            <h2>Actions rapides</h2>
-            <ul>
-              <li>Partager une ressource</li>
-              <li>Poser une question</li>
-              <li>Rejoindre un groupe</li>
-            </ul>
-          </div>
-  
-          <div class="sujet-populaire">
-            <h2>Sujets populaires</h2>
-            <ul>
-              <li><span>Optimisation C++</span><span>24</span></li>
-              <li><span>CSS Grid</span><span>18</span></li>
-              <li><span>Algorithme de tri</span><span>15</span></li>
-              <li><span>Gestion mémoire</span><span>12</span></li>
-              <li><span>JavaScript async</span><span>10</span></li>
-            </ul>
-          </div>
-  
-          <div class="statistique">
-            <h2>Statistiques</h2>
-            <ul>
-              <li><span>Membres actifs</span><span>24</span></li>
-              <li><span>Discussions ouvertes</span><span>18</span></li>
-              <li><span>Ressources partagées</span><span>15</span></li>
-              <li><span>Messages aujourd'hui</span><span>12</span></li>
-            </ul>
-          </div>
-        </div>
-  
+        {% endfor %}
+        <!-- fin discussions -->
       </div>
-    </section>
-  
-    <!-- Section PARTAGES -->
-    <section id="partages" class="page">
-      <div class="discussion">
-  
-        <!-- Colonne principale -->
-        <div class="info-discussion">
-  
-          <div class="discussion-list">
-            <div class="discussion-head">
-              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
-              <div class="discussion-list-info">
-                <p class="p1">
-                  <span>Comment optimiser les performances en C++</span>
-                  <span>C++</span>
-                  <span><i class="fa-solid fa-heart"></i> 15</span>
-                </p>
-                <p>J'ai des questions sur l'utilisation des pointeurs en C++</p>
-                <p class="p2">
-                  <span>par Marie Dubois</span>
-                  <span>il y a 2h</span>
-                  <span><i class="fa-solid fa-download"></i> 8 telechargements</span>
-                </p>
-  
-                <div class="btn-footer">
-                  <a href="#"><i class="fa-solid fa-download"></i> Télécharger</a>
-                  <a href="#"><i class="fa-solid fa-eye"></i> Aperçu</a>
-                  <a href="#"><i class="fa-solid fa-save"></i> Sauvegarder</a>
-                </div>
-              </div>
-            </div>
-          </div>
-  
-          <div class="discussion-list">
-            <div class="discussion-head">
-              <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
-              <div class="discussion-list-info">
-                <p class="p1">
-                  <span>Projet HTML/CSS - Besoin d'aide pour le responsive</span>
-                  <span>HTML/CSS</span>
-                  <span><i class="fa-solid fa-heart"></i> 23</span>
-                </p>
-                <p>Mon site ne s'affiche pas correctement sur mobile, quelqu’un peut m'aider avec les media queries ?</p>
-                <p class="p2">
-                  <span>par Lucas</span>
-                  <span>il y a 4h</span>
-                  <span><i class="fa-solid fa-download"></i> 12 telechargements</span>
-                </p>
-  
-                <div class="btn-footer">
-                  <a href="#"><i class="fa-solid fa-download"></i> Télécharger</a>
-                  <a href="#"><i class="fa-solid fa-eye"></i> Aperçu</a>
-                  <a href="#"><i class="fa-solid fa-save"></i> Sauvegarder</a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- fin discussions -->
+
+      <!-- Colonne droite -->
+      <div class="block-2">
+        <div class="action-rapide">
+          <h2>Actions rapides</h2>
+          <ul>
+            <li class="share-ressource">Partager une ressource</li>
+            <li><a href="{{url_for('communaute')}}" style="color: black; text-decoration: none;">Poser une question</a>
+            </li>
+            <li class="join-group">Rejoindre un groupe</li>
+          </ul>
         </div>
-  
-        <!-- Colonne droite -->
-        <div class="block-2">
-          <div class="action-rapide">
-            <h2>Actions rapides</h2>
-            <ul>
-              <li>Partager une ressource</li>
-              <li>Poser une question</li>
-              <li>Rejoindre un groupe</li>
-            </ul>
-          </div>
-  
-          <div class="sujet-populaire">
-            <h2>Sujets populaires</h2>
-            <ul>
-              <li><span>Optimisation C++</span><span>24</span></li>
-              <li><span>CSS Grid</span><span>18</span></li>
-              <li><span>Algorithme de tri</span><span>15</span></li>
-              <li><span>Gestion mémoire</span><span>12</span></li>
-              <li><span>JavaScript async</span><span>10</span></li>
-            </ul>
-          </div>
-  
-          <div class="statistique">
-            <h2>Statistiques</h2>
-            <ul>
-              <li><span>Membres actifs</span><span>24</span></li>
-              <li><span>Discussions ouvertes</span><span>18</span></li>
-              <li><span>Ressources partagées</span><span>15</span></li>
-              <li><span>Messages aujourd'hui</span><span>12</span></li>
-            </ul>
-          </div>
+
+        <div class="sujet-populaire">
+          <h2>Sujets populaires</h2>
+          <ul>
+            <li><span>Optimisation C++</span><span>24</span></li>
+            <li><span>CSS Grid</span><span>18</span></li>
+            <li><span>Algorithme de tri</span><span>15</span></li>
+            <li><span>Gestion mémoire</span><span>12</span></li>
+            <li><span>JavaScript async</span><span>10</span></li>
+          </ul>
         </div>
-  
+
+        <div class="statistique">
+          <h2>Statistiques</h2>
+          <ul>
+            <li><span>Membres actifs</span><span>24</span></li>
+            <li><span>Discussions ouvertes</span><span>18</span></li>
+            <li><span>Ressources partagées</span><span>15</span></li>
+            <li><span>Messages aujourd'hui</span><span>12</span></li>
+          </ul>
+        </div>
       </div>
-    </section>
-  </main>
-  
+
+    </div>
+  </section>
+</main>
+
+<div id="modal-overlay" class="modal-overlay">
+  <form id="form-partage" class="form-partage" method="post" action="{{ url_for('share_ressource') }}"
+    enctype="multipart/form-data">
+    <label for="titre">Titre:</label>
+    <input type="text" id="titre" name="titre" placeholder="Le titre du document" required />
+
+    <label for="MYmatiere">Matière :</label>
+    <select id="MYmatiere" name="matiere" required>
+      <option value="">-- Sélectionnez --</option>
+      <option value="JavaScript">JavaScript</option>
+      <option value="HTML">HTML</option>
+      <option value="C++">C++</option>
+      <option value="CSS">CSS</option>
+      <option value="Systèmes">Système</option>
+    </select>
+
+    <label for="file">Fichier (image, pdf, doc) :</label>
+    <input type="file" id="file" name="file" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx" required>
+
+    <div class="bbtn">
+      <button type="submit">Publier</button>
+      <button type="button" onclick="fermerFormulaire()">Annuler</button>
+    </div>
+  </form>
+</div>
 {%endblock%}
 
 {%block script%}
-  <script>
-    // Sélectionner tous les boutons de navigation
-    const tabs = document.querySelectorAll(".tab");
-    const pages = document.querySelectorAll(".page");
+<script>
+  // Sélectionner tous les boutons de navigation
+  const tabs = document.querySelectorAll(".tab");
+  const pages = document.querySelectorAll(".page");
 
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        // Retirer l'activation de tous les boutons
-        tabs.forEach(t => t.classList.remove("active"));
-        // Activer le bouton cliqué
-        tab.classList.add("active");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      // Retirer l'activation de tous les boutons
+      tabs.forEach(t => t.classList.remove("active"));
+      // Activer le bouton cliqué
+      tab.classList.add("active");
 
-        // Masquer toutes les sections
-        pages.forEach(page => page.classList.remove("active"));
-        // Afficher la section correspondante
-        const target = tab.getAttribute("data-page");
-        document.getElementById(target).classList.add("active");
-      });
+      // Masquer toutes les sections
+      pages.forEach(page => page.classList.remove("active"));
+      // Afficher la section correspondante
+      const target = tab.getAttribute("data-page");
+      document.getElementById(target).classList.add("active");
     });
+  });
 
-  </script>
+  //================================form===============================
+  const partages = document.querySelectorAll('.share-ressource');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const form_p = document.getElementById('form-partage');
+
+  // Fonction pour ouvrir
+  function ouvrirFormulaire() {
+    modalOverlay.style.display = 'flex'; // ← Affiche l'overlay ET le formulaire
+  }
+
+  // Fonction pour fermer
+  function fermerFormulaire() {
+    modalOverlay.style.display = 'none';
+  }
+
+  // Attacher l'ouverture à tous les boutons "Partager"
+  partages.forEach(btn => {
+    btn.addEventListener('click', ouvrirFormulaire);
+  });
+
+  // Fermer en cliquant sur l'overlay (sauf sur le formulaire)
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      fermerFormulaire();
+    }
+  });
+
+  // Empêcher la fermeture si on clique à l'intérieur du formulaire
+  form_p.addEventListener('click', (e) => {
+    e.stopPropagation(); // ← Empêche la propagation vers l'overlay
+  });
+
+  //===========like ress===============
+  function likeRessource(id) {
+    fetch(`/like_ressource/${id}`, { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById(`like-count-${id}`).innerText = data.likes;
+      });
+  }
+
+  //================like=================
+function likeRessource(ressourceId) {
+    fetch(`/like_ressource/${ressourceId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest', // Pour indiquer que c’est une requête AJAX
+            'Content-Type': 'application/json'
+        },
+        // Pas de body nécessaire ici
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau ou serveur');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Met à jour le compteur de likes dans le DOM
+        document.getElementById(`like-count-${ressourceId}`).innerText = data.likes;
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Impossible de liker pour le moment.');
+    });
+}
+
+</script>
 {%endblock%}

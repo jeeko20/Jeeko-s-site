@@ -9,6 +9,25 @@ import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
 
+
+from datetime import datetime
+
+def time_ago(dt):
+    """Retourne une chaîne du type 'il y a 5 minutes', 'il y a 2 heures', etc."""
+    now = datetime.utcnow()
+    diff = now - dt
+
+    seconds = diff.total_seconds()
+    if seconds < 60:
+        return "à l'instant"
+    elif seconds < 3600:
+        return f"il y a {int(seconds // 60)} minute{'s' if int(seconds // 60) > 1 else ''}"
+    elif seconds < 86400:
+        return f"il y a {int(seconds // 3600)} heure{'s' if int(seconds // 3600) > 1 else ''}"
+    elif seconds < 604800:
+        return f"il y a {int(seconds // 86400)} jour{'s' if int(seconds // 86400) > 1 else ''}"
+    else:
+        return dt.strftime("%d/%m/%Y")
 # --------------------
 # Configuration de base
 # --------------------
@@ -19,7 +38,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 app.permanent_session_lifetime = timedelta(days=7)
-
+app.jinja_env.filters['time_ago'] = time_ago
 # --------------------
 # Database config
 # --------------------
@@ -78,6 +97,26 @@ class Profile(db.Model):
     bio = db.Column(db.Text)
     year_of_study = db.Column(db.String(50))
     avatar_path = db.Column(db.String(200))
+
+class Ressource(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    subject = db.Column(db.String(50), nullable=False)  # Matière
+    file_url = db.Column(db.String(500), nullable=False)  # URL Cloudinary ou chemin
+    file_type = db.Column(db.String(20), nullable=False)  # 'image', 'pdf', 'doc', etc.
+    page_count = db.Column(db.Integer, default=0)  # Si PDF, nombre de pages
+    likes = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relation pour accéder à l'utilisateur et son avatar
+    user = db.relationship('User', backref=db.backref('ressources', lazy=True))
+
+    @property
+    def user_avatar(self):
+        if self.user and self.user.profile:
+            return self.user.profile.avatar_path
+        return "https://via.placeholder.com/150"    
 
 # --------------------
 # Routes Flask
@@ -230,13 +269,121 @@ def profile():
 
     return render_template('profile.html', username=username ,user=user, profile=profile)
 
+import PyPDF2  # ⚠️ Installe avec: pip install PyPDF2
+from io import BytesIO
+
+from werkzeug.utils import secure_filename
+from cloudinary.utils import cloudinary_url
+
+
+@app.route('/share_ressource', methods=['POST'])
+def share_ressource():
+    if 'user_id' not in session:
+        flash('Veuillez vous connecter pour partager une ressource.', 'warning')
+        return redirect(url_for('communaute'))
+
+    user_id = session['user_id']
+    title = request.form.get('titre')
+    subject = request.form.get('matiere')
+    file = request.files.get('file')
+
+    if not title or not subject or not file:
+        flash('Tous les champs sont obligatoires.', 'danger')
+        return redirect(url_for('communaute'))
+
+    filename = secure_filename(file.filename)
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    allowed_types = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx'}
+    if ext not in allowed_types:
+        flash('Type de fichier non autorisé. Formats acceptés : png, jpg, jpeg, gif, pdf, doc, docx.', 'danger')
+        return redirect(url_for('communaute'))
+
+    # Détecter resource_type
+    is_raw = ext in {'pdf', 'doc', 'docx'}
+    resource_type = 'raw' if is_raw else 'image'
+
+    # Lire nb pages si PDF (faire avant l'upload ou repositionner le stream)
+    page_count = 0
+    if ext == 'pdf':
+        try:
+            file.stream.seek(0)
+            pdf_reader = PyPDF2.PdfReader(file.stream)
+            page_count = len(pdf_reader.pages)
+        except Exception as e:
+            logger.warning(f"Impossible de lire localement le PDF: {e}")
+            page_count = 0
+        finally:
+            file.stream.seek(0)  # remettre au début pour l'upload
+
+    # Construire un public_id qui contient l'extension (important pour raw)
+    public_id = filename  # secure_filename already contains the extension
+
+    try:
+        upload_result = cloudinary.uploader.upload(
+            file,
+            resource_type=resource_type,
+            folder="edushare/ressources",
+            public_id=public_id,      # <- important pour garder l'extension
+            overwrite=True,
+            invalidate=True,
+            use_filename=False,       # on fournit public_id manuellement
+            unique_filename=False,
+            tags=["edushare"]
+        )
+        logger.info(f"🔁 upload_result keys: { {k: upload_result.get(k) for k in ['public_id','secure_url','resource_type','format']} }")
+
+        # Générer une URL de téléchargement propre (fl_attachment)
+        download_url, _ = cloudinary_url(
+            upload_result.get('public_id'),
+            resource_type=resource_type,
+            flags='attachment',  # ajoute fl_attachment
+            secure=True
+        )
+
+        file_url = download_url
+        file_type = ext
+
+    except Exception as e:
+        logger.error(f"❌ Erreur upload Cloudinary : {e}")
+        flash("Échec de l'upload du fichier.", "danger")
+        return redirect(url_for('communaute'))
+
+    # Sauvegarder en base
+    new_ressource = Ressource(
+        user_id=user_id,
+        title=title,
+        subject=subject,
+        file_url=file_url,
+        file_type=file_type,
+        page_count=page_count
+    )
+
+    try:
+        db.session.add(new_ressource)
+        db.session.commit()
+        flash('✅ Ressource partagée avec succès !', 'success')
+        logger.info(f"🔗 URL du fichier : {file_url}")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur sauvegarde : {e}")
+        flash("Erreur lors de la publication.", "danger")
+
+    return redirect(url_for('communaute'))
+ 
 @app.route('/notes')
 def notes():
     return render_template('note.html')
 
 @app.route('/communaute')
 def communaute():
-    return render_template('communaute.html')
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Récupérer les 10 dernières ressources
+    ressources = Ressource.query.order_by(Ressource.created_at.desc()).limit(10).all()
+    username = session.get('username')
+    
+    return render_template('communaute.html', username=username, ressources=ressources)
 
 @app.route('/learn_html')
 def learn_html():
@@ -246,6 +393,23 @@ def learn_html():
 def learn_css():
     return render_template('learn_css.html')
 
+@app.route('/page_not_found')
+def page_not_found():
+    return render_template('page_not_found.html')
+
+@app.route('/like_ressource/<int:ressource_id>', methods=['POST'])
+def like_ressource(ressource_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non connecté"}), 403
+
+    ressource = Ressource.query.get(ressource_id)
+    if not ressource:
+        return jsonify({"error": "Ressource introuvable"}), 404
+
+    ressource.likes += 1
+    db.session.commit()
+
+    return jsonify({"likes": ressource.likes}), 200
 # --------------------
 # Lancement Flask
 # --------------------
