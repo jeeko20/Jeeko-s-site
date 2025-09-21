@@ -159,8 +159,7 @@
               </p>
               <div class="btn-footer">
                 {% if res.file_type == 'pdf' %}
-                  {% set voir_url = res.file_url.replace('/fl_attachment/', '/') + '?#view=fitH' %}
-                  <a href="{{ voir_url }}" target="_blank">
+                  <a href="{{ res.file_url }}?#view=fitH" target="_blank">
                     <i class="fa-solid fa-eye"></i> Voir
                   </a>
                 {% else %}
@@ -169,8 +168,7 @@
                   </a>
                 {% endif %}
                 
-                {# Pour télécharger, on garde l'URL originale (avec fl_attachment si présent) #}
-                <a href="{{ res.file_url }}" download>
+                <a href="{{ res.download_url }}" download="{{ res.title }}.{{ res.file_type }}">
                   <i class="fa-solid fa-download"></i> Télécharger
                 </a>
               </div>
@@ -309,30 +307,30 @@
   }
 
   //================like=================
-function likeRessource(ressourceId) {
+  function likeRessource(ressourceId) {
     fetch(`/like_ressource/${ressourceId}`, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest', // Pour indiquer que c’est une requête AJAX
-            'Content-Type': 'application/json'
-        },
-        // Pas de body nécessaire ici
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest', // Pour indiquer que c’est une requête AJAX
+        'Content-Type': 'application/json'
+      },
+      // Pas de body nécessaire ici
     })
-    .then(response => {
+      .then(response => {
         if (!response.ok) {
-            throw new Error('Erreur réseau ou serveur');
+          throw new Error('Erreur réseau ou serveur');
         }
         return response.json();
-    })
-    .then(data => {
+      })
+      .then(data => {
         // Met à jour le compteur de likes dans le DOM
         document.getElementById(`like-count-${ressourceId}`).innerText = data.likes;
-    })
-    .catch(error => {
+      })
+      .catch(error => {
         console.error('Erreur:', error);
         alert('Impossible de liker pour le moment.');
-    });
-}
+      });
+  }
 
 </script>
 {%endblock%}

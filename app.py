@@ -102,12 +102,14 @@ class Ressource(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
-    subject = db.Column(db.String(50), nullable=False)  # Matière
-    file_url = db.Column(db.String(500), nullable=False)  # URL Cloudinary ou chemin
-    file_type = db.Column(db.String(20), nullable=False)  # 'image', 'pdf', 'doc', etc.
-    page_count = db.Column(db.Integer, default=0)  # Si PDF, nombre de pages
+    subject = db.Column(db.String(50), nullable=False)
+    file_url = db.Column(db.String(500), nullable=False)   # URL pour l’affichage
+    download_url = db.Column(db.String(500), nullable=True) # URL pour le téléchargement
+    file_type = db.Column(db.String(20), nullable=False)
+    page_count = db.Column(db.Integer, default=0)
     likes = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
     # Relation pour accéder à l'utilisateur et son avatar
     user = db.relationship('User', backref=db.backref('ressources', lazy=True))
@@ -269,11 +271,11 @@ def profile():
 
     return render_template('profile.html', username=username ,user=user, profile=profile)
 
-import PyPDF2  # ⚠️ Installe avec: pip install PyPDF2
+import PyPDF2  # pip install PyPDF2
 from io import BytesIO
-
 from werkzeug.utils import secure_filename
 from cloudinary.utils import cloudinary_url
+import cloudinary.uploader
 
 
 @app.route('/share_ressource', methods=['POST'])
@@ -298,11 +300,11 @@ def share_ressource():
         flash('Type de fichier non autorisé. Formats acceptés : png, jpg, jpeg, gif, pdf, doc, docx.', 'danger')
         return redirect(url_for('communaute'))
 
-    # Détecter resource_type
+    # Déterminer le resource_type
     is_raw = ext in {'pdf', 'doc', 'docx'}
     resource_type = 'raw' if is_raw else 'image'
 
-    # Lire nb pages si PDF (faire avant l'upload ou repositionner le stream)
+    # Lire nb pages si PDF
     page_count = 0
     if ext == 'pdf':
         try:
@@ -310,37 +312,49 @@ def share_ressource():
             pdf_reader = PyPDF2.PdfReader(file.stream)
             page_count = len(pdf_reader.pages)
         except Exception as e:
-            logger.warning(f"Impossible de lire localement le PDF: {e}")
+            logger.warning(f"Impossible de lire le PDF localement: {e}")
             page_count = 0
         finally:
-            file.stream.seek(0)  # remettre au début pour l'upload
+            file.stream.seek(0)
 
-    # Construire un public_id qui contient l'extension (important pour raw)
-    public_id = filename  # secure_filename already contains the extension
+    public_id = filename  # le nom de fichier (sécurisé) sert de public_id
 
     try:
         upload_result = cloudinary.uploader.upload(
             file,
             resource_type=resource_type,
             folder="edushare/ressources",
-            public_id=public_id,      # <- important pour garder l'extension
+            public_id=public_id,
             overwrite=True,
             invalidate=True,
-            use_filename=False,       # on fournit public_id manuellement
+            use_filename=False,
             unique_filename=False,
             tags=["edushare"]
         )
-        logger.info(f"🔁 upload_result keys: { {k: upload_result.get(k) for k in ['public_id','secure_url','resource_type','format']} }")
 
-        # Générer une URL de téléchargement propre (fl_attachment)
-        download_url, _ = cloudinary_url(
-            upload_result.get('public_id'),
-            resource_type=resource_type,
-            flags='attachment',  # ajoute fl_attachment
-            secure=True
-        )
+        logger.info(f"🔁 Upload réussi: { {k: upload_result.get(k) for k in ['public_id','secure_url','resource_type','format']} }")
 
-        file_url = download_url
+        # 🔹 Gérer URLs selon type
+        if resource_type == "image":
+            # Affichage direct
+            file_url = upload_result.get("secure_url")
+            # URL pour téléchargement
+            download_url, _ = cloudinary_url(
+                upload_result.get("public_id"),
+                resource_type="image",
+                flags="attachment",
+                secure=True
+            )
+        else:
+            # Pour PDF/DOC : pas d’affichage direct → file_url = download_url
+            download_url, _ = cloudinary_url(
+                upload_result.get("public_id"),
+                resource_type="raw",
+                flags="attachment",
+                secure=True
+            )
+            file_url = download_url
+
         file_type = ext
 
     except Exception as e:
@@ -353,7 +367,8 @@ def share_ressource():
         user_id=user_id,
         title=title,
         subject=subject,
-        file_url=file_url,
+        file_url=file_url,         # pour affichage
+        download_url=download_url, # pour téléchargement
         file_type=file_type,
         page_count=page_count
     )
@@ -377,6 +392,7 @@ def notes():
 @app.route('/communaute')
 def communaute():
     if 'user_id' not in session:
+        flash('veuillez vous connecter pour accéder a la communaute', 'warning')
         return redirect(url_for('login'))
     
     # Récupérer les 10 dernières ressources
