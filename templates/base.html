@@ -252,14 +252,23 @@
     /*menu hamburger*/
     const hamburger = document.getElementById('hamburger');
     const menu_hamburger = document.getElementById('menu-hamburger');
-
-    hamburger.addEventListener('click', () => {
+     const body=document.body;
+    hamburger.addEventListener('click', (e) => {
       menu_hamburger.classList.toggle('open');
 
       // Change l'icône
       hamburger.classList.toggle('fa-bars');
       hamburger.classList.toggle('fa-xmark');
+	    e.stopPropagation();
     });
+    
+	   body.addEventListener("click", () => {
+    if (menu_hamburger.classList.contains("open")) {
+      menu_hamburger.classList.remove("open");
+      hamburger.classList.add("fa-bars");
+      hamburger.classList.remove("fa-xmark");
+    }
+  });
     /*..................................*/
   // Sélection de tous les boutons Connexion
 const openLoginButtons = document.querySelectorAll(".btn-connexion");

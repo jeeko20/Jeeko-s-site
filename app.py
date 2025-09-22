@@ -413,6 +413,10 @@ def learn_css():
 def page_not_found():
     return render_template('page_not_found.html')
 
+@app.route('/systeme')
+def systeme():
+    return render_template('systeme.html')
+
 @app.route('/like_ressource/<int:ressource_id>', methods=['POST'])
 def like_ressource(ressource_id):
     if 'user_id' not in session:
