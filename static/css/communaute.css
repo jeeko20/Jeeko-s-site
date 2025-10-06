@@ -7,6 +7,20 @@
   --card-shadow: 0 8px 24px rgba(149,157,165,0.15);
 }
 
+/* ========== poutr le tri============== */
+.tri-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tri-bar select,
+.tri-bar input {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 
 /* ================= HEADER ================= */
 .header { padding-top: var(--nav-height); background: #fff; }

@@ -1,6 +1,45 @@
 {%extends 'base.html'%}
 {%block extra_css%}
 <link rel="stylesheet" href="{{url_for('static', filename='css/communaute.css')}}">
+<!-- CSS pour le modal (tu peux le déplacer dans ton fichier CSS principal) -->
+<!-- CSS minimal pour le modal (à intégrer dans ton CSS global si possible) -->
+<style>
+  .modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* fond semi-transparent noir (overlay) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background: white !important; /* ✅ Force le fond blanc */
+    color: black !important;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .close {
+    float: right;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #555;
+  }
+  .close:hover {
+    color: #000;
+  }
+</style>
 {%endblock%}
 
 {%block content%}
@@ -25,108 +64,102 @@
 <!-- Contenu dynamique -->
 <main>
   <!-- Section DISCUSSION -->
-  <section id="discussion" class="page active">
-    <div class="discussion">
+<section id="discussion" class="page active">
+  <div class="discussion">
 
-      <!-- Colonne principale -->
-      <div class="info-discussion">
-        <div class="start-discussion">
-          <h2>Nouvelle discussion</h2>
-          <div id="area-1">
-            <img src="https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg" alt="photo">
-            <form method="post" class="form-control">
-              <textarea required placeholder="Poser une question ou commencer une discussion"></textarea>
-              <div id="area-3">
-                <select id="matiere" name="matiere">
-                  <option value="">-- Choisir une matière --</option>
-                  <option value="C++">C++</option>
-                  <option value="HTML">HTML</option>
-                  <option value="CSS">CSS</option>
-                  <option value="Javascript">Javascript</option>
-                  <option value="Algorithme">Algorithme</option>
-                </select>
-                <button type="submit">Publier</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Discussion exemple -->
-        <div class="discussion-list">
-          <div class="discussion-head">
-            <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
-            <div class="discussion-list-info">
-              <p class="p1">
-                <span>Comment optimiser les performances en C++</span>
-                <span>C++</span>
-                <span><i class="fa-solid fa-heart"></i> 15</span>
-              </p>
-              <p>J'ai des questions sur l'utilisation des pointeurs en C++</p>
-              <p>
-                <span>par Marie Dubois</span>
-                <span>il y a 2h</span>
-                <span><i class="fa-solid fa-comment"></i> 8 réponses</span>
-              </p>
+    <!-- Colonne principale -->
+    <div class="info-discussion">
+      <div class="start-discussion">
+        <h2>Nouvelle discussion</h2>
+        <div id="area-1">
+          <img src="{{ session.get('user_avatar') or 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg' }}" alt="photo">
+          <form id="new-discussion-form" class="form-control">
+            <textarea id="discussion-content" required placeholder="Poser une question ou commencer une discussion"></textarea>
+            <div id="area-3">
+              <select id="discussion-subject">
+                <option value="">-- Choisir une matière --</option>
+                <option value="C++">C++</option>
+                <option value="HTML">HTML</option>
+                <option value="CSS">CSS</option>
+                <option value="Javascript">Javascript</option>
+                <option value="Algorithme">Algorithme</option>
+              </select>
+              <button type="submit">Publier</button>
             </div>
-          </div>
-        </div>
-
-        <div class="discussion-list">
-          <div class="discussion-head">
-            <img src="https://cdn.pixabay.com/photo/2024/03/23/17/16/man-8651694_640.jpg" alt="photo">
-            <div class="discussion-list-info">
-              <p class="p1">
-                <span>Projet HTML/CSS - Besoin d'aide pour le responsive</span>
-                <span>HTML/CSS</span>
-                <span><i class="fa-solid fa-heart"></i> 23</span>
-              </p>
-              <p>Mon site ne s'affiche pas correctement sur mobile, quelqu’un peut m'aider avec les media queries ?</p>
-              <p>
-                <span>par Lucas</span>
-                <span>il y a 4h</span>
-                <span><i class="fa-solid fa-comment"></i> 12 réponses</span>
-              </p>
-            </div>
-          </div>
-        </div>
-        <!-- fin discussions -->
-      </div>
-
-      <!-- Colonne droite -->
-      <div class="block-2">
-        <div class="action-rapide">
-          <h2>Actions rapides</h2>
-          <ul>
-            <li class="share-ressource">Partager une ressource</li>
-            <li><a href="#" style="color: black; text-decoration: none;">Poser une question</a></li>
-            <li class="join-group">Rejoindre un groupe</li>
-          </ul>
-        </div>
-
-        <div class="sujet-populaire">
-          <h2>Sujets populaires</h2>
-          <ul>
-            <li><span>Optimisation C++</span><span>24</span></li>
-            <li><span>CSS Grid</span><span>18</span></li>
-            <li><span>Algorithme de tri</span><span>15</span></li>
-            <li><span>Gestion mémoire</span><span>12</span></li>
-            <li><span>JavaScript async</span><span>10</span></li>
-          </ul>
-        </div>
-
-        <div class="statistique">
-          <h2>Statistiques</h2>
-          <ul>
-            <li><span>Membres actifs</span><span>24</span></li>
-            <li><span>Discussions ouvertes</span><span>18</span></li>
-            <li><span>Ressources partagées</span><span>15</span></li>
-            <li><span>Messages aujourd'hui</span><span>12</span></li>
-          </ul>
+          </form>
         </div>
       </div>
 
+      <!-- Barre de recherche et tri -->
+      <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: end;">
+        <div style="flex: 1; min-width: 200px;">
+          <input type="text" id="search-discussions" placeholder="Rechercher une discussion..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="min-width: 150px;">
+          <select id="sort-discussions" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="date">Plus récent</option>
+            <option value="likes">Populaires</option>
+            <option value="subject">Par matière</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Discussions dynamiques -->
+      <div id="discussions-container">
+        <!-- Chargé par JavaScript -->
+      </div>
     </div>
-  </section>
+
+    <!-- Colonne droite -->
+    <div class="block-2">
+      <div class="action-rapide">
+        <h2>Actions rapides</h2>
+        <ul>
+          <li class="share-ressource">Partager une ressource</li>
+          <li><a href="#" style="color: black; text-decoration: none;">Poser une question</a></li>
+          <li class="join-group">Rejoindre un groupe</li>
+        </ul>
+      </div>
+
+      <div class="sujet-populaire">
+        <h2>Sujets populaires</h2>
+        <ul>
+          <li><span>Optimisation C++</span><span>24</span></li>
+          <li><span>CSS Grid</span><span>18</span></li>
+          <li><span>Algorithme de tri</span><span>15</span></li>
+          <li><span>Gestion mémoire</span><span>12</span></li>
+          <li><span>JavaScript async</span><span>10</span></li>
+        </ul>
+      </div>
+
+      <div class="statistique">
+        <h2>Statistiques</h2>
+        <ul>
+          <li><span>Membres actifs</span><span id="active-users">—</span></li>
+          <li><span>Discussions ouvertes</span><span id="total-discussions">—</span></li>
+          <li><span>Ressources partagées</span><span id="total-ressources">—</span></li>
+          <li><span>Messages aujourd'hui</span><span>12</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Modal pour les commentaires -->
+<div id="comment-modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3 id="modal-title">Commentaires</h3>
+    <div id="comments-list"></div>
+    <form id="comment-form" style="margin-top:15px;">
+      <textarea id="comment-input" placeholder="Écrivez un commentaire..." required style="width:100%; height:60px; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea>
+      <button type="submit" style="margin-top:8px; padding:6px 12px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Envoyer</button>
+    </form>
+  </div>
+</div>
+
+
 
   <!-- Section PARTAGES -->
   <section id="partages" class="page">
@@ -134,50 +167,25 @@
 
       <!-- Colonne principale -->
       <div class="info-discussion">
-        <!-- Dans la section partages -->
-        {% for res in ressources %}
-        <div class="discussion-list">
-          <div class="discussion-head">
-            <img src="{{ res.user_avatar }}" alt="Avatar de {{ res.user.username }}"
-              onerror="this.src='https://via.placeholder.com/150'">
-            <div class="discussion-list-info">
-              <p class="p1">
-                <span>{{ res.title }}</span>
-                <span>{{ res.subject }}</span>
-                <a href="#" onclick="likeRessource({{ res.id }}); return false;"
-                  style="text-decoration: none; color: inherit;">
-                  <i class="fa-solid fa-thumbs-up"></i> <span id="like-count-{{ res.id }}">{{ res.likes }}</span>
-                </a>
-              </p>
-              <p>
-                Type: {{ res.file_type }}
-                {% if res.page_count > 0 %} ({{ res.page_count }} pages) {% endif %}
-              </p>
-              <p class="p2">
-                <span>par {{ res.user.username }}</span>
-                <span>il y a {{ res.created_at|time_ago }}</span>
-              </p>
-              <div class="btn-footer">
-                {% if res.file_type == 'pdf' %}
-                  <a href="{{ res.file_url }}?#view=fitH" target="_blank">
-                    <i class="fa-solid fa-eye"></i> Voir
-                  </a>
-                {% else %}
-                  <a href="{{ res.file_url }}" target="_blank">
-                    <i class="fa-solid fa-eye"></i> Voir
-                  </a>
-                {% endif %}
-                
-                <a href="{{ res.download_url }}" download="{{ res.title }}.{{ res.file_type }}">
-                  <i class="fa-solid fa-download"></i> Télécharger
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-        <!-- fin discussions -->
-      </div>
+
+  <!-- Menu de tri et recherche -->
+  <div class="tri-bar">
+    <label for="sort">Trier par :</label>
+    <select id="sort">
+      <option value="date-desc">Date (récent → ancien)</option>
+      <option value="date-asc">Date (ancien → récent)</option>
+      <option value="file_type-asc">Type (A-Z)</option>
+      <option value="file_type-desc">Type (Z-A)</option>
+      <option value="likes-desc">Likes (plus aimés)</option>
+    </select>
+
+    <input type="text" id="search" placeholder="Rechercher un titre ou un sujet...">
+  </div>
+
+  <!-- Liste dynamique -->
+  <div id="ressource-list"></div>
+</div>
+
 
       <!-- Colonne droite -->
       <div class="block-2">
@@ -246,6 +254,91 @@
 
 {%block script%}
 <script>
+  //afficher les element
+  let ressources = []; // Toutes les ressources récupérées du serveur
+let filtered = [];   // Liste affichée après tri / recherche
+
+// Charger les ressources depuis Flask
+async function loadRessources() {
+  const res = await fetch('/api/ressources');
+  ressources = await res.json();
+  filtered = [...ressources];
+  displayRessources(filtered);
+}
+
+// Afficher les ressources dans le HTML
+function displayRessources(list) {
+  const container = document.getElementById('ressource-list');
+  container.innerHTML = '';
+
+  list.forEach(res => {
+    const pages = res.page_count > 0 ? ` (${res.page_count} pages)` : '';
+    const date = new Date(res.created_at).toLocaleDateString();
+
+    container.innerHTML += `
+      <div class="discussion-list">
+        <div class="discussion-head">
+          <img src="${res.user_avatar}" alt="Avatar de ${res.username}"
+               onerror="this.src='https://via.placeholder.com/150'">
+          <div class="discussion-list-info">
+            <p class="p1">
+              <span>${res.title}</span>
+              <span>${res.subject}</span>
+              <a href="#" onclick="likeRessource(${res.id}); return false;">
+                <i class="fa-solid fa-thumbs-up"></i> <span>${res.likes}</span>
+              </a>
+            </p>
+            <p>Type: ${res.file_type}${pages}</p>
+            <p class="p2">
+              <span>par ${res.username}</span>
+              <span>${date}</span>
+            </p>
+            <div class="btn-footer">
+              <a href="${res.file_url}" target="_blank">
+                <i class="fa-solid fa-eye"></i> Voir
+              </a>
+              <a href="${res.download_url}" download="${res.title}.${res.file_type}">
+                <i class="fa-solid fa-download"></i> Télécharger
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+// Tri dynamique
+document.getElementById('sort').addEventListener('change', (e) => {
+  const [field, order] = e.target.value.split('-');
+  filtered.sort((a, b) => {
+    let x = a[field], y = b[field];
+
+    if (field === 'date') {
+      x = new Date(a.created_at);
+      y = new Date(b.created_at);
+    }
+
+    if (x < y) return order === 'asc' ? -1 : 1;
+    if (x > y) return order === 'asc' ? 1 : -1;
+    return 0;
+  });
+  displayRessources(filtered);
+});
+
+// Recherche en direct
+document.getElementById('search').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  filtered = ressources.filter(r =>
+    r.title.toLowerCase().includes(term) ||
+    r.subject.toLowerCase().includes(term) ||
+    r.file_type.toLowerCase().includes(term)
+  );
+  displayRessources(filtered);
+});
+
+// Charger au démarrage
+loadRessources();
+
   // Sélectionner tous les boutons de navigation
   const tabs = document.querySelectorAll(".tab");
   const pages = document.querySelectorAll(".page");
@@ -332,5 +425,210 @@
       });
   }
 
+</script>
+<!-- JavaScript dynamique -->
+
+<script>
+  let allDiscussions = [];
+  let currentDiscussionId = null;
+
+  // Format "il y a X minutes"
+  function formatTimeAgo(dateStr) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffSec = Math.floor((now - date) / 1000);
+    if (diffSec < 60) return "à l'instant";
+    if (diffSec < 3600) {
+      const m = Math.floor(diffSec / 60);
+      return `il y a ${m} minute${m > 1 ? 's' : ''}`;
+    }
+    if (diffSec < 86400) {
+      const h = Math.floor(diffSec / 3600);
+      return `il y a ${h} heure${h > 1 ? 's' : ''}`;
+    }
+    if (diffSec < 604800) {
+      const d = Math.floor(diffSec / 86400);
+      return `il y a ${d} jour${d > 1 ? 's' : ''}`;
+    }
+    return date.toLocaleDateString('fr-FR');
+  }
+
+  // Trier les discussions
+  function sortDiscussions(discussions, sortBy) {
+    return [...discussions].sort((a, b) => {
+      if (sortBy === 'likes') return b.likes - a.likes;
+      if (sortBy === 'subject') return a.subject.localeCompare(b.subject);
+      return new Date(b.created_at) - new Date(a.created_at); // date décroissante
+    });
+  }
+
+  // Filtrer par recherche
+  function filterDiscussions(discussions, query) {
+    if (!query) return discussions;
+    const q = query.toLowerCase();
+    return discussions.filter(d =>
+      d.title.toLowerCase().includes(q) ||
+      d.content.toLowerCase().includes(q) ||
+      d.subject.toLowerCase().includes(q)
+    );
+  }
+
+  // Afficher les discussions
+  function renderDiscussions(discussions) {
+    const container = document.getElementById('discussions-container');
+    if (discussions.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:#777; padding:20px;">Aucune discussion trouvée.</p>';
+      return;
+    }
+    container.innerHTML = '';
+    discussions.forEach(d => {
+      const timeAgo = formatTimeAgo(d.created_at);
+      const el = document.createElement('div');
+      el.className = 'discussion-list';
+      el.innerHTML = `
+        <div class="discussion-head">
+          <img src="${d.user_avatar || 'https://via.placeholder.com/150'}" alt="avatar" onerror="this.src='https://via.placeholder.com/150'">
+          <div class="discussion-list-info">
+            <p class="p1">
+              <span>${d.title}</span>
+              <span>${d.subject}</span>
+              <span><i class="fa-solid fa-heart" onclick="likeDiscussion(${d.id})" style="cursor:pointer;"></i> ${d.likes}</span>
+            </p>
+            <p>${d.content}</p>
+            <p>
+              <span>par ${d.username}</span>
+              <span>${timeAgo}</span>
+              <span onclick="openComments(${d.id})" style="cursor:pointer;">
+                <i class="fa-solid fa-comment"></i> ${d.comment_count} réponse${d.comment_count !== 1 ? 's' : ''}
+              </span>
+            </p>
+          </div>
+        </div>
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  // Recharger & appliquer filtres
+  function applyFilters() {
+    const query = document.getElementById('search-discussions').value.trim();
+    const sortBy = document.getElementById('sort-discussions').value;
+    const filtered = filterDiscussions(allDiscussions, query);
+    const sorted = sortDiscussions(filtered, sortBy);
+    renderDiscussions(sorted);
+  }
+
+  // Charger toutes les discussions une fois
+  function loadAllDiscussions() {
+    fetch('/api/discussions')
+      .then(res => res.json())
+      .then(discussions => {
+        allDiscussions = discussions;
+        document.getElementById('total-discussions').textContent = discussions.length;
+        applyFilters();
+      })
+      .catch(err => {
+        console.error("Erreur chargement discussions:", err);
+        document.getElementById('discussions-container').innerHTML = '<p style="color:red; text-align:center;">Erreur de chargement.</p>';
+      });
+  }
+
+  // --- Fonctions modales et interactions ---
+  function openComments(discussionId) {
+    currentDiscussionId = discussionId;
+    document.getElementById('comment-modal').style.display = 'flex';
+    loadComments(discussionId);
+  }
+
+  function loadComments(discussionId) {
+    fetch(`/api/discussion/${discussionId}/comments`)
+      .then(res => res.json())
+      .then(comments => {
+        const list = document.getElementById('comments-list');
+        list.innerHTML = comments.length ? comments.map(c => `
+          <div style="margin-bottom:12px; padding:10px; border-bottom:1px solid #eee;">
+            <div style="display:flex; align-items:start; gap:8px;">
+              <img src="${c.user_avatar || 'https://via.placeholder.com/30'}" width="30" style="border-radius:50%;">
+              <div>
+                <strong>${c.username}</strong> • <span style="color:#777;">${formatTimeAgo(c.created_at)}</span>
+                <p style="margin:6px 0 0 0;">${c.content}</p>
+              </div>
+            </div>
+          </div>
+        `).join('') : '<p style="color:#777;">Aucun commentaire.</p>';
+      });
+  }
+
+  function likeDiscussion(id) {
+    fetch(`/api/discussion/${id}/like`, { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        // Met à jour le like dans `allDiscussions`
+        const disc = allDiscussions.find(d => d.id === id);
+        if (disc) disc.likes = data.likes;
+        applyFilters(); // rafraîchit l'affichage
+      });
+  }
+
+  // --- Événements ---
+  document.getElementById('new-discussion-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const content = document.getElementById('discussion-content').value.trim();
+    const subject = document.getElementById('discussion-subject').value;
+    if (!content || !subject) return alert("Veuillez remplir tous les champs.");
+    const title = content.length > 60 ? content.substring(0, 60) + "…" : content;
+
+    fetch('/api/discussion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, subject, content })
+    }).then(() => {
+      document.getElementById('discussion-content').value = '';
+      document.getElementById('discussion-subject').value = '';
+      loadAllDiscussions(); // recharge tout
+    }).catch(() => alert("Erreur lors de la publication."));
+  });
+
+  document.getElementById('search-discussions')?.addEventListener('input', applyFilters);
+  document.getElementById('sort-discussions')?.addEventListener('change', applyFilters);
+
+  document.querySelector('.close')?.addEventListener('click', () => {
+    document.getElementById('comment-modal').style.display = 'none';
+  });
+  window.addEventListener('click', e => {
+    if (e.target.id === 'comment-modal') {
+      document.getElementById('comment-modal').style.display = 'none';
+    }
+  });
+
+  document.getElementById('comment-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const content = document.getElementById('comment-input').value.trim();
+    if (!content) return;
+    fetch(`/api/discussion/${currentDiscussionId}/comment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    }).then(() => {
+      document.getElementById('comment-input').value = '';
+      loadComments(currentDiscussionId);
+    });
+  });
+
+  // --- Stats ---
+  function loadStats() {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('active-users').textContent = data.active_users;
+        document.getElementById('total-ressources').textContent = data.total_ressources || 0;
+      });
+  }
+
+  // --- Initialisation ---
+  document.addEventListener('DOMContentLoaded', () => {
+    loadAllDiscussions();
+    loadStats();
+  });
 </script>
 {%endblock%}

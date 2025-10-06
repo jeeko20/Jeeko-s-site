@@ -120,6 +120,38 @@ class Ressource(db.Model):
             return self.user.profile.avatar_path
         return "https://via.placeholder.com/150"    
 
+class Discussion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    subject = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    likes = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('discussions', lazy=True))
+
+    @property
+    def user_avatar(self):
+        if self.user and self.user.profile:
+            return self.user.profile.avatar_path
+        return "https://via.placeholder.com/150"
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    discussion_id = db.Column(db.Integer, db.ForeignKey('discussion.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('comments', lazy=True))
+    discussion = db.relationship('Discussion', backref=db.backref('comments', lazy=True, cascade="all, delete-orphan"))
+
+    @property
+    def user_avatar(self):
+        if self.user and self.user.profile:
+            return self.user.profile.avatar_path
+        return "https://via.placeholder.com/150"
 # --------------------
 # Routes Flask
 # --------------------
@@ -385,6 +417,139 @@ def share_ressource():
 
     return redirect(url_for('communaute'))
  
+# api pour les donne
+@app.route('/api/ressources')
+def api_ressources():
+    ressources = Ressource.query.all()
+    return jsonify([
+        {
+            "id": r.id,
+            "title": r.title,
+            "subject": r.subject,
+            "file_type": r.file_type,
+            "likes": r.likes,
+            "created_at": r.created_at.isoformat(),
+            "user_avatar": r.user_avatar,
+            "username": r.user.username,
+            "file_url": r.file_url,
+            "download_url": r.download_url
+        }
+        for r in ressources
+    ])
+
+# api discussion
+@app.route('/api/discussions', methods=['GET'])
+def api_discussions():
+    sort_by = request.args.get('sort', 'date')  # 'date', 'likes', 'subject'
+    query = Discussion.query
+
+    if sort_by == 'likes':
+        query = query.order_by(Discussion.likes.desc())
+    elif sort_by == 'subject':
+        query = query.order_by(Discussion.subject)
+    else:  # default: date
+        query = query.order_by(Discussion.created_at.desc())
+
+    discussions = query.all()
+    return jsonify([
+        {
+            "id": d.id,
+            "title": d.title,
+            "subject": d.subject,
+            "content": d.content,
+            "likes": d.likes,
+            "created_at": d.created_at.isoformat(),
+            "user_avatar": d.user_avatar,
+            "username": d.user.username,
+            "comment_count": len(d.comments)
+        }
+        for d in discussions
+    ])
+
+@app.route('/api/discussion', methods=['POST'])
+def create_discussion():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non connecté"}), 403
+
+    data = request.get_json()
+    title = data.get('title')
+    subject = data.get('subject')
+    content = data.get('content')
+
+    if not title or not subject or not content:
+        return jsonify({"error": "Tous les champs sont requis"}), 400
+
+    new_discussion = Discussion(
+        user_id=session['user_id'],
+        title=title,
+        subject=subject,
+        content=content
+    )
+    db.session.add(new_discussion)
+    db.session.commit()
+
+    return jsonify({
+        "id": new_discussion.id,
+        "title": new_discussion.title,
+        "subject": new_discussion.subject,
+        "content": new_discussion.content,
+        "likes": 0,
+        "created_at": new_discussion.created_at.isoformat(),
+        "user_avatar": new_discussion.user_avatar,
+        "username": new_discussion.user.username,
+        "comment_count": 0
+    }), 201
+
+@app.route('/api/discussion/<int:discussion_id>/comments', methods=['GET'])
+def get_comments(discussion_id):
+    comments = Comment.query.filter_by(discussion_id=discussion_id).order_by(Comment.created_at.asc()).all()
+    return jsonify([
+        {
+            "id": c.id,
+            "content": c.content,
+            "created_at": c.created_at.isoformat(),
+            "user_avatar": c.user_avatar,
+            "username": c.user.username
+        }
+        for c in comments
+    ])
+
+@app.route('/api/discussion/<int:discussion_id>/comment', methods=['POST'])
+def add_comment(discussion_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non connecté"}), 403
+
+    data = request.get_json()
+    content = data.get('content')
+    if not content:
+        return jsonify({"error": "Contenu requis"}), 400
+
+    new_comment = Comment(
+        discussion_id=discussion_id,
+        user_id=session['user_id'],
+        content=content
+    )
+    db.session.add(new_comment)
+    db.session.commit()
+
+    return jsonify({
+        "id": new_comment.id,
+        "content": new_comment.content,
+        "created_at": new_comment.created_at.isoformat(),
+        "user_avatar": new_comment.user_avatar,
+        "username": new_comment.user.username
+    }), 201
+
+@app.route('/api/discussion/<int:discussion_id>/like', methods=['POST'])
+def like_discussion(discussion_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non connecté"}), 403
+
+    discussion = Discussion.query.get_or_404(discussion_id)
+    discussion.likes += 1
+    db.session.commit()
+    return jsonify({"likes": discussion.likes}), 200
+
 @app.route('/notes')
 def notes():
     return render_template('note.html')
@@ -430,6 +595,11 @@ def like_ressource(ressource_id):
     db.session.commit()
 
     return jsonify({"likes": ressource.likes}), 200
+
+
+
+
+
 # --------------------
 # Lancement Flask
 # --------------------
