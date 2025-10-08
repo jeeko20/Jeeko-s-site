@@ -135,6 +135,58 @@
   .btn-download { background: #28a745; color: white; }
   .btn-download:hover { background: #218838; }
 
+  /* =============== STYLE PAGINATION =============== */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+
+  .pagination button {
+    padding: 8px 14px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    color: #007bff;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .pagination button:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+  }
+
+  .pagination .current-page {
+    padding: 8px 14px;
+    background: #007bff;
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+    border: 1px solid #007bff;
+  }
+
+  .pagination button:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .pagination button:first-child,
+  .pagination button:last-child {
+    padding: 8px 16px;
+    font-weight: 600;
+  }
+
   /* Responsive mobile */
   @media (max-width: 768px) {
     .ressources-grid {
@@ -144,8 +196,33 @@
     .ressources-list {
       height: 480px; /* Un peu moins sur mobile */
     }
+    
+    .pagination {
+      gap: 4px;
+      margin: 20px 0;
+    }
+    
+    .pagination button {
+      padding: 6px 10px;
+      min-width: 36px;
+      font-size: 0.9em;
+    }
+    
+    .pagination .current-page {
+      padding: 6px 10px;
+      min-width: 36px;
+    }
   }
-</style>
+
+  /* Animation pour le changement de page */
+  .ressources-grid {
+    transition: opacity 0.3s ease;
+  }
+
+  .ressources-grid.loading {
+    opacity: 0.6;
+  }
+</style>  
 {% endblock %}
 
 {% block content %}
@@ -155,7 +232,7 @@
     <h1>Bienvenue sur votre espace de notes</h1>
     <p>Gérez et partagez vos notes facilement</p>
     <div class="header-buttons">
-      <a href="{{ url_for('communaute') }}" class="btn btn-primary">Partager une ressource</a>
+      <a href="{{ url_for('communaute') }}" class="btn btn-primary" style="color: black !important;">Partager une ressource</a>
     </div>
   </div>
 
@@ -183,6 +260,10 @@
 <nav>
   <button class="tab active" data-page="all_note"><i class="fa-solid fa-file"></i>&nbsp;mes notes</button>
   <button class="tab" data-page="Partagees"><i class="fa-solid fa-bookmark"></i>&nbsp;sauvegarder</button>
+  <button class="tab" onclick="window.location.href='/videos'" 
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <i class="fa-solid fa-video"></i>&nbsp;vidéos
+  </button>
 </nav>
 
 <div class="filter">
@@ -196,6 +277,7 @@
       <option value="Algorithme">Algorithme</option>
       <option value="C++">C++</option>
       <option value="systeme">Système</option>
+      <option value="autre">Autre</option>
     </select>
 
     <label for="tri">Trier par :</label>
@@ -214,40 +296,74 @@
 <main>
   <section id="all_note" class="page active">
     <div id="my-ressources-container"></div>
+    <div id="my-pagination"></div> <!-- Conteneur de pagination pour mes notes -->
   </section>
 
   <section id="Partagees" class="page">
     <div id="saved-ressources-container"></div>
+    <div id="saved-pagination"></div> <!-- Conteneur de pagination pour les sauvegardes -->
   </section>
 </main>
 {% endblock %}
 
 {% block script %}
 <script>
+const ITEMS_PER_PAGE = 10;
 let myRessources = [];
 let savedRessources = [];
+let currentPageMy = 1;
+let currentPageSaved = 1;
 
 async function loadAllData() {
   try {
     const myRes = await fetch('/api/my_ressources');
     myRessources = await myRes.json();
-    renderRessources(myRessources, 'my-ressources-container');
+    renderPaginatedMy(myRessources, currentPageMy);
+
     document.getElementById('total-notes').textContent = myRessources.length;
     document.getElementById('total-shared').textContent = myRessources.length;
 
     const savedRes = await fetch('/api/saved_ressources');
     savedRessources = await savedRes.json();
-    renderRessources(savedRessources, 'saved-ressources-container');
+    renderPaginatedSaved(savedRessources, currentPageSaved);
+
     document.getElementById('total-saved').textContent = savedRessources.length;
+
+    // Compter les matières uniques
+    const subjects = [...new Set(myRessources.map(r => r.subject))];
+    document.getElementById('total-subjects').textContent = subjects.length;
+
   } catch (err) {
     console.error("Erreur:", err);
   }
 }
 
+function renderPaginatedMy(list, page) {
+  currentPageMy = page;
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const paginated = list.slice(start, start + ITEMS_PER_PAGE);
+  renderRessources(paginated, 'my-ressources-container');
+  renderPagination(totalPages, page, (newPage) => {
+    renderPaginatedMy(list, newPage);
+  }, 'my-ressources-container', 'my-pagination');
+}
+
+function renderPaginatedSaved(list, page) {
+  currentPageSaved = page;
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const paginated = list.slice(start, start + ITEMS_PER_PAGE);
+  renderRessources(paginated, 'saved-ressources-container');
+  renderPagination(totalPages, page, (newPage) => {
+    renderPaginatedSaved(list, newPage);
+  }, 'saved-ressources-container', 'saved-pagination');
+}
+
 function renderRessources(list, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
-
+  
   if (list.length === 0) {
     container.innerHTML = '<p style="text-align:center; padding:30px; color:#777; font-size:1.1em;">Aucune ressource.</p>';
     return;
@@ -265,31 +381,30 @@ function renderRessources(list, containerId) {
     let mediaHtml = '';
     if (isVideo) {
       mediaHtml = `
-        <div class="ressource-media">
-          <video controls preload="metadata">
-            <source src="${r.file_url}" type="video/${r.file_type}">
-            Votre navigateur ne supporte pas la vidéo.
-          </video>
+        <div class="ressource-media" style="cursor: pointer;" onclick="window.location.href='/videos#video-${r.id}'">
+          <div class="icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+            <i class="fa-solid fa-video" style="font-size: 2.5em; margin-bottom: 12px;"></i>
+            <p style="margin: 0; font-weight: 500;">📹 Vidéo disponible</p>
+            <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.9;">Cliquez pour voir dans la page Vidéos</p>
+          </div>
         </div>`;
     } else if (isImage) {
       mediaHtml = `
         <div class="ressource-media">
-          <img src="${r.file_url}" alt="${r.title}" onerror="this.src='https://via.placeholder.com/300x200?text=Image'">
+          <img src="${r.file_url}" alt="${r.title}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5JbWFnZTwvdGV4dD48L3N2Zz4='">
         </div>`;
     } else if (isPdf) {
       mediaHtml = `
         <div class="ressource-media">
           <div class="icon-placeholder">
-            <i class="fa-solid fa-file-pdf"></i>
-            <p>Document PDF</p>
+            <i class="fa-solid fa-file-pdf"></i><p>Document PDF</p>
           </div>
         </div>`;
     } else {
       mediaHtml = `
         <div class="ressource-media">
           <div class="icon-placeholder">
-            <i class="fa-solid fa-file-lines"></i>
-            <p>${r.file_type.toUpperCase()}</p>
+            <i class="fa-solid fa-file-lines"></i><p>${(r.file_type || 'DOC').toUpperCase()}</p>
           </div>
         </div>`;
     }
@@ -297,46 +412,219 @@ function renderRessources(list, containerId) {
     grid.innerHTML += `
       <div class="ressources-list">
         <div class="ressource-header">
-          <img src="${r.user_avatar || 'https://via.placeholder.com/150'}" 
-               alt="Avatar" 
+          <img src="${r.user_avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+QXZhdGFyPC90ZXh0Pjwvc3ZnPg=='}" 
                class="ressource-avatar"
-               onerror="this.src='https://via.placeholder.com/150'">
+               onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+QXZhdGFyPC90ZXh0Pjwvc3ZnPg=='">
           <h3 class="ressource-title">${r.title}</h3>
         </div>
-        
         <div class="ressource-meta">
           <span class="ressource-subject">${r.subject}</span>
           <span>par ${r.username || 'Moi'}</span>
         </div>
-
         ${mediaHtml}
-
         <div class="ressource-meta">
           <span>${date}</span>
           <span>${r.page_count ? r.page_count + ' pages' : '—'}</span>
         </div>
-
         <div class="ressource-actions">
-          <button class="btn-view" onclick="window.open('${r.file_url}', '_blank')">Voir</button>
-          <button class="btn-download" onclick="window.open('${r.download_url}', '_blank')">Télécharger</button>
+          ${isVideo ? `
+            <button class="btn-view" onclick="window.location.href='/videos#video-${r.id}'" style="background: #667eea;">
+              <i class="fa-solid fa-video"></i> Voir la vidéo
+            </button>
+          ` : `
+            <button class="btn-view" onclick="window.open('${r.file_url}', '_blank')">
+              <i class="fa-solid fa-eye"></i> Voir
+            </button>
+          `}
+          <button class="btn-download" onclick="window.open('${r.download_url || r.file_url}', '_blank')">
+            <i class="fa-solid fa-download"></i> Télécharger
+          </button>
         </div>
       </div>`;
   });
 }
 
-// Navigation
-const tabs = document.querySelectorAll(".tab");
-const pages = document.querySelectorAll(".page");
+function renderPagination(totalPages, currentPage, onPageChange, containerId, paginationId) {
+  // Trouver ou créer le conteneur de pagination
+  let paginationContainer = document.getElementById(paginationId);
+  const mainContainer = document.getElementById(containerId);
+  
+  if (!paginationContainer) {
+    paginationContainer = document.createElement('div');
+    paginationContainer.id = paginationId;
+    if (mainContainer) {
+      mainContainer.after(paginationContainer);
+    }
+  }
+  
+  if (totalPages <= 1) {
+    paginationContainer.innerHTML = '';
+    return;
+  }
 
-tabs.forEach(tab => {
+  let html = '<div class="pagination">';
+  
+  // Bouton précédent
+  if (currentPage > 1) {
+    html += `<button onclick="pageChangeHandler(${currentPage - 1}, '${paginationId}')" title="Page précédente">&laquo; Précédent</button>`;
+  }
+  
+  // Pages - afficher maximum 7 pages pour ne pas surcharger
+  const maxVisiblePages = 7;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  // Ajuster si on est près du début
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+  
+  // Première page + points de suspension si nécessaire
+  if (startPage > 1) {
+    html += `<button onclick="pageChangeHandler(1, '${paginationId}')">1</button>`;
+    if (startPage > 2) {
+      html += `<span style="padding: 8px 6px; color: #6c757d;">...</span>`;
+    }
+  }
+  
+  // Pages principales
+  for (let i = startPage; i <= endPage; i++) {
+    if (i === currentPage) {
+      html += `<span class="current-page">${i}</span>`;
+    } else {
+      html += `<button onclick="pageChangeHandler(${i}, '${paginationId}')">${i}</button>`;
+    }
+  }
+  
+  // Dernière page + points de suspension si nécessaire
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      html += `<span style="padding: 8px 6px; color: #6c757d;">...</span>`;
+    }
+    html += `<button onclick="pageChangeHandler(${totalPages}, '${paginationId}')">${totalPages}</button>`;
+  }
+  
+  // Bouton suivant
+  if (currentPage < totalPages) {
+    html += `<button onclick="pageChangeHandler(${currentPage + 1}, '${paginationId}')" title="Page suivante">Suivant &raquo;</button>`;
+  }
+  
+  html += '</div>';
+  paginationContainer.innerHTML = html;
+  
+  // Stocker le callback
+  paginationContainer._pageChangeCallback = onPageChange;
+}
+function renderPaginatedMy(list, page) {
+  currentPageMy = page;
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const paginated = list.slice(start, start + ITEMS_PER_PAGE);
+  
+  // Animation de chargement
+  const container = document.getElementById('my-ressources-container');
+  if (container) {
+    container.style.opacity = '0.6';
+    setTimeout(() => {
+      renderRessources(paginated, 'my-ressources-container');
+      container.style.opacity = '1';
+    }, 150);
+  }
+  
+  renderPagination(totalPages, page, (newPage) => {
+    renderPaginatedMy(list, newPage);
+  }, 'my-ressources-container', 'my-pagination');
+}
+
+// Gestionnaire global pour les changements de page
+function pageChangeHandler(page, paginationId) {
+  const container = document.getElementById(paginationId);
+  if (container && container._pageChangeCallback) {
+    container._pageChangeCallback(page);
+  }
+}
+
+// Filtres et recherche
+function setupFilters() {
+  const matiereSelect = document.getElementById('matiere');
+  const triSelect = document.getElementById('tri');
+  const searchInput = document.getElementById('search');
+
+  if (matiereSelect) {
+    matiereSelect.addEventListener('change', applyFilters);
+  }
+  if (triSelect) {
+    triSelect.addEventListener('change', applyFilters);
+  }
+  if (searchInput) {
+    searchInput.addEventListener('input', applyFilters);
+  }
+}
+
+function applyFilters() {
+  const matiere = document.getElementById('matiere')?.value || '';
+  const tri = document.getElementById('tri')?.value || 'date';
+  const search = document.getElementById('search')?.value.toLowerCase() || '';
+
+  // Filtrer mes ressources
+  let filteredMy = myRessources.filter(r => {
+    const matchesMatiere = !matiere || 
+                           matiere === 'autre' ? 
+                           !['javascript', 'HTML', 'CSS', 'Algorithme', 'C++', 'systeme'].includes(r.subject.toLowerCase()) :
+                           r.subject.toLowerCase() === matiere.toLowerCase();
+    const matchesSearch = !search || 
+      r.title.toLowerCase().includes(search) || 
+      r.subject.toLowerCase().includes(search);
+    return matchesMatiere && matchesSearch;
+  });
+
+  // Trier
+  if (tri === 'date') {
+    filteredMy.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (tri === 'subject') {
+    filteredMy.sort((a, b) => a.subject.localeCompare(b.subject));
+  }
+
+  // Filtrer les ressources sauvegardées
+  let filteredSaved = savedRessources.filter(r => {
+    const matchesMatiere = !matiere || 
+                           matiere === 'autre' ? 
+                           !['javascript', 'HTML', 'CSS', 'Algorithme', 'C++', 'systeme'].includes(r.subject.toLowerCase()) :
+                           r.subject.toLowerCase() === matiere.toLowerCase();
+    const matchesSearch = !search || 
+      r.title.toLowerCase().includes(search) || 
+      r.subject.toLowerCase().includes(search);
+    return matchesMatiere && matchesSearch;
+  });
+
+  // Trier les sauvegardées
+  if (tri === 'date') {
+    filteredSaved.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (tri === 'subject') {
+    filteredSaved.sort((a, b) => a.subject.localeCompare(b.subject));
+  }
+
+  // Réinitialiser les pages et afficher
+  currentPageMy = 1;
+  currentPageSaved = 1;
+  
+  renderPaginatedMy(filteredMy, currentPageMy);
+  renderPaginatedSaved(filteredSaved, currentPageSaved);
+}
+// Navigation entre onglets
+document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
-    tabs.forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     tab.classList.add("active");
-    pages.forEach(page => page.classList.remove("active"));
-    document.getElementById(tab.getAttribute("data-page")).classList.add("active");
+    document.getElementById(tab.dataset.page).classList.add("active");
   });
 });
 
-document.addEventListener('DOMContentLoaded', loadAllData);
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+  loadAllData();
+  setupFilters();
+});
 </script>
 {% endblock %}

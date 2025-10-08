@@ -13,6 +13,8 @@ import PyPDF2
 from io import BytesIO
 from werkzeug.utils import secure_filename
 from cloudinary.utils import cloudinary_url
+from sqlalchemy.orm import joinedload
+from flask_compress import Compress
 
 # -------------------- Configuration --------------------
 load_dotenv()
@@ -22,6 +24,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 app.permanent_session_lifetime = timedelta(days=7)
+
+# -------------------- Compression GZIP --------------------
+compress = Compress()
+compress.init_app(app)
 
 # -------------------- Database --------------------
 database_url = os.environ.get("DATABASE_URL")
@@ -223,7 +229,7 @@ def register():
         if User.query.filter_by(email=email).first():
             flash('Cet email est déjà utilisé.', 'danger')
         elif User.query.filter_by(username=username).first():
-            flash('Ce nom d’utilisateur est déjà pris.', 'danger')
+            flash('Ce nom d\'utilisateur est déjà pris.', 'danger')
         else:
             hash_password = generate_password_hash(password)
             new_user = User(username=username, email=email, password=hash_password)
@@ -296,7 +302,6 @@ def profile():
 
     return render_template('profile.html', user=current_user, profile=current_user.profile)
 
-
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 Mo en octets
 
 @app.route('/share_ressource', methods=['POST'])
@@ -321,7 +326,7 @@ def share_ressource():
     for file in valid_files:
         filename = secure_filename(file.filename)
         if '.' not in filename:
-            flash(f'Fichier invalide (pas d’extension) : {filename}', 'warning')
+            flash(f'Fichier invalide (pas d\'extension) : {filename}', 'warning')
             continue
 
         ext = filename.rsplit('.', 1)[1].lower()
@@ -388,13 +393,17 @@ def share_ressource():
                 file_url = upload_result.get("secure_url")  # Pour balise <video>
                 download_url = file_url  # Même URL pour téléchargement
             else:  # document (PDF, DOC, etc.)
+                file_url, _ = cloudinary_url(
+                    upload_result.get("public_id"),
+                    resource_type="raw",
+                    secure=True
+                )
                 download_url, _ = cloudinary_url(
                     upload_result.get("public_id"),
                     resource_type="raw",
                     flags="attachment",
                     secure=True
                 )
-                file_url = download_url
 
         except Exception as e:
             logger.error(f"Erreur Cloudinary pour {filename}: {e}")
@@ -420,19 +429,23 @@ def share_ressource():
         if uploaded_count > 0:
             flash(f'✅ {uploaded_count} ressource(s) partagée(s) avec succès !', 'success')
         else:
-            flash('Aucune ressource n’a pu être partagée.', 'warning')
+            flash('Aucune ressource n\'a pu être partagée.', 'warning')
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erreur lors de la sauvegarde en base : {e}")
         flash("Erreur critique lors de la publication.", "danger")
 
     return redirect(url_for('communaute'))
-# -------------------- API --------------------
+
+# -------------------- API OPTIMISÉES --------------------
 @app.route('/api/ressources')
 @login_required
 def api_ressources():
-    ressources = Ressource.query.all()
-    # Récupérer les IDs des ressources sauvegardées par l'utilisateur
+    # Charger les relations en une seule requête
+    ressources = Ressource.query.options(
+        joinedload(Ressource.user)
+    ).all()
+    
     saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
     
     return jsonify([{
@@ -442,13 +455,15 @@ def api_ressources():
         "file_type": r.file_type,
         "likes": r.likes,
         "created_at": r.created_at.isoformat(),
-        "user_avatar": r.user_avatar,
+        "user_avatar": r.user.avatar_url,
         "username": r.user.username,
         "file_url": r.file_url,
         "download_url": r.download_url,
-        "is_saved": r.id in saved_ids,  # ✅ Ajouté
-        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm']  # ✅ Pour l'affichage
+        "is_saved": r.id in saved_ids,
+        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm'],
+        "page_count": r.page_count
     } for r in ressources])
+
 @app.route('/api/save_ressource/<int:ressource_id>', methods=['POST'])
 @login_required
 def save_ressource(ressource_id):
@@ -474,7 +489,10 @@ def unsave_ressource(ressource_id):
 @app.route('/api/saved_ressources')
 @login_required
 def api_saved_ressources():
-    saved = SavedRessource.query.filter_by(user_id=current_user.id).all()
+    saved = SavedRessource.query.options(
+        joinedload(SavedRessource.ressource).joinedload(Ressource.user)
+    ).filter_by(user_id=current_user.id).all()
+    
     return jsonify([{
         "id": s.ressource.id,
         "title": s.ressource.title,
@@ -484,7 +502,7 @@ def api_saved_ressources():
         "file_url": s.ressource.file_url,
         "download_url": s.ressource.download_url,
         "page_count": s.ressource.page_count,
-        "user_avatar": s.ressource.user_avatar,
+        "user_avatar": s.ressource.user.avatar_url,
         "username": s.ressource.user.username,
         "is_video": s.ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm']
     } for s in saved])
@@ -492,14 +510,22 @@ def api_saved_ressources():
 @app.route('/api/discussions', methods=['GET'])
 def api_discussions():
     sort_by = request.args.get('sort', 'date')
-    query = Discussion.query
+    
+    # Utiliser joinedload pour charger les relations en une seule requête
+    query = Discussion.query.options(
+        joinedload(Discussion.user),
+        joinedload(Discussion.comments)
+    )
+    
     if sort_by == 'likes':
         query = query.order_by(Discussion.likes.desc())
     elif sort_by == 'subject':
         query = query.order_by(Discussion.subject)
     else:
         query = query.order_by(Discussion.created_at.desc())
+        
     discussions = query.all()
+    
     return jsonify([{
         "id": d.id,
         "title": d.title,
@@ -507,7 +533,7 @@ def api_discussions():
         "content": d.content,
         "likes": d.likes,
         "created_at": d.created_at.isoformat(),
-        "user_avatar": d.user_avatar,
+        "user_avatar": d.user.avatar_url,
         "username": d.user.username,
         "comment_count": len(d.comments)
     } for d in discussions])
@@ -516,7 +542,10 @@ def api_discussions():
 @login_required
 def api_my_ressources():
     # Récupérer toutes les ressources de l'utilisateur connecté
-    ressources = Ressource.query.filter_by(user_id=current_user.id).order_by(Ressource.created_at.desc()).all()
+    ressources = Ressource.query.options(
+        joinedload(Ressource.user)
+    ).filter_by(user_id=current_user.id).order_by(Ressource.created_at.desc()).all()
+    
     return jsonify([{
         "id": r.id,
         "title": r.title,
@@ -553,21 +582,25 @@ def create_discussion():
         "content": new_discussion.content,
         "likes": 0,
         "created_at": new_discussion.created_at.isoformat(),
-        "user_avatar": new_discussion.user_avatar,
+        "user_avatar": new_discussion.user.avatar_url,
         "username": new_discussion.user.username,
         "comment_count": 0
     }), 201
 
 @app.route('/api/discussion/<int:discussion_id>/comments', methods=['GET'])
 def get_comments(discussion_id):
-    comments = Comment.query.filter_by(discussion_id=discussion_id).order_by(Comment.created_at.asc()).all()
+    comments = Comment.query.options(
+        joinedload(Comment.user)
+    ).filter_by(discussion_id=discussion_id).order_by(Comment.created_at.asc()).all()
+    
     return jsonify([{
         "id": c.id,
         "content": c.content,
         "created_at": c.created_at.isoformat(),
-        "user_avatar": c.user_avatar,
+        "user_avatar": c.user.avatar_url,
         "username": c.user.username
     } for c in comments])
+
 
 @app.route('/api/discussion/<int:discussion_id>/comment', methods=['POST'])
 @login_required
@@ -587,7 +620,7 @@ def add_comment(discussion_id):
         "id": new_comment.id,
         "content": new_comment.content,
         "created_at": new_comment.created_at.isoformat(),
-        "user_avatar": new_comment.user_avatar,
+        "user_avatar": new_comment.user.avatar_url,
         "username": new_comment.user.username
     }), 201
 
@@ -606,6 +639,33 @@ def like_ressource(ressource_id):
     ressource.likes += 1
     db.session.commit()
     return jsonify({"likes": ressource.likes}), 200
+
+@app.route('/api/videos')
+@login_required
+def api_videos():
+    """Route spécifique pour les vidéos seulement"""
+    video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm']
+    
+    # Charger seulement les vidéos avec les relations
+    videos = Ressource.query.options(
+        joinedload(Ressource.user)
+    ).filter(Ressource.file_type.in_(video_types)).order_by(Ressource.created_at.desc()).all()
+    
+    saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
+    
+    return jsonify([{
+        "id": r.id,
+        "title": r.title,
+        "subject": r.subject,
+        "file_type": r.file_type,
+        "likes": r.likes,
+        "created_at": r.created_at.isoformat(),
+        "user_avatar": r.user.avatar_url,
+        "username": r.user.username,
+        "file_url": r.file_url,
+        "download_url": r.download_url,
+        "is_saved": r.id in saved_ids
+    } for r in videos])
 
 # -------------------- Pages --------------------
 @app.route('/communaute')
@@ -633,6 +693,11 @@ def page_not_found():
 @app.route('/systeme')
 def systeme():
     return render_template('systeme.html')
+
+@app.route('/videos')
+@login_required
+def videos():
+    return render_template('videos.html')
 
 # --------------------------------------------------
 if __name__ == "__main__":

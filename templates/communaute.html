@@ -62,6 +62,178 @@
     color: white;
     border-radius: 4px;
   }
+
+  /* Reprise du style note.html pour les cartes de ressources */
+  .ressources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    padding: 20px 0;
+    align-items: start;
+  }
+
+  .ressources-list {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    height: 520px; /* fixe pour uniformité */
+    overflow: hidden;
+  }
+
+  .ressource-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 18px 12px;
+    flex-shrink: 0;
+  }
+
+  .ressource-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+
+  .ressource-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0;
+    color: #212529;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+
+  .ressource-meta-container {
+    padding: 0 18px 12px;
+    flex-shrink: 0;
+  }
+
+  .ressource-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #6c757d;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ressource-subject {
+    background: #e9ecef;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .ressource-media {
+    flex: 1; /* prend l'espace restant */
+    margin: 0 18px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .ressource-media img,
+  .ressource-media video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: white;
+  }
+
+  .ressource-media .icon-placeholder {
+    text-align: center;
+    color: #6c757d;
+    padding: 20px;
+  }
+  .ressource-media .icon-placeholder i {
+    font-size: 3em;
+    margin-bottom: 12px;
+    color: #007bff;
+  }
+
+  .ressource-actions {
+    display: flex;
+    gap: 10px;
+    padding: 12px 18px 18px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  .ressource-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-view { background: #007bff; color: white; }
+  .btn-view:hover { background: #0069d9; }
+  .btn-download { background: #28a745; color: white; }
+  .btn-download:hover { background: #218838; }
+
+  @media (max-width: 768px) {
+    .ressources-grid { grid-template-columns: 1fr; gap: 16px; }
+    .ressources-list { height: 480px; }
+  }
+  /* Styles pour l'icône de sauvegarde */
+.ressource-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  flex-shrink: 0;
+  position: relative; /* Pour positionner l'icône de sauvegarde */
+}
+
+.save-icon {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  cursor: pointer;
+  font-size: 1.2em;
+  z-index: 2;
+}
+
+.save-icon .fa-regular {
+  color: #ccc;
+}
+
+.save-icon .fa-solid {
+  color: #007bff;
+}
+
+.ressource-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0;
+  color: #212529;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  flex: 1;
+  padding-right: 30px; /* Espace pour l'icône de sauvegarde */
+}
 </style>
 {% endblock %}
 
@@ -80,6 +252,10 @@
     <button class="tab" data-page="partages">
       <i class="fas fa-folder-open"></i> Partages recentes
     </button>
+    <button class="tab" onclick="window.location.href='/videos'" 
+    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+<i class="fas fa-video"></i> Vidéos
+</button>
   </nav>
 </header>
 
@@ -95,14 +271,16 @@
             <form id="new-discussion-form" class="form-control">
               <textarea id="discussion-content" required placeholder="Poser une question ou commencer une discussion"></textarea>
               <div id="area-3">
-                <select id="discussion-subject">
+                <select id="discussion-subject" required>
                   <option value="">-- Choisir une matière --</option>
                   <option value="C++">C++</option>
                   <option value="HTML">HTML</option>
                   <option value="CSS">CSS</option>
                   <option value="Javascript">Javascript</option>
                   <option value="Algorithme">Algorithme</option>
+                  <option value="autre">Autre (précisez)</option>
                 </select>
+                <input type="text" id="autre-subject" placeholder="Précisez la matière" style="display: none; margin-top: 8px; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 <button type="submit">Publier</button>
               </div>
             </form>
@@ -198,8 +376,11 @@
         </div>
 
         <!-- Liste dynamique -->
-        <div id="ressource-list"></div>
-        <div id="ressources-pagination"></div> <!-- ✅ Pagination ici -->
+        <!-- IMPORTANT: Le rendu des ressources (grid de cartes) est maintenant géré par renderPaginated + renderRessources -->
+        <div id="ressource-list-wrapper">
+          <div id="ressource-list"></div>
+          <div id="ressources-pagination"></div> <!-- Pagination placée ici -->
+        </div>
       </div>
 
       <!-- Colonne droite -->
@@ -238,8 +419,7 @@
   </section>
 </main>
 
-<div id="modal-overlay" class="modal-overlay">
-  <!-- Dans votre modal de partage -->
+<div id="modal-overlay" class="modal-overlay" style="display:none;">
 <form id="form-partage" class="form-partage" method="post" action="{{ url_for('share_ressource') }}" enctype="multipart/form-data">
   <label for="titre">Titre:</label>
   <input type="text" id="titre" name="titre" placeholder="Le titre du document" required />
@@ -252,10 +432,11 @@
     <option value="C++">C++</option>
     <option value="CSS">CSS</option>
     <option value="Systèmes">Système</option>
+    <option value="autre">Autre (précisez)</option>
   </select>
+  <input type="text" id="autre-matiere" name="autre_matiere" placeholder="Précisez la matière" style="display: none; margin-top: 8px; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
 
   <label for="file">Fichier(s) (images, pdf, vidéo) :</label>
-  <!-- ✅ accept multiple + nouveaux formats -->
   <input type="file" id="file" name="files" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.mp4,.mov,.avi,.mkv" multiple required>
 
   <div class="bbtn">
@@ -270,117 +451,281 @@
 <script>
   // =============== CONFIGURATION ===============
   const ITEMS_PER_PAGE = 10;
-  let currentPageDiscussions = 1;
-  let currentPageRessources = 1;
-
-  // =============== PARTAGES ===============
+  
+  // Variables globales pour la pagination
   let ressources = [];
   let filteredRessources = [];
+  let currentPageRessources = 1;
+  
+  let allDiscussions = [];
+  let currentPageDiscussions = 1;
+  let currentDiscussionId = null;
 
+  // =============== CHARGEMENT DES RESSOURCES ===============
   async function loadRessources() {
-    const res = await fetch('/api/ressources');
-    ressources = await res.json();
-    filteredRessources = [...ressources];
-    displayRessources(filteredRessources);
+    try {
+      const res = await fetch('/api/ressources');
+      ressources = await res.json();
+      filteredRessources = [...ressources];
+
+      // Mettre à jour compteur
+      document.getElementById('total-ressources').textContent = ressources.length || 0;
+
+      // Afficher la première page
+      renderPaginatedRessources(filteredRessources, currentPageRessources);
+    } catch (err) {
+      console.error('Erreur loadRessources:', err);
+      document.getElementById('ressource-list').innerHTML = '<p style="color:red; text-align:center;">Erreur lors du chargement des ressources.</p>';
+    }
   }
 
-  function displayRessources(list) {
-  const container = document.getElementById('ressource-list');
-  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
-  const start = (currentPageRessources - 1) * ITEMS_PER_PAGE;
-  const paginated = list.slice(start, start + ITEMS_PER_PAGE);
-
-  container.innerHTML = '';
-  paginated.forEach(res => {
-    const pages = res.page_count > 0 ? ` (${res.page_count} pages)` : '';
-    const date = new Date(res.created_at).toLocaleDateString();
-    
-    // Déterminer si c'est une vidéo
-    const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(res.file_type);
-
-    // Déterminer l'état de l'icône de sauvegarde
-    const isSaved = res.is_saved || false;
-    const bookmarkIconClass = isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
-    const bookmarkColor = isSaved ? '#007bff' : '#ccc';
-
-    container.innerHTML += `
-      <div class="discussion-list">
-        <div class="discussion-head">
-          <img src="${res.user_avatar}" alt="Avatar de ${res.username}" onerror="this.src='https://via.placeholder.com/150'">
-          <div class="discussion-list-info">
-            <p class="p1">
-              <span>${res.title}</span>
-              <span>${res.subject}</span>
-              <a href="#" onclick="likeRessource(${res.id}); return false;">
-                <i class="fa-solid fa-thumbs-up"></i> <span>${res.likes}</span>
-              </a>
-              <a href="#" onclick="toggleSaveRessource(${res.id}, this); return false;">
-                <i class="${bookmarkIconClass}" style="color: ${bookmarkColor};"></i>
-              </a>
-            </p>
-            <p>Type: ${res.file_type}${pages}</p>
-            <div style="margin: 10px 0;">
-              ${isVideo ? `
-                <video controls width="100%" style="border-radius:4px;">
-                  <source src="${res.file_url}" type="video/${res.file_type}">
-                  Votre navigateur ne supporte pas la vidéo.
-                </video>
-              ` : `
-                <a href="${res.file_url}" target="_blank">
-                  <i class="fa-solid fa-eye"></i> Voir
-                </a>
-              `}
-            </div>
-            <p class="p2">
-              <span>par ${res.username}</span>
-              <span>${date}</span>
-            </p>
-            <div class="btn-footer">
-              <a href="${res.download_url}" download="${res.title}.${res.file_type}">
-                <i class="fa-solid fa-download"></i> Télécharger
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>`;
-  });
-
-  renderPagination(totalPages, currentPageRessources, (page) => {
+  // =============== FONCTIONS DE RENDU POUR RESSOURCES ===============
+  function renderPaginatedRessources(list, page) {
     currentPageRessources = page;
-    displayRessources(list);
-  }, 'ressources-pagination');
-}
-  document.getElementById('sort').addEventListener('change', (e) => {
-    currentPageRessources = 1;
-    const [field, order] = e.target.value.split('-');
-    filteredRessources.sort((a, b) => {
-      let x = a[field], y = b[field];
-      if (field === 'date') {
-        x = new Date(a.created_at);
-        y = new Date(b.created_at);
-      }
-      if (x < y) return order === 'asc' ? -1 : 1;
-      if (x > y) return order === 'asc' ? 1 : -1;
-      return 0;
+    const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    const paginated = list.slice(start, start + ITEMS_PER_PAGE);
+
+    // Rendu des cartes
+    renderRessources(paginated, 'ressource-list');
+
+    // Rendu de la pagination
+    renderPagination(totalPages, page, (newPage) => {
+      renderPaginatedRessources(list, newPage);
+    }, 'ressources-pagination');
+  }
+
+  function renderRessources(list, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (list.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:30px; color:#777; font-size:1.1em;">Aucune ressource.</p>';
+        return;
+    }
+
+    container.innerHTML = '<div class="ressources-grid"></div>';
+    const grid = container.querySelector('.ressources-grid');
+
+    list.forEach(r => {
+        const date = new Date(r.created_at).toLocaleDateString('fr-FR');
+        const isImage = ['png','jpg','jpeg','gif'].includes(r.file_type);
+        const isPdf = r.file_type === 'pdf';
+        const isVideo = ['mp4','mov','avi','mkv','webm'].includes(r.file_type);
+        
+        // État de sauvegarde
+        const isSaved = r.is_saved || false;
+        const bookmarkIconClass = isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
+        const bookmarkColor = isSaved ? '#007bff' : '#ccc';
+
+        let mediaHtml = '';
+        if (isVideo) {
+            // AFFICHER LA VIDÉO MAIS AVEC UN LIEN VERS LA PAGE DÉDIÉE
+            mediaHtml = `
+                <div class="ressource-media" style="cursor: pointer;" onclick="window.location.href='/videos#video-${r.id}'">
+                    <div class="icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+                        <i class="fa-solid fa-video" style="font-size: 2.5em; margin-bottom: 12px;"></i>
+                        <p style="margin: 0; font-weight: 500;">📹 Vidéo disponible</p>
+                        <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.9;">Cliquez pour voir dans la page Vidéos</p>
+                    </div>
+                </div>`;
+        } else if (isImage) {
+            mediaHtml = `
+                <div class="ressource-media">
+                    <img src="${r.file_url}" alt="${r.title}" 
+                         loading="lazy" 
+                         style="width: 100%; height: 100%; object-fit: contain;">
+                </div>`;
+        } else if (isPdf) {
+            mediaHtml = `
+                <div class="ressource-media">
+                    <div class="icon-placeholder">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <p>Document PDF</p>
+                    </div>
+                </div>`;
+        } else {
+            mediaHtml = `
+                <div class="ressource-media">
+                    <div class="icon-placeholder">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <p>${(r.file_type || '').toUpperCase()}</p>
+                    </div>
+                </div>`;
+        }
+
+        grid.innerHTML += `
+            <div class="ressources-list">
+                <div class="ressource-header">
+                    <img src="${r.user_avatar}" 
+                         alt="Avatar" 
+                         class="ressource-avatar"
+                         loading="lazy"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+QXZhdGFyPC90ZXh0Pjwvc3ZnPg=='">
+                    <h3 class="ressource-title">${r.title}</h3>
+                    <!-- ICÔNE DE SAUVEGARDE RÉTABLIE -->
+                    <div class="save-icon" onclick="toggleSaveRessource(${r.id}, this)">
+                        <i class="${bookmarkIconClass}" style="color: ${bookmarkColor};"></i>
+                    </div>
+                </div>
+                
+                <div class="ressource-meta">
+                    <span class="ressource-subject">${r.subject}</span>
+                    <span>par ${r.username || 'Utilisateur'}</span>
+                </div>
+
+                ${mediaHtml}
+
+                <div class="ressource-meta">
+                    <span>${date}</span>
+                    <span>${r.page_count ? r.page_count + ' pages' : '—'}</span>
+                </div>
+
+                <div class="ressource-actions">
+                    ${isVideo ? `
+                        <button class="btn-view" onclick="window.location.href='/videos#video-${r.id}'" style="background: #667eea;">
+                            <i class="fa-solid fa-video"></i> Voir la vidéo
+                        </button>
+                    ` : `
+                        <button class="btn-view" onclick="window.open('${r.file_url}', '_blank')">
+                            <i class="fa-solid fa-eye"></i> Voir
+                        </button>
+                    `}
+                    <button class="btn-download" onclick="window.open('${r.download_url || r.file_url}', '_blank')">
+                        <i class="fa-solid fa-download"></i> Télécharger
+                    </button>
+                </div>
+            </div>`;
     });
-    displayRessources(filteredRessources);
+}
+
+// =============== FONCTION DE SAUVEGARDE ===============
+function toggleSaveRessource(ressourceId, element) {
+  const icon = element.querySelector('i');
+  const isCurrentlySaved = icon.classList.contains('fa-solid');
+
+  const url = isCurrentlySaved 
+    ? `/api/unsave_ressource/${ressourceId}` 
+    : `/api/save_ressource/${ressourceId}`;
+
+  fetch(url, { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.saved) {
+        icon.className = 'fa-solid fa-bookmark';
+        icon.style.color = '#007bff';
+        
+        // Mettre à jour la ressource locale
+        const ressource = ressources.find(r => r.id === ressourceId);
+        if (ressource) ressource.is_saved = true;
+        
+        // Recharger les ressources sauvegardées dans note.html (si ouvert)
+        console.log('Ressource sauvegardée !');
+      } else {
+        icon.className = 'fa-regular fa-bookmark';
+        icon.style.color = '#ccc';
+        
+        // Mettre à jour la ressource locale
+        const ressource = ressources.find(r => r.id === ressourceId);
+        if (ressource) ressource.is_saved = false;
+        
+        console.log('Ressource désauvegardée !');
+      }
+    })
+    .catch(err => {
+      console.error('Erreur:', err);
+      alert('Impossible de sauvegarder.');
+    });
+}
+  // =============== PAGINATION GÉNÉRIQUE CORRIGÉE ===============
+  function renderPagination(totalPages, currentPage, onPageChange, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="pagination">';
+
+    // Bouton précédent
+    if (currentPage > 1) {
+      html += `<button onclick="pageChangeHandler(${currentPage - 1}, '${containerId}')">&laquo; Précédent</button>`;
+    }
+
+    // Pages
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === currentPage) {
+        html += `<span class="current-page">${i}</span>`;
+      } else {
+        html += `<button onclick="pageChangeHandler(${i}, '${containerId}')">${i}</button>`;
+      }
+    }
+
+    // Bouton suivant
+    if (currentPage < totalPages) {
+      html += `<button onclick="pageChangeHandler(${currentPage + 1}, '${containerId}')">Suivant &raquo;</button>`;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Stocker la fonction de callback dans l'élément
+    container._pageChangeCallback = onPageChange;
+  }
+
+  // Gestionnaire global pour les changements de page
+  function pageChangeHandler(page, containerId) {
+    const container = document.getElementById(containerId);
+    if (container && container._pageChangeCallback) {
+      container._pageChangeCallback(page);
+    }
+  }
+
+  // =============== TRI & RECHERCHE pour les partages ===============
+  document.getElementById('sort')?.addEventListener('change', (e) => {
+    currentPageRessources = 1;
+    const v = e.target.value;
+    if (!ressources) return;
+    
+    filteredRessources = [...ressources]; // Réinitialiser avant de trier
+    
+    if (v === 'date-desc') {
+      filteredRessources.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (v === 'date-asc') {
+      filteredRessources.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (v === 'file_type-asc') {
+      filteredRessources.sort((a, b) => (a.file_type || '').localeCompare(b.file_type || ''));
+    } else if (v === 'file_type-desc') {
+      filteredRessources.sort((a, b) => (b.file_type || '').localeCompare(a.file_type || ''));
+    } else if (v === 'likes-desc') {
+      filteredRessources.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    }
+    
+    renderPaginatedRessources(filteredRessources, currentPageRessources);
   });
 
-  document.getElementById('search').addEventListener('input', (e) => {
+  document.getElementById('search')?.addEventListener('input', (e) => {
     currentPageRessources = 1;
     const term = e.target.value.toLowerCase();
     filteredRessources = ressources.filter(r =>
-      r.title.toLowerCase().includes(term) ||
-      r.subject.toLowerCase().includes(term) ||
-      r.file_type.toLowerCase().includes(term)
+      (r.title || '').toLowerCase().includes(term) ||
+      (r.subject || '').toLowerCase().includes(term) ||
+      (r.file_type || '').toLowerCase().includes(term)
     );
-    displayRessources(filteredRessources);
+    renderPaginatedRessources(filteredRessources, currentPageRessources);
   });
 
   // =============== DISCUSSIONS ===============
-  let allDiscussions = [];
-  let currentDiscussionId = null;
-
   function formatTimeAgo(dateStr) {
     const now = new Date();
     const date = new Date(dateStr);
@@ -413,9 +758,9 @@
     if (!query) return discussions;
     const q = query.toLowerCase();
     return discussions.filter(d =>
-      d.title?.toLowerCase().includes(q) ||
-      d.content?.toLowerCase().includes(q) ||
-      d.subject?.toLowerCase().includes(q)
+      (d.title || '').toLowerCase().includes(q) ||
+      (d.content || '').toLowerCase().includes(q) ||
+      (d.subject || '').toLowerCase().includes(q)
     );
   }
 
@@ -450,7 +795,7 @@
               <span>par ${d.username}</span>
               <span>${timeAgo}</span>
               <span onclick="openComments(${d.id})" style="cursor:pointer;">
-                <i class="fa-solid fa-comment"></i> ${d.comment_count} réponse${d.comment_count !== 1 ? 's' : ''}
+                <i class="fa-solid fa-comment"></i> ${d.comment_count} réponse${d.comment_count !== 1 ? 's' : ''} 
               </span>
             </p>
           </div>
@@ -459,6 +804,7 @@
       container.appendChild(el);
     });
 
+    // Pagination pour discussions
     renderPagination(totalPages, currentPageDiscussions, (page) => {
       currentPageDiscussions = page;
       renderDiscussions(discussions);
@@ -466,7 +812,6 @@
   }
 
   function applyFilters() {
-    currentPageDiscussions = 1;
     const query = document.getElementById('search-discussions').value.trim();
     const sortBy = document.getElementById('sort-discussions').value;
     const filtered = filterDiscussions(allDiscussions, query);
@@ -488,7 +833,7 @@
       });
   }
 
-  // =============== MODAL & INTERACTIONS ===============
+  // =============== MODAL & INTERACTIONS COMMENTS ===============
   function openComments(discussionId) {
     currentDiscussionId = discussionId;
     document.getElementById('comment-modal').style.display = 'flex';
@@ -524,120 +869,193 @@
       });
   }
 
-  function likeRessource(id) {
-    fetch(`/like_ressource/${id}`, {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Content-Type': 'application/json'
-      },
-    })
-      .then(response => response.json())
-      .then(data => {
-        // Note: vous n'avez pas d'ID like-count dans le HTML, donc on ne met pas à jour visuellement ici
-        // Si besoin, ajoutez un span avec id="like-count-${id}" dans le HTML
-      })
-      .catch(error => {
-        console.error('Erreur:', error);
-        alert('Impossible de liker pour le moment.');
-      });
+  // =============== EVENTS ===============
+// =============== GESTION DU CHAMP "AUTRE" POUR LES MATIÈRES ===============
+document.getElementById('discussion-subject')?.addEventListener('change', function(e) {
+  const autreInput = document.getElementById('autre-subject');
+  if (e.target.value === 'autre') {
+    autreInput.style.display = 'block';
+    autreInput.required = true;
+  } else {
+    autreInput.style.display = 'none';
+    autreInput.required = false;
+    autreInput.value = '';
   }
+});
 
-  // =============== ÉVÉNEMENTS ===============
-  document.getElementById('new-discussion-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const content = document.getElementById('discussion-content').value.trim();
-    const subject = document.getElementById('discussion-subject').value;
-    if (!content || !subject) return alert("Veuillez remplir tous les champs.");
-    const title = content.length > 60 ? content.substring(0, 60) + "…" : content;
-
-    fetch('/api/discussion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, subject, content })
-    }).then(() => {
-      document.getElementById('discussion-content').value = '';
-      document.getElementById('discussion-subject').value = '';
-      loadAllDiscussions();
-    }).catch(() => alert("Erreur lors de la publication."));
-  });
-
-  document.getElementById('search-discussions')?.addEventListener('input', applyFilters);
-  document.getElementById('sort-discussions')?.addEventListener('change', applyFilters);
-
-  document.querySelector('.close')?.addEventListener('click', () => {
-    document.getElementById('comment-modal').style.display = 'none';
-  });
-  window.addEventListener('click', e => {
-    if (e.target.id === 'comment-modal') {
-      document.getElementById('comment-modal').style.display = 'none';
-    }
-  });
-
-  document.getElementById('comment-form')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const content = document.getElementById('comment-input').value.trim();
-    if (!content) return;
-    fetch(`/api/discussion/${currentDiscussionId}/comment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
-    }).then(() => {
-      document.getElementById('comment-input').value = '';
-      loadComments(currentDiscussionId);
-    });
-  });
-
-  // =============== STATS ===============
-  function loadStats() {
-    fetch('/api/stats')
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('active-users').textContent = data.active_users;
-        document.getElementById('total-ressources').textContent = data.total_ressources || 0;
-      });
-  }
-
-  // =============== PAGINATION GÉNÉRIQUE ===============
-  function renderPagination(totalPages, currentPage, onPageChange, containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    if (totalPages <= 1) {
-      container.innerHTML = '';
+// Modifiez la fonction de soumission du formulaire de discussion
+document.getElementById('new-discussion-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const content = document.getElementById('discussion-content').value.trim();
+  let subject = document.getElementById('discussion-subject').value;
+  const autreSubject = document.getElementById('autre-subject').value.trim();
+  
+  // Si "Autre" est sélectionné, utiliser la valeur du champ texte
+  if (subject === 'autre') {
+    if (!autreSubject) {
+      alert("Veuillez préciser la matière.");
       return;
     }
+    subject = autreSubject;
+  }
+  
+  if (!content || !subject) return alert("Veuillez remplir tous les champs.");
+  const title = content.length > 60 ? content.substring(0, 60) + "…" : content;
 
-    let html = '<div class="pagination">';
+  fetch('/api/discussion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, subject, content })
+  }).then(() => {
+    document.getElementById('discussion-content').value = '';
+    document.getElementById('discussion-subject').value = '';
+    document.getElementById('autre-subject').value = '';
+    document.getElementById('autre-subject').style.display = 'none';
+    loadAllDiscussions();
+  }).catch(() => alert("Erreur lors de la publication."));
+});
 
-    if (currentPage > 1) {
-      html += `<button onclick="(${onPageChange})(${currentPage - 1})">&laquo; Précédent</button>`;
+document.getElementById('search-discussions')?.addEventListener('input', applyFilters);
+document.getElementById('sort-discussions')?.addEventListener('change', applyFilters);
+
+document.querySelector('.close')?.addEventListener('click', () => {
+  document.getElementById('comment-modal').style.display = 'none';
+});
+window.addEventListener('click', e => {
+  if (e.target.id === 'comment-modal') {
+    document.getElementById('comment-modal').style.display = 'none';
+  }
+});
+
+document.getElementById('comment-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const content = document.getElementById('comment-input').value.trim();
+  if (!content) return;
+  fetch(`/api/discussion/${currentDiscussionId}/comment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  }).then(() => {
+    document.getElementById('comment-input').value = '';
+    loadComments(currentDiscussionId);
+  });
+});
+
+// =============== MODAL PARTAGE ===============
+const partages = document.querySelectorAll('.share-ressource');
+const modalOverlay = document.getElementById('modal-overlay');
+const form_p = document.getElementById('form-partage');
+
+function ouvrirFormulaire() {
+  if (modalOverlay) modalOverlay.style.display = 'flex';
+}
+
+function fermerFormulaire() {
+  if (modalOverlay) {
+    modalOverlay.style.display = 'none';
+    // Réinitialiser les champs "Autre" quand on ferme le modal
+    const autreInput = document.getElementById('autre-matiere');
+    if (autreInput) {
+      autreInput.style.display = 'none';
+      autreInput.value = '';
     }
-
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
+    const matiereSelect = document.getElementById('MYmatiere');
+    if (matiereSelect) {
+      matiereSelect.disabled = false;
+      matiereSelect.value = '';
     }
+  }
+}
 
-    for (let i = startPage; i <= endPage; i++) {
-      if (i === currentPage) {
-        html += `<span class="current-page">${i}</span>`;
-      } else {
-        html += `<button onclick="(${onPageChange})(${i})">${i}</button>`;
+partages.forEach(btn => {
+  btn.addEventListener('click', ouvrirFormulaire);
+});
+
+if (modalOverlay) {
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) fermerFormulaire();
+  });
+}
+
+if (form_p) {
+  form_p.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+// =============== GESTION DU CHAMP "AUTRE" POUR LE PARTAGE DE RESSOURCES ===============
+document.getElementById('MYmatiere')?.addEventListener('change', function(e) {
+  const autreInput = document.getElementById('autre-matiere');
+  if (e.target.value === 'autre') {
+    autreInput.style.display = 'block';
+    autreInput.required = true;
+  } else {
+    autreInput.style.display = 'none';
+    autreInput.required = false;
+    autreInput.value = '';
+  }
+});
+
+if (form_p) {
+  form_p.addEventListener('submit', function(e) {
+    const matiereSelect = document.getElementById('MYmatiere');
+    const autreInput = document.getElementById('autre-matiere');
+    
+    // Si "Autre" est sélectionné, remplacer la valeur
+    if (matiereSelect && matiereSelect.value === 'autre') {
+      if (!autreInput || !autreInput.value.trim()) {
+        e.preventDefault();
+        alert("Veuillez préciser la matière.");
+        return false;
+      }
+      // Créer un champ hidden pour envoyer la valeur
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = 'matiere';
+      hiddenInput.value = autreInput.value.trim();
+      e.target.appendChild(hiddenInput);
+      
+      // Désactiver le select original pour qu'il ne soit pas envoyé
+      matiereSelect.disabled = true;
+    }
+    
+    // Vérification de la taille des fichiers
+    const files = document.getElementById('file').files;
+    const maxSize = 100 * 1024 * 1024; // 100 Mo
+    
+    for (let file of files) {
+      if (file.size > maxSize) {
+        e.preventDefault();
+        alert(`Le fichier "${file.name}" est trop volumineux.\nTaille maximale : 100 Mo.`);
+        return false;
       }
     }
+  });
+}
 
-    if (currentPage < totalPages) {
-      html += `<button onclick="(${onPageChange})(${currentPage + 1})">Suivant &raquo;</button>`;
+// Réinitialiser le formulaire quand il est soumis avec succès
+form_p?.addEventListener('submit', function() {
+  // Réinitialiser après un délai pour laisser le temps à l'envoi
+  setTimeout(() => {
+    const autreInput = document.getElementById('autre-matiere');
+    const matiereSelect = document.getElementById('MYmatiere');
+    
+    if (autreInput) {
+      autreInput.style.display = 'none';
+      autreInput.value = '';
     }
-
-    html += '</div>';
-    container.innerHTML = html;
-  }
-
-  // =============== NAVIGATION ===============
+    if (matiereSelect) {
+      matiereSelect.disabled = false;
+      matiereSelect.value = '';
+    }
+    
+    // Réinitialiser les autres champs
+    document.getElementById('titre').value = '';
+    document.getElementById('file').value = '';
+  }, 1000);
+});
+ 
+  // =============== NAVIGATION ENTRE ONGLETS ===============
   const tabs = document.querySelectorAll(".tab");
   const pages = document.querySelectorAll(".page");
 
@@ -651,30 +1069,15 @@
     });
   });
 
-  // =============== MODAL PARTAGE ===============
-  const partages = document.querySelectorAll('.share-ressource');
-  const modalOverlay = document.getElementById('modal-overlay');
-  const form_p = document.getElementById('form-partage');
-
-  function ouvrirFormulaire() {
-    modalOverlay.style.display = 'flex';
+  // =============== STATS ===============
+  function loadStats() {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('active-users').textContent = data.active_users;
+        document.getElementById('total-ressources').textContent = data.total_ressources || 0;
+      });
   }
-
-  function fermerFormulaire() {
-    modalOverlay.style.display = 'none';
-  }
-
-  partages.forEach(btn => {
-    btn.addEventListener('click', ouvrirFormulaire);
-  });
-
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) fermerFormulaire();
-  });
-
-  form_p.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
 
   // =============== INITIALISATION ===============
   document.addEventListener('DOMContentLoaded', () => {
@@ -683,44 +1086,4 @@
     loadStats();
   });
 </script>
-<script>
- function toggleSaveRessource(ressourceId, linkElement) {
-  // Trouver l'icône à l'intérieur du lien
-  const icon = linkElement.querySelector('i');
-  const isCurrentlySaved = icon.classList.contains('fa-solid'); // plein = sauvegardé
-
-  const url = isCurrentlySaved 
-    ? `/api/unsave_ressource/${ressourceId}` 
-    : `/api/save_ressource/${ressourceId}`;
-
-  fetch(url, { method: 'POST' })
-    .then(response => response.json())
-    .then(data => {
-      if (data.saved) {
-        icon.className = 'fa-solid fa-bookmark';
-        icon.style.color = '#007bff';
-      } else {
-        icon.className = 'fa-regular fa-bookmark';
-        icon.style.color = '#ccc';
-      }
-    })
-    .catch(err => {
-      console.error('Erreur:', err);
-      alert('Impossible de sauvegarder.');
-    });
-}
-
-  document.getElementById('form-partage').addEventListener('submit', function(e) {
-    const files = document.getElementById('file').files;
-    const maxSize = 100 * 1024 * 1024; // 100 Mo
-  
-    for (let file of files) {
-      if (file.size > maxSize) {
-        e.preventDefault();
-        alert(`Le fichier "${file.name}" est trop volumineux.\nTaille maximale : 100 Mo.`);
-        return false;
-      }
-    }
-  });
-  </script>
 {% endblock %}
