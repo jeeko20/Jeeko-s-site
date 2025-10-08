@@ -1,8 +1,6 @@
-{%extends 'base.html'%}
-{%block extra_css%}
-<link rel="stylesheet" href="{{url_for('static', filename='css/communaute.css')}}">
-<!-- CSS pour le modal (tu peux le déplacer dans ton fichier CSS principal) -->
-<!-- CSS minimal pour le modal (à intégrer dans ton CSS global si possible) -->
+{% extends 'base.html' %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/communaute.css') }}">
 <style>
   .modal {
     position: fixed;
@@ -11,14 +9,14 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* fond semi-transparent noir (overlay) */
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
   }
 
   .modal-content {
-    background: white !important; /* ✅ Force le fond blanc */
+    background: white !important;
     color: black !important;
     padding: 20px;
     border-radius: 8px;
@@ -39,10 +37,35 @@
   .close:hover {
     color: #000;
   }
-</style>
-{%endblock%}
 
-{%block content%}
+  /* Pagination style */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background: #f8f9fa;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .pagination button:hover {
+    background: #e9ecef;
+  }
+  .current-page {
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    border-radius: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
 <!-- ================= HEADER ================= -->
 <header class="header">
   <div class="header-content">
@@ -58,134 +81,54 @@
       <i class="fas fa-folder-open"></i> Partages recentes
     </button>
   </nav>
-
 </header>
 
-<!-- Contenu dynamique -->
 <main>
   <!-- Section DISCUSSION -->
-<section id="discussion" class="page active">
-  <div class="discussion">
-
-    <!-- Colonne principale -->
-    <div class="info-discussion">
-      <div class="start-discussion">
-        <h2>Nouvelle discussion</h2>
-        <div id="area-1">
-          <img src="{{ session.get('user_avatar') or 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg' }}" alt="photo">
-          <form id="new-discussion-form" class="form-control">
-            <textarea id="discussion-content" required placeholder="Poser une question ou commencer une discussion"></textarea>
-            <div id="area-3">
-              <select id="discussion-subject">
-                <option value="">-- Choisir une matière --</option>
-                <option value="C++">C++</option>
-                <option value="HTML">HTML</option>
-                <option value="CSS">CSS</option>
-                <option value="Javascript">Javascript</option>
-                <option value="Algorithme">Algorithme</option>
-              </select>
-              <button type="submit">Publier</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Barre de recherche et tri -->
-      <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: end;">
-        <div style="flex: 1; min-width: 200px;">
-          <input type="text" id="search-discussions" placeholder="Rechercher une discussion..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        </div>
-        <div style="min-width: 150px;">
-          <select id="sort-discussions" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-            <option value="date">Plus récent</option>
-            <option value="likes">Populaires</option>
-            <option value="subject">Par matière</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Discussions dynamiques -->
-      <div id="discussions-container">
-        <!-- Chargé par JavaScript -->
-      </div>
-    </div>
-
-    <!-- Colonne droite -->
-    <div class="block-2">
-      <div class="action-rapide">
-        <h2>Actions rapides</h2>
-        <ul>
-          <li class="share-ressource">Partager une ressource</li>
-          <li><a href="#" style="color: black; text-decoration: none;">Poser une question</a></li>
-          <li class="join-group">Rejoindre un groupe</li>
-        </ul>
-      </div>
-
-      <div class="sujet-populaire">
-        <h2>Sujets populaires</h2>
-        <ul>
-          <li><span>Optimisation C++</span><span>24</span></li>
-          <li><span>CSS Grid</span><span>18</span></li>
-          <li><span>Algorithme de tri</span><span>15</span></li>
-          <li><span>Gestion mémoire</span><span>12</span></li>
-          <li><span>JavaScript async</span><span>10</span></li>
-        </ul>
-      </div>
-
-      <div class="statistique">
-        <h2>Statistiques</h2>
-        <ul>
-          <li><span>Membres actifs</span><span id="active-users">—</span></li>
-          <li><span>Discussions ouvertes</span><span id="total-discussions">—</span></li>
-          <li><span>Ressources partagées</span><span id="total-ressources">—</span></li>
-          <li><span>Messages aujourd'hui</span><span>12</span></li>
-        </ul>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- Modal pour les commentaires -->
-<div id="comment-modal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h3 id="modal-title">Commentaires</h3>
-    <div id="comments-list"></div>
-    <form id="comment-form" style="margin-top:15px;">
-      <textarea id="comment-input" placeholder="Écrivez un commentaire..." required style="width:100%; height:60px; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea>
-      <button type="submit" style="margin-top:8px; padding:6px 12px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Envoyer</button>
-    </form>
-  </div>
-</div>
-
-
-
-  <!-- Section PARTAGES -->
-  <section id="partages" class="page">
+  <section id="discussion" class="page active">
     <div class="discussion">
-
-      <!-- Colonne principale -->
       <div class="info-discussion">
+        <div class="start-discussion">
+          <h2>Nouvelle discussion</h2>
+          <div id="area-1">
+            <img src="{{ current_user.avatar_url or 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg' }}" alt="photo">
+            <form id="new-discussion-form" class="form-control">
+              <textarea id="discussion-content" required placeholder="Poser une question ou commencer une discussion"></textarea>
+              <div id="area-3">
+                <select id="discussion-subject">
+                  <option value="">-- Choisir une matière --</option>
+                  <option value="C++">C++</option>
+                  <option value="HTML">HTML</option>
+                  <option value="CSS">CSS</option>
+                  <option value="Javascript">Javascript</option>
+                  <option value="Algorithme">Algorithme</option>
+                </select>
+                <button type="submit">Publier</button>
+              </div>
+            </form>
+          </div>
+        </div>
 
-  <!-- Menu de tri et recherche -->
-  <div class="tri-bar">
-    <label for="sort">Trier par :</label>
-    <select id="sort">
-      <option value="date-desc">Date (récent → ancien)</option>
-      <option value="date-asc">Date (ancien → récent)</option>
-      <option value="file_type-asc">Type (A-Z)</option>
-      <option value="file_type-desc">Type (Z-A)</option>
-      <option value="likes-desc">Likes (plus aimés)</option>
-    </select>
+        <!-- Barre de recherche et tri -->
+        <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: end;">
+          <div style="flex: 1; min-width: 200px;">
+            <input type="text" id="search-discussions" placeholder="Rechercher une discussion..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          </div>
+          <div style="min-width: 150px;">
+            <select id="sort-discussions" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="date">Plus récent</option>
+              <option value="likes">Populaires</option>
+              <option value="subject">Par matière</option>
+            </select>
+          </div>
+        </div>
 
-    <input type="text" id="search" placeholder="Rechercher un titre ou un sujet...">
-  </div>
-
-  <!-- Liste dynamique -->
-  <div id="ressource-list"></div>
-</div>
-
+        <!-- Discussions dynamiques -->
+        <div id="discussions-container">
+          <!-- Chargé par JavaScript -->
+        </div>
+        <div id="discussions-pagination"></div> <!-- ✅ Pagination ici -->
+      </div>
 
       <!-- Colonne droite -->
       <div class="block-2">
@@ -193,8 +136,79 @@
           <h2>Actions rapides</h2>
           <ul>
             <li class="share-ressource">Partager une ressource</li>
-            <li><a href="{{url_for('communaute')}}" style="color: black; text-decoration: none;">Poser une question</a>
-            </li>
+            <li><a href="#" style="color: black; text-decoration: none;">Poser une question</a></li>
+            <li class="join-group">Rejoindre un groupe</li>
+          </ul>
+        </div>
+
+        <div class="sujet-populaire">
+          <h2>Sujets populaires</h2>
+          <ul>
+            <li><span>Optimisation C++</span><span>24</span></li>
+            <li><span>CSS Grid</span><span>18</span></li>
+            <li><span>Algorithme de tri</span><span>15</span></li>
+            <li><span>Gestion mémoire</span><span>12</span></li>
+            <li><span>JavaScript async</span><span>10</span></li>
+          </ul>
+        </div>
+
+        <div class="statistique">
+          <h2>Statistiques</h2>
+          <ul>
+            <li><span>Membres actifs</span><span id="active-users">—</span></li>
+            <li><span>Discussions ouvertes</span><span id="total-discussions">—</span></li>
+            <li><span>Ressources partagées</span><span id="total-ressources">—</span></li>
+            <li><span>Messages aujourd'hui</span><span>12</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal pour les commentaires -->
+  <div id="comment-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="modal-title">Commentaires</h3>
+      <div id="comments-list"></div>
+      <form id="comment-form" style="margin-top:15px;">
+        <textarea id="comment-input" placeholder="Écrivez un commentaire..." required style="width:100%; height:60px; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea>
+        <button type="submit" style="margin-top:8px; padding:6px 12px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Envoyer</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Section PARTAGES -->
+  <section id="partages" class="page">
+    <div class="discussion">
+      <div class="info-discussion">
+        <!-- Menu de tri et recherche -->
+        <div class="tri-bar">
+          <label for="sort">Trier par :</label>
+          <select id="sort">
+            <option value="date-desc">Date (récent → ancien)</option>
+            <option value="date-asc">Date (ancien → récent)</option>
+            <option value="file_type-asc">Type (A-Z)</option>
+            <option value="file_type-desc">Type (Z-A)</option>
+            <option value="likes-desc">Likes (plus aimés)</option>
+          </select>
+          <div>
+            <input type="text" id="search" placeholder="Rechercher un titre ou un sujet...">
+          </div>
+        </div>
+
+        <!-- Liste dynamique -->
+        <div id="ressource-list"></div>
+        <div id="ressources-pagination"></div> <!-- ✅ Pagination ici -->
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="block-2">
+        <div class="action-rapide">
+          <h2>Actions rapides</h2>
+          <ul>
+            <li class="share-ressource">Partager une ressource</li>
+            <li><a href="{{ url_for('communaute') }}" style="color: black; text-decoration: none;">Poser une question</a></li>
             <li class="join-group">Rejoindre un groupe</li>
           </ul>
         </div>
@@ -220,66 +234,79 @@
           </ul>
         </div>
       </div>
-
     </div>
   </section>
 </main>
 
 <div id="modal-overlay" class="modal-overlay">
-  <form id="form-partage" class="form-partage" method="post" action="{{ url_for('share_ressource') }}"
-    enctype="multipart/form-data">
-    <label for="titre">Titre:</label>
-    <input type="text" id="titre" name="titre" placeholder="Le titre du document" required />
+  <!-- Dans votre modal de partage -->
+<form id="form-partage" class="form-partage" method="post" action="{{ url_for('share_ressource') }}" enctype="multipart/form-data">
+  <label for="titre">Titre:</label>
+  <input type="text" id="titre" name="titre" placeholder="Le titre du document" required />
 
-    <label for="MYmatiere">Matière :</label>
-    <select id="MYmatiere" name="matiere" required>
-      <option value="">-- Sélectionnez --</option>
-      <option value="JavaScript">JavaScript</option>
-      <option value="HTML">HTML</option>
-      <option value="C++">C++</option>
-      <option value="CSS">CSS</option>
-      <option value="Systèmes">Système</option>
-    </select>
+  <label for="MYmatiere">Matière :</label>
+  <select id="MYmatiere" name="matiere" required>
+    <option value="">-- Sélectionnez --</option>
+    <option value="JavaScript">JavaScript</option>
+    <option value="HTML">HTML</option>
+    <option value="C++">C++</option>
+    <option value="CSS">CSS</option>
+    <option value="Systèmes">Système</option>
+  </select>
 
-    <label for="file">Fichier (image, pdf, doc) :</label>
-    <input type="file" id="file" name="file" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx" required>
+  <label for="file">Fichier(s) (images, pdf, vidéo) :</label>
+  <!-- ✅ accept multiple + nouveaux formats -->
+  <input type="file" id="file" name="files" accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.mp4,.mov,.avi,.mkv" multiple required>
 
-    <div class="bbtn">
-      <button type="submit">Publier</button>
-      <button type="button" onclick="fermerFormulaire()">Annuler</button>
-    </div>
-  </form>
+  <div class="bbtn">
+    <button type="submit">Publier</button>
+    <button type="button" onclick="fermerFormulaire()">Annuler</button>
+  </div>
+</form>
 </div>
-{%endblock%}
+{% endblock %}
 
-{%block script%}
+{% block script %}
 <script>
-  //afficher les element
-  let ressources = []; // Toutes les ressources récupérées du serveur
-let filtered = [];   // Liste affichée après tri / recherche
+  // =============== CONFIGURATION ===============
+  const ITEMS_PER_PAGE = 10;
+  let currentPageDiscussions = 1;
+  let currentPageRessources = 1;
 
-// Charger les ressources depuis Flask
-async function loadRessources() {
-  const res = await fetch('/api/ressources');
-  ressources = await res.json();
-  filtered = [...ressources];
-  displayRessources(filtered);
-}
+  // =============== PARTAGES ===============
+  let ressources = [];
+  let filteredRessources = [];
 
-// Afficher les ressources dans le HTML
-function displayRessources(list) {
+  async function loadRessources() {
+    const res = await fetch('/api/ressources');
+    ressources = await res.json();
+    filteredRessources = [...ressources];
+    displayRessources(filteredRessources);
+  }
+
+  function displayRessources(list) {
   const container = document.getElementById('ressource-list');
-  container.innerHTML = '';
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  const start = (currentPageRessources - 1) * ITEMS_PER_PAGE;
+  const paginated = list.slice(start, start + ITEMS_PER_PAGE);
 
-  list.forEach(res => {
+  container.innerHTML = '';
+  paginated.forEach(res => {
     const pages = res.page_count > 0 ? ` (${res.page_count} pages)` : '';
     const date = new Date(res.created_at).toLocaleDateString();
+    
+    // Déterminer si c'est une vidéo
+    const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(res.file_type);
+
+    // Déterminer l'état de l'icône de sauvegarde
+    const isSaved = res.is_saved || false;
+    const bookmarkIconClass = isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
+    const bookmarkColor = isSaved ? '#007bff' : '#ccc';
 
     container.innerHTML += `
       <div class="discussion-list">
         <div class="discussion-head">
-          <img src="${res.user_avatar}" alt="Avatar de ${res.username}"
-               onerror="this.src='https://via.placeholder.com/150'">
+          <img src="${res.user_avatar}" alt="Avatar de ${res.username}" onerror="this.src='https://via.placeholder.com/150'">
           <div class="discussion-list-info">
             <p class="p1">
               <span>${res.title}</span>
@@ -287,16 +314,28 @@ function displayRessources(list) {
               <a href="#" onclick="likeRessource(${res.id}); return false;">
                 <i class="fa-solid fa-thumbs-up"></i> <span>${res.likes}</span>
               </a>
+              <a href="#" onclick="toggleSaveRessource(${res.id}, this); return false;">
+                <i class="${bookmarkIconClass}" style="color: ${bookmarkColor};"></i>
+              </a>
             </p>
             <p>Type: ${res.file_type}${pages}</p>
+            <div style="margin: 10px 0;">
+              ${isVideo ? `
+                <video controls width="100%" style="border-radius:4px;">
+                  <source src="${res.file_url}" type="video/${res.file_type}">
+                  Votre navigateur ne supporte pas la vidéo.
+                </video>
+              ` : `
+                <a href="${res.file_url}" target="_blank">
+                  <i class="fa-solid fa-eye"></i> Voir
+                </a>
+              `}
+            </div>
             <p class="p2">
               <span>par ${res.username}</span>
               <span>${date}</span>
             </p>
             <div class="btn-footer">
-              <a href="${res.file_url}" target="_blank">
-                <i class="fa-solid fa-eye"></i> Voir
-              </a>
               <a href="${res.download_url}" download="${res.title}.${res.file_type}">
                 <i class="fa-solid fa-download"></i> Télécharger
               </a>
@@ -305,134 +344,43 @@ function displayRessources(list) {
         </div>
       </div>`;
   });
+
+  renderPagination(totalPages, currentPageRessources, (page) => {
+    currentPageRessources = page;
+    displayRessources(list);
+  }, 'ressources-pagination');
 }
-
-// Tri dynamique
-document.getElementById('sort').addEventListener('change', (e) => {
-  const [field, order] = e.target.value.split('-');
-  filtered.sort((a, b) => {
-    let x = a[field], y = b[field];
-
-    if (field === 'date') {
-      x = new Date(a.created_at);
-      y = new Date(b.created_at);
-    }
-
-    if (x < y) return order === 'asc' ? -1 : 1;
-    if (x > y) return order === 'asc' ? 1 : -1;
-    return 0;
-  });
-  displayRessources(filtered);
-});
-
-// Recherche en direct
-document.getElementById('search').addEventListener('input', (e) => {
-  const term = e.target.value.toLowerCase();
-  filtered = ressources.filter(r =>
-    r.title.toLowerCase().includes(term) ||
-    r.subject.toLowerCase().includes(term) ||
-    r.file_type.toLowerCase().includes(term)
-  );
-  displayRessources(filtered);
-});
-
-// Charger au démarrage
-loadRessources();
-
-  // Sélectionner tous les boutons de navigation
-  const tabs = document.querySelectorAll(".tab");
-  const pages = document.querySelectorAll(".page");
-
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      // Retirer l'activation de tous les boutons
-      tabs.forEach(t => t.classList.remove("active"));
-      // Activer le bouton cliqué
-      tab.classList.add("active");
-
-      // Masquer toutes les sections
-      pages.forEach(page => page.classList.remove("active"));
-      // Afficher la section correspondante
-      const target = tab.getAttribute("data-page");
-      document.getElementById(target).classList.add("active");
+  document.getElementById('sort').addEventListener('change', (e) => {
+    currentPageRessources = 1;
+    const [field, order] = e.target.value.split('-');
+    filteredRessources.sort((a, b) => {
+      let x = a[field], y = b[field];
+      if (field === 'date') {
+        x = new Date(a.created_at);
+        y = new Date(b.created_at);
+      }
+      if (x < y) return order === 'asc' ? -1 : 1;
+      if (x > y) return order === 'asc' ? 1 : -1;
+      return 0;
     });
+    displayRessources(filteredRessources);
   });
 
-  //================================form===============================
-  const partages = document.querySelectorAll('.share-ressource');
-  const modalOverlay = document.getElementById('modal-overlay');
-  const form_p = document.getElementById('form-partage');
-
-  // Fonction pour ouvrir
-  function ouvrirFormulaire() {
-    modalOverlay.style.display = 'flex'; // ← Affiche l'overlay ET le formulaire
-  }
-
-  // Fonction pour fermer
-  function fermerFormulaire() {
-    modalOverlay.style.display = 'none';
-  }
-
-  // Attacher l'ouverture à tous les boutons "Partager"
-  partages.forEach(btn => {
-    btn.addEventListener('click', ouvrirFormulaire);
+  document.getElementById('search').addEventListener('input', (e) => {
+    currentPageRessources = 1;
+    const term = e.target.value.toLowerCase();
+    filteredRessources = ressources.filter(r =>
+      r.title.toLowerCase().includes(term) ||
+      r.subject.toLowerCase().includes(term) ||
+      r.file_type.toLowerCase().includes(term)
+    );
+    displayRessources(filteredRessources);
   });
 
-  // Fermer en cliquant sur l'overlay (sauf sur le formulaire)
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) {
-      fermerFormulaire();
-    }
-  });
-
-  // Empêcher la fermeture si on clique à l'intérieur du formulaire
-  form_p.addEventListener('click', (e) => {
-    e.stopPropagation(); // ← Empêche la propagation vers l'overlay
-  });
-
-  //===========like ress===============
-  function likeRessource(id) {
-    fetch(`/like_ressource/${id}`, { method: 'POST' })
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById(`like-count-${id}`).innerText = data.likes;
-      });
-  }
-
-  //================like=================
-  function likeRessource(ressourceId) {
-    fetch(`/like_ressource/${ressourceId}`, {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest', // Pour indiquer que c’est une requête AJAX
-        'Content-Type': 'application/json'
-      },
-      // Pas de body nécessaire ici
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Erreur réseau ou serveur');
-        }
-        return response.json();
-      })
-      .then(data => {
-        // Met à jour le compteur de likes dans le DOM
-        document.getElementById(`like-count-${ressourceId}`).innerText = data.likes;
-      })
-      .catch(error => {
-        console.error('Erreur:', error);
-        alert('Impossible de liker pour le moment.');
-      });
-  }
-
-</script>
-<!-- JavaScript dynamique -->
-
-<script>
+  // =============== DISCUSSIONS ===============
   let allDiscussions = [];
   let currentDiscussionId = null;
 
-  // Format "il y a X minutes"
   function formatTimeAgo(dateStr) {
     const now = new Date();
     const date = new Date(dateStr);
@@ -453,35 +401,38 @@ loadRessources();
     return date.toLocaleDateString('fr-FR');
   }
 
-  // Trier les discussions
   function sortDiscussions(discussions, sortBy) {
     return [...discussions].sort((a, b) => {
       if (sortBy === 'likes') return b.likes - a.likes;
       if (sortBy === 'subject') return a.subject.localeCompare(b.subject);
-      return new Date(b.created_at) - new Date(a.created_at); // date décroissante
+      return new Date(b.created_at) - new Date(a.created_at);
     });
   }
 
-  // Filtrer par recherche
   function filterDiscussions(discussions, query) {
     if (!query) return discussions;
     const q = query.toLowerCase();
     return discussions.filter(d =>
-      d.title.toLowerCase().includes(q) ||
-      d.content.toLowerCase().includes(q) ||
-      d.subject.toLowerCase().includes(q)
+      d.title?.toLowerCase().includes(q) ||
+      d.content?.toLowerCase().includes(q) ||
+      d.subject?.toLowerCase().includes(q)
     );
   }
 
-  // Afficher les discussions
   function renderDiscussions(discussions) {
     const container = document.getElementById('discussions-container');
+    const totalPages = Math.ceil(discussions.length / ITEMS_PER_PAGE);
+    const start = (currentPageDiscussions - 1) * ITEMS_PER_PAGE;
+    const paginated = discussions.slice(start, start + ITEMS_PER_PAGE);
+
     if (discussions.length === 0) {
       container.innerHTML = '<p style="text-align:center; color:#777; padding:20px;">Aucune discussion trouvée.</p>';
+      document.getElementById('discussions-pagination').innerHTML = '';
       return;
     }
+
     container.innerHTML = '';
-    discussions.forEach(d => {
+    paginated.forEach(d => {
       const timeAgo = formatTimeAgo(d.created_at);
       const el = document.createElement('div');
       el.className = 'discussion-list';
@@ -507,10 +458,15 @@ loadRessources();
       `;
       container.appendChild(el);
     });
+
+    renderPagination(totalPages, currentPageDiscussions, (page) => {
+      currentPageDiscussions = page;
+      renderDiscussions(discussions);
+    }, 'discussions-pagination');
   }
 
-  // Recharger & appliquer filtres
   function applyFilters() {
+    currentPageDiscussions = 1;
     const query = document.getElementById('search-discussions').value.trim();
     const sortBy = document.getElementById('sort-discussions').value;
     const filtered = filterDiscussions(allDiscussions, query);
@@ -518,7 +474,6 @@ loadRessources();
     renderDiscussions(sorted);
   }
 
-  // Charger toutes les discussions une fois
   function loadAllDiscussions() {
     fetch('/api/discussions')
       .then(res => res.json())
@@ -533,7 +488,7 @@ loadRessources();
       });
   }
 
-  // --- Fonctions modales et interactions ---
+  // =============== MODAL & INTERACTIONS ===============
   function openComments(discussionId) {
     currentDiscussionId = discussionId;
     document.getElementById('comment-modal').style.display = 'flex';
@@ -563,14 +518,32 @@ loadRessources();
     fetch(`/api/discussion/${id}/like`, { method: 'POST' })
       .then(res => res.json())
       .then(data => {
-        // Met à jour le like dans `allDiscussions`
         const disc = allDiscussions.find(d => d.id === id);
         if (disc) disc.likes = data.likes;
-        applyFilters(); // rafraîchit l'affichage
+        applyFilters();
       });
   }
 
-  // --- Événements ---
+  function likeRessource(id) {
+    fetch(`/like_ressource/${id}`, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json'
+      },
+    })
+      .then(response => response.json())
+      .then(data => {
+        // Note: vous n'avez pas d'ID like-count dans le HTML, donc on ne met pas à jour visuellement ici
+        // Si besoin, ajoutez un span avec id="like-count-${id}" dans le HTML
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+        alert('Impossible de liker pour le moment.');
+      });
+  }
+
+  // =============== ÉVÉNEMENTS ===============
   document.getElementById('new-discussion-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
     const content = document.getElementById('discussion-content').value.trim();
@@ -585,7 +558,7 @@ loadRessources();
     }).then(() => {
       document.getElementById('discussion-content').value = '';
       document.getElementById('discussion-subject').value = '';
-      loadAllDiscussions(); // recharge tout
+      loadAllDiscussions();
     }).catch(() => alert("Erreur lors de la publication."));
   });
 
@@ -615,7 +588,7 @@ loadRessources();
     });
   });
 
-  // --- Stats ---
+  // =============== STATS ===============
   function loadStats() {
     fetch('/api/stats')
       .then(res => res.json())
@@ -625,10 +598,129 @@ loadRessources();
       });
   }
 
-  // --- Initialisation ---
+  // =============== PAGINATION GÉNÉRIQUE ===============
+  function renderPagination(totalPages, currentPage, onPageChange, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="pagination">';
+
+    if (currentPage > 1) {
+      html += `<button onclick="(${onPageChange})(${currentPage - 1})">&laquo; Précédent</button>`;
+    }
+
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === currentPage) {
+        html += `<span class="current-page">${i}</span>`;
+      } else {
+        html += `<button onclick="(${onPageChange})(${i})">${i}</button>`;
+      }
+    }
+
+    if (currentPage < totalPages) {
+      html += `<button onclick="(${onPageChange})(${currentPage + 1})">Suivant &raquo;</button>`;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // =============== NAVIGATION ===============
+  const tabs = document.querySelectorAll(".tab");
+  const pages = document.querySelectorAll(".page");
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      pages.forEach(page => page.classList.remove("active"));
+      const target = tab.getAttribute("data-page");
+      document.getElementById(target).classList.add("active");
+    });
+  });
+
+  // =============== MODAL PARTAGE ===============
+  const partages = document.querySelectorAll('.share-ressource');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const form_p = document.getElementById('form-partage');
+
+  function ouvrirFormulaire() {
+    modalOverlay.style.display = 'flex';
+  }
+
+  function fermerFormulaire() {
+    modalOverlay.style.display = 'none';
+  }
+
+  partages.forEach(btn => {
+    btn.addEventListener('click', ouvrirFormulaire);
+  });
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) fermerFormulaire();
+  });
+
+  form_p.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  // =============== INITIALISATION ===============
   document.addEventListener('DOMContentLoaded', () => {
     loadAllDiscussions();
+    loadRessources();
     loadStats();
   });
 </script>
-{%endblock%}
+<script>
+ function toggleSaveRessource(ressourceId, linkElement) {
+  // Trouver l'icône à l'intérieur du lien
+  const icon = linkElement.querySelector('i');
+  const isCurrentlySaved = icon.classList.contains('fa-solid'); // plein = sauvegardé
+
+  const url = isCurrentlySaved 
+    ? `/api/unsave_ressource/${ressourceId}` 
+    : `/api/save_ressource/${ressourceId}`;
+
+  fetch(url, { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.saved) {
+        icon.className = 'fa-solid fa-bookmark';
+        icon.style.color = '#007bff';
+      } else {
+        icon.className = 'fa-regular fa-bookmark';
+        icon.style.color = '#ccc';
+      }
+    })
+    .catch(err => {
+      console.error('Erreur:', err);
+      alert('Impossible de sauvegarder.');
+    });
+}
+
+  document.getElementById('form-partage').addEventListener('submit', function(e) {
+    const files = document.getElementById('file').files;
+    const maxSize = 100 * 1024 * 1024; // 100 Mo
+  
+    for (let file of files) {
+      if (file.size > maxSize) {
+        e.preventDefault();
+        alert(`Le fichier "${file.name}" est trop volumineux.\nTaille maximale : 100 Mo.`);
+        return false;
+      }
+    }
+  });
+  </script>
+{% endblock %}

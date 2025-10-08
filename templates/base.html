@@ -122,11 +122,11 @@
 
     <!-- Boutons connexion / inscription -->
     <p>
-      {%if username%}
-      <a href="{{url_for('logout')}}" class="btn-signup">Déconnexion</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{url_for('logout')}}" class="btn-signup" style="cursor: pointer;">Déconnexion</a>
       {%else%}
-      <a class="btn-connexion" id="openLogin">Connexion</a>
-      <a class="btn-signup" id="openRegister">S'inscrire</a>
+      <a class="btn-connexion" id="openLogin" style="cursor: pointer;">Connexion</a>
+      <a class="btn-signup" id="openRegister" style="cursor: pointer;">S'inscrire</a>
       {%endif%}
     </p>
 
@@ -136,11 +136,11 @@
       <a href="{{url_for('communaute')}}" class="navbar-menu">Communauté</a>
       <a href="{{url_for('notes')}}" class="navbar-menu">Mes notes</a>
       <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
-      {%if username%}
-      <a href="{{url_for('logout')}}" class="btn-signup">Déconnexion</a>
+      {% if current_user.is_authenticated %}
+      <a href="{{url_for('logout')}}" class="btn-signup" style="cursor: pointer;">Déconnexion</a>
       {%else%}
-      <a  class="btn-connexion" id="openLogin">Connexion</a>
-      <a  class="btn-signup" id="openRegister">S'inscrire</a>
+      <a  class="btn-connexion" id="openLogin" style="cursor: pointer;">Connexion</a>
+      <a  class="btn-signup" id="openRegister" style="cursor: pointer;">S'inscrire</a>
       {%endif%}
     </div>
 
