@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template,session, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,9 +15,32 @@ from werkzeug.utils import secure_filename
 from cloudinary.utils import cloudinary_url
 from sqlalchemy.orm import joinedload
 from flask_compress import Compress
+# ====================
 
+# -------------------- Imports --------------------
+import io
+import json
+import pickle
+import tempfile
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+# -------------------- Config YouTube --------------------
+YOUTUBE_SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+
+def get_client_config():
+    """Renvoie le dict JSON des credentials depuis la variable d'environnement."""
+    secrets_json = os.environ.get("YOUTUBE_CLIENT_SECRET")
+    if not secrets_json:
+        raise RuntimeError("❌ Variable d'environnement YOUTUBE_CLIENT_SECRET manquante !")
+    return json.loads(secrets_json)
 # -------------------- Configuration --------------------
+
 load_dotenv()
+# 🔥 Ajoute cette ligne ici
+if os.getenv("RENDER") is None:
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -87,6 +110,8 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     profile = db.relationship('Profile', backref='user', uselist=False)
+    youtube_credentials = db.Column(db.LargeBinary, nullable=True)  # <-- ajout
+   
 
     @property
     def avatar_url(self):
@@ -459,7 +484,7 @@ def api_ressources():
         "file_url": r.file_url,
         "download_url": r.download_url,
         "is_saved": r.id in saved_ids,
-        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm'],
+        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm','youtube'],
         "page_count": r.page_count
     } for r in ressources])
 
@@ -470,7 +495,7 @@ def api_videos():
         return jsonify([])
     current_year = current_user.profile.year_of_study
 
-    video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm']
+    video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm','youtube']
     videos = Ressource.query.join(User).join(Profile).filter(
         Profile.year_of_study == current_year,
         Ressource.file_type.in_(video_types)
@@ -692,6 +717,122 @@ def page_not_found():
 @app.route('/systeme')
 def systeme():
     return render_template('systeme.html')
+
+
+
+
+
+# -------------------- Routes OAuth --------------------
+@app.route('/youtube_auth')
+@login_required
+def youtube_auth():
+    """Déclenche l'authentification OAuth YouTube."""
+    if current_user.youtube_credentials:
+        return redirect(url_for('share_youtube_video'))
+
+    flow = Flow.from_client_config(
+        get_client_config(),
+        scopes=YOUTUBE_SCOPES,
+        redirect_uri=url_for('youtube_oauth2callback', _external=True)
+    )
+    auth_url, _ = flow.authorization_url(prompt="consent")
+    return redirect(auth_url)
+
+
+@app.route('/youtube_oauth2callback')
+@login_required
+def youtube_oauth2callback():
+    """Callback OAuth, stocke les credentials dans la DB."""
+    flow = Flow.from_client_config(
+        get_client_config(),
+        scopes=YOUTUBE_SCOPES,
+        redirect_uri=url_for('youtube_oauth2callback', _external=True)
+    )
+    flow.fetch_token(authorization_response=request.url)
+
+    # Stockage sécurisé dans la DB
+    current_user.youtube_credentials = pickle.dumps(flow.credentials)
+    db.session.commit()
+
+    flash("✅ Auth YouTube réussie !", "success")
+    return redirect(url_for('share_youtube_video'))
+
+
+# -------------------- Route Upload YouTube --------------------
+@app.route('/share_youtube_video', methods=['GET', 'POST'])
+@login_required
+def share_youtube_video():
+    """Upload de vidéos sur YouTube et sauvegarde dans la DB."""
+    if not current_user.youtube_credentials:
+        return redirect(url_for('youtube_auth'))
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        subject = request.form.get('subject')
+        video_file = request.files.get('video')
+
+        if not title or not subject or not video_file:
+            flash("Tous les champs sont requis.", "danger")
+            return render_template('share_youtube.html')
+
+        # Fichier temporaire
+        fd, temp_path = tempfile.mkstemp(suffix=".mp4")
+        with os.fdopen(fd, 'wb') as tmp:
+            video_file.save(tmp)
+
+        try:
+            credentials = pickle.loads(current_user.youtube_credentials)
+            youtube = build("youtube", "v3", credentials=credentials)
+
+            body = {
+                "snippet": {
+                    "title": title,
+                    "description": f"Partagée via Edushare - Matière : {subject}",
+                    "tags": ["edushare", subject.lower()],
+                    "categoryId": "27"
+                },
+                "status": {"privacyStatus": "unlisted"}
+            }
+
+            insert_request = youtube.videos().insert(
+                part="snippet,status",
+                body=body,
+                media_body=MediaFileUpload(temp_path, chunksize=-1, resumable=True)
+            )
+            response = insert_request.execute()
+
+            video_id = response["id"]
+            embed_url = f"https://www.youtube.com/embed/{video_id}"
+            watch_url = f"https://www.youtube.com/watch?v={video_id}"
+
+            # Sauvegarde dans la base de données
+            new_ressource = Ressource(
+                user_id=current_user.id,
+                title=title,
+                subject=subject,
+                file_url=embed_url,
+                download_url=watch_url,
+                file_type="youtube",
+                page_count=0
+            )
+            db.session.add(new_ressource)
+            db.session.commit()
+
+            flash("✅ Vidéo uploadée sur YouTube et partagée !", "success")
+            return redirect(url_for('videos'))
+
+        except Exception as e:
+            flash(f"❌ Échec de l'upload YouTube : {e}", "danger")
+            return render_template('share_youtube.html')
+
+        finally:
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+
+    return render_template('share_youtube.html')
+
 
 # --------------------------------------------------
 if __name__ == "__main__":

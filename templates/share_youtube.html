@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div  style="max-width: 600px; margin: 100px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+  <h2>📤 Partager une vidéo sur YouTube</h2>
+  <p>Votre vidéo sera uploadée sur <strong>votre propre chaîne YouTube</strong>.</p>
+  
+  <form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label>Titre de la vidéo</label>
+      <input type="text" name="title" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Matière</label>
+      <select name="subject" class="form-control" required>
+        <option value="">-- Choisir --</option>
+        <option value="HTML">HTML</option>
+        <option value="CSS">CSS</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="C++">C++</option>
+        <option value="Algorithme">Algorithme</option>
+        <option value="Système">Système</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label>Vidéo (MP4, MOV, etc.)</label>
+      <input type="file" name="video" accept="video/*" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-success">📤 Uploader sur YouTube</button>
+  </form>
+  <a href="{{ url_for('videos') }}" class="btn btn-secondary mt-3">← Retour aux vidéos</a>
+</div>
+{% endblock %}

@@ -1,283 +1,7 @@
 {% extends 'base.html' %}
 
 {% block extra_css %}
-<style>
-  .header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 40px 20px;
-    text-align: center;
-  }
-
-  .header-content h1 {
-    margin: 0 0 10px 0;
-    font-size: 2.5em;
-  }
-
-  .header-content p {
-    margin: 0;
-    opacity: 0.9;
-    font-size: 1.1em;
-  }
-
-  .videos-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-
-  /* Filtres et recherche */
-  .filters {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-bottom: 30px;
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    align-items: end;
-  }
-
-  .filter-group {
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .filter-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .filter-group select,
-  .filter-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1em;
-  }
-
-  /* Grille de vidéos */
-  .videos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 25px;
-    margin-bottom: 40px;
-  }
-
-  .video-card {
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .video-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  }
-
-  .video-thumbnail {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    background: #f8f9fa;
-    overflow: hidden;
-  }
-
-  .video-thumbnail video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .video-thumbnail .thumbnail-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .video-thumbnail:hover .thumbnail-overlay {
-    opacity: 1;
-  }
-
-  .play-button {
-    width: 60px;
-    height: 60px;
-    background: #007bff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5em;
-    cursor: pointer;
-  }
-
-  .video-info {
-    padding: 20px;
-  }
-
-  .video-title {
-    font-size: 1.2em;
-    font-weight: 600;
-    margin: 0 0 10px 0;
-    color: #333;
-    line-height: 1.3;
-  }
-
-  .video-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    font-size: 0.9em;
-    color: #666;
-  }
-
-  .video-subject {
-    background: #e9ecef;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-  }
-
-  .video-author {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  .author-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
-  .video-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-  }
-
-  .video-actions button {
-    flex: 1;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.2s;
-  }
-
-  .btn-view {
-    background: #007bff;
-    color: white;
-  }
-
-  .btn-view:hover {
-    background: #0069d9;
-  }
-
-  .btn-download {
-    background: #28a745;
-    color: white;
-  }
-
-  .btn-download:hover {
-    background: #218838;
-  }
-
-  /* Pagination */
-  .pagination {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin: 40px 0;
-    flex-wrap: wrap;
-  }
-
-  .pagination button {
-    padding: 10px 16px;
-    border: 1px solid #dee2e6;
-    background: #fff;
-    color: #007bff;
-    cursor: pointer;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .pagination button:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
-  }
-
-  .pagination .current-page {
-    padding: 10px 16px;
-    background: #007bff;
-    color: white;
-    border-radius: 6px;
-    font-weight: 600;
-    border: 1px solid #007bff;
-  }
-
-  /* Loading */
-  .loading {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-  }
-
-  .spinner {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .videos-grid {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-    
-    .filters {
-      flex-direction: column;
-      gap: 15px;
-    }
-    
-    .filter-group {
-      min-width: 100%;
-    }
-  }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/video.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -339,309 +63,295 @@
 
 {% block script %}
 <script>
-const ITEMS_PER_PAGE = 12; // Plus de vidéos par page puisque c'est dédié
-let allVideos = [];
-let filteredVideos = [];
-let currentPage = 1;
-
-// Charger les vidéos
-async function loadVideos() {
-  try {
-    showLoading();
-    
-    const response = await fetch('/api/videos');
-    const data = await response.json();
-    
-    allVideos = data.items || data; // Support both paginated and non-paginated responses
-    filteredVideos = [...allVideos];
-    
-    renderVideos();
-    
-  } catch (error) {
-    console.error('Erreur chargement vidéos:', error);
+  const ITEMS_PER_PAGE = 12;
+  let allVideos = [];
+  let filteredVideos = [];
+  let currentPage = 1;
+  
+  // Charger les vidéos
+  async function loadVideos() {
+    try {
+      showLoading();
+      const response = await fetch('/api/videos');
+      const data = await response.json();
+      allVideos = data.items || data;
+      filteredVideos = [...allVideos];
+      renderVideos();
+    } catch (error) {
+      console.error('Erreur chargement vidéos:', error);
+      document.getElementById('videos-grid').innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #dc3545;">
+          <p>Erreur lors du chargement des vidéos.</p>
+          <button onclick="loadVideos()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Réessayer
+          </button>
+        </div>
+      `;
+    }
+  }
+  
+  function showLoading() {
     document.getElementById('videos-grid').innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #dc3545;">
-        <p>Erreur lors du chargement des vidéos.</p>
-        <button onclick="loadVideos()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-          Réessayer
-        </button>
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement des vidéos...</p>
       </div>
     `;
   }
-}
-
-// Afficher le loading
-function showLoading() {
-  document.getElementById('videos-grid').innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>Chargement des vidéos...</p>
-    </div>
-  `;
-}
-
-// Rendu des vidéos
-// Rendu des vidéos
-function renderVideos() {
-  const grid = document.getElementById('videos-grid');
-  const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedVideos = filteredVideos.slice(start, start + ITEMS_PER_PAGE);
-
-  if (paginatedVideos.length === 0) {
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 60px; color: #666; grid-column: 1 / -1;">
-        <i class="fa-solid fa-video-slash" style="font-size: 3em; margin-bottom: 16px; opacity: 0.5;"></i>
-        <h3>Aucune vidéo trouvée</h3>
-        <p>Essayez de modifier vos critères de recherche</p>
-      </div>
-    `;
-    document.getElementById('videos-pagination').innerHTML = '';
-    return;
-  }
-
-  let html = '';
-  paginatedVideos.forEach(video => {
-    const date = new Date(video.created_at).toLocaleDateString('fr-FR');
-    
-    html += `
-      <div class="video-card" data-video-id="${video.id}">
-        <div class="video-thumbnail">
-          <video preload="metadata" controls>
-            <source src="${video.file_url}" type="video/${video.file_type}">
-          </video>
-          <div class="thumbnail-overlay">
-            <div class="play-button">
-              <i class="fa-solid fa-play"></i>
+  
+  // 🔁 Rendu mis à jour avec support YouTube + Cloudinary
+  function renderVideos() {
+    const grid = document.getElementById('videos-grid');
+    const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedVideos = filteredVideos.slice(start, start + ITEMS_PER_PAGE);
+  
+    if (paginatedVideos.length === 0) {
+      grid.innerHTML = `
+        <div style="text-align: center; padding: 60px; color: #666; grid-column: 1 / -1;">
+          <i class="fa-solid fa-video-slash" style="font-size: 3em; margin-bottom: 16px; opacity: 0.5;"></i>
+          <h3>Aucune vidéo trouvée</h3>
+          <p>Essayez de modifier vos critères de recherche</p>
+        </div>
+      `;
+      document.getElementById('videos-pagination').innerHTML = '';
+      return;
+    }
+  
+    let html = '';
+    paginatedVideos.forEach(video => {
+      const date = new Date(video.created_at).toLocaleDateString('fr-FR');
+      const isYouTube = video.file_type === 'youtube';
+  
+      let videoPlayerHtml = '';
+      if (isYouTube) {
+        videoPlayerHtml = `
+          <div class="video-thumbnail">
+            <iframe 
+              width="100%" 
+              height="200" 
+              src="${video.file_url}" 
+              frameborder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen>
+            </iframe>
+          </div>
+        `;
+      } else {
+        videoPlayerHtml = `
+          <div class="video-thumbnail">
+            <video preload="metadata" controls>
+              <source src="${video.file_url}" type="video/${video.file_type}">
+              Votre navigateur ne supporte pas la vidéo.
+            </video>
+            <div class="thumbnail-overlay">
+              <div class="play-button">
+                <i class="fa-solid fa-play"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+  
+      html += `
+        <div class="video-card" data-video-id="${video.id}">
+          ${videoPlayerHtml}
+          <div class="video-info">
+            <h3 class="video-title">${video.title}</h3>
+            <div class="video-meta">
+              <span class="video-subject">${video.subject}</span>
+              <span>${date}</span>
+            </div>
+            <div class="video-author">
+              <img src="${video.user_avatar || 'https://via.placeholder.com/150'}" 
+                   alt="Avatar" 
+                   class="author-avatar"
+                   onerror="this.src='https://via.placeholder.com/150'">
+              <span>par ${video.username}</span>
+            </div>
+            <div class="video-actions">
+              ${isYouTube 
+                ? `<button class="btn-view" onclick="window.open('${video.download_url}', '_blank')">
+                    <i class="fa-solid fa-eye"></i> Voir sur YouTube
+                  </button>`
+                : `<button class="btn-view" onclick="playVideo(this)">
+                    <i class="fa-solid fa-play"></i> Regarder
+                  </button>
+                  <button class="btn-download" onclick="window.open('${video.download_url || video.file_url}', '_blank')">
+                    <i class="fa-solid fa-download"></i> Télécharger
+                  </button>`
+              }
             </div>
           </div>
         </div>
-        
-        <div class="video-info">
-          <h3 class="video-title">${video.title}</h3>
-          
-          <div class="video-meta">
-            <span class="video-subject">${video.subject}</span>
-            <span>${date}</span>
-          </div>
-          
-          <div class="video-author">
-            <img src="${video.user_avatar || 'https://via.placeholder.com/150'}" 
-                 alt="Avatar" 
-                 class="author-avatar"
-                 onerror="this.src='https://via.placeholder.com/150'">
-            <span>par ${video.username}</span>
-          </div>
-          
-          <div class="video-actions">
-            <button class="btn-view" onclick="playVideo(this)">
-              <i class="fa-solid fa-play"></i> Regarder
-            </button>
-            <button class="btn-download" onclick="window.open('${video.download_url || video.file_url}', '_blank')">
-              <i class="fa-solid fa-download"></i> Télécharger
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-
-  grid.innerHTML = html;
-  renderPagination(totalPages);
+      `;
+    });
   
-  // Appeler scrollToVideo après le rendu
-  setTimeout(scrollToVideo, 100);
-}
-
-// Fonction pour scroll vers une vidéo spécifique via l'URL
-function scrollToVideo() {
-  const hash = window.location.hash;
-  if (hash && hash.startsWith('#video-')) {
-    const videoId = hash.replace('#video-', '');
-    const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
+    grid.innerHTML = html;
+    renderPagination(totalPages);
     
-    if (videoElement) {
-      setTimeout(() => {
-        videoElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        videoElement.style.boxShadow = '0 0 0 3px #007bff';
-        videoElement.style.borderRadius = '10px';
-        videoElement.style.transition = 'box-shadow 0.3s ease';
-        
-        // Animation de pulse
+    // ⏱️ Toujours appeler scrollToVideo après rendu
+    setTimeout(scrollToVideo, 100);
+  }
+  
+  // 🔍 Fonction de scroll vers la vidéo (garde-la !)
+  function scrollToVideo() {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#video-')) {
+      const videoId = hash.replace('#video-', '');
+      const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
+      
+      if (videoElement) {
         setTimeout(() => {
-          videoElement.style.boxShadow = '0 0 0 3px #007bff, 0 0 20px rgba(0, 123, 255, 0.5)';
-        }, 300);
-        
-        setTimeout(() => {
+          videoElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           videoElement.style.boxShadow = '0 0 0 3px #007bff';
-        }, 600);
-        
-        // Retirer la surbrillance après 3 secondes
-        setTimeout(() => {
-          videoElement.style.boxShadow = '';
-        }, 3000);
-      }, 500);
+          videoElement.style.borderRadius = '10px';
+          videoElement.style.transition = 'box-shadow 0.3s ease';
+          
+          setTimeout(() => {
+            videoElement.style.boxShadow = '0 0 0 3px #007bff, 0 0 20px rgba(0, 123, 255, 0.5)';
+          }, 300);
+          setTimeout(() => {
+            videoElement.style.boxShadow = '0 0 0 3px #007bff';
+          }, 600);
+          setTimeout(() => {
+            videoElement.style.boxShadow = '';
+          }, 3000);
+        }, 500);
+      }
     }
   }
-}
-
-// Fonction pour jouer une vidéo
-function playVideo(button) {
-  const videoCard = button.closest('.video-card');
-  const video = videoCard.querySelector('video');
-  const overlay = videoCard.querySelector('.thumbnail-overlay');
   
-  if (video.paused) {
-    video.play();
-    overlay.style.opacity = '0';
-  } else {
-    video.pause();
-    overlay.style.opacity = '1';
-  }
-}
-
-// Gérer le play/pause sur les vidéos
-document.addEventListener('DOMContentLoaded', function() {
-  // Écouter les changements d'hash (quand l'URL change)
-  window.addEventListener('hashchange', scrollToVideo);
-  
-  // Ajouter des écouteurs pour les événements vidéo
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.play-button')) {
-      const videoCard = e.target.closest('.video-card');
-      const video = videoCard.querySelector('video');
-      const overlay = videoCard.querySelector('.thumbnail-overlay');
-      
+  // ▶️ Fonction play/pause (uniquement pour Cloudinary)
+  function playVideo(button) {
+    const videoCard = button.closest('.video-card');
+    const video = videoCard.querySelector('video');
+    const overlay = videoCard.querySelector('.thumbnail-overlay');
+    
+    if (video && video.paused) {
       video.play();
       overlay.style.opacity = '0';
-    }
-  });
-  
-  // Remettre l'overlay quand la vidéo se termine
-  document.addEventListener('ended', function(e) {
-    if (e.target.tagName === 'VIDEO') {
-      const videoCard = e.target.closest('.video-card');
-      const overlay = videoCard.querySelector('.thumbnail-overlay');
+    } else if (video) {
+      video.pause();
       overlay.style.opacity = '1';
     }
-  }, true);
-});
-
-// Pagination
-function renderPagination(totalPages) {
-  const container = document.getElementById('videos-pagination');
+  }
   
-  if (totalPages <= 1) {
-    container.innerHTML = '';
-    return;
-  }
-
-  let html = '<div class="pagination">';
-
-  // Bouton précédent
-  if (currentPage > 1) {
-    html += `<button onclick="changePage(${currentPage - 1})">&laquo; Précédent</button>`;
-  }
-
-  // Pages
-  const maxVisible = 5;
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+  // 🧠 Initialisation avec hashchange
+  document.addEventListener('DOMContentLoaded', function() {
+    // 🔗 Écoute les changements d'URL (ex: #video-42)
+    window.addEventListener('hashchange', scrollToVideo);
   
-  if (endPage - startPage + 1 < maxVisible) {
-    startPage = Math.max(1, endPage - maxVisible + 1);
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    if (i === currentPage) {
-      html += `<span class="current-page">${i}</span>`;
-    } else {
-      html += `<button onclick="changePage(${i})">${i}</button>`;
-    }
-  }
-
-  // Bouton suivant
-  if (currentPage < totalPages) {
-    html += `<button onclick="changePage(${currentPage + 1})">Suivant &raquo;</button>`;
-  }
-
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function changePage(page) {
-  currentPage = page;
-  renderVideos();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Filtres et recherche
-function setupFilters() {
-  // Recherche
-  document.getElementById('search-videos').addEventListener('input', (e) => {
-    currentPage = 1;
-    const term = e.target.value.toLowerCase();
-    
-    filteredVideos = allVideos.filter(video =>
-      video.title.toLowerCase().includes(term) ||
-      video.subject.toLowerCase().includes(term) ||
-      video.username.toLowerCase().includes(term)
-    );
-    
-    renderVideos();
-  });
-
-  // Tri
-  document.getElementById('sort-videos').addEventListener('change', (e) => {
-    currentPage = 1;
-    const sortBy = e.target.value;
-    
-    filteredVideos.sort((a, b) => {
-      switch (sortBy) {
-        case 'date-desc':
-          return new Date(b.created_at) - new Date(a.created_at);
-        case 'date-asc':
-          return new Date(a.created_at) - new Date(b.created_at);
-        case 'title-asc':
-          return a.title.localeCompare(b.title);
-        case 'title-desc':
-          return b.title.localeCompare(a.title);
-        case 'likes-desc':
-          return (b.likes || 0) - (a.likes || 0);
-        default:
-          return 0;
+    // ▶️ Clic sur le bouton play
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.play-button')) {
+        const videoCard = e.target.closest('.video-card');
+        const video = videoCard.querySelector('video');
+        const overlay = videoCard.querySelector('.thumbnail-overlay');
+        if (video) {
+          video.play();
+          overlay.style.opacity = '0';
+        }
       }
     });
-    
-    renderVideos();
+  
+    // 🔄 Remettre l'overlay à la fin (uniquement pour <video>)
+    document.addEventListener('ended', function(e) {
+      if (e.target.tagName === 'VIDEO') {
+        const videoCard = e.target.closest('.video-card');
+        const overlay = videoCard.querySelector('.thumbnail-overlay');
+        if (overlay) overlay.style.opacity = '1';
+      }
+    }, true);
   });
-
-  // Filtre par matière
-  document.getElementById('subject-filter').addEventListener('change', (e) => {
-    currentPage = 1;
-    const subject = e.target.value;
-    
-    if (!subject) {
-      filteredVideos = [...allVideos];
-    } else if (subject === 'autre') {
-      const predefinedSubjects = ['javascript', 'html', 'css', 'c++', 'algorithme', 'système'];
-      filteredVideos = allVideos.filter(video => 
-        !predefinedSubjects.includes(video.subject.toLowerCase())
-      );
-    } else {
-      filteredVideos = allVideos.filter(video => 
-        video.subject.toLowerCase() === subject.toLowerCase()
-      );
+  
+  // Pagination (inchangée)
+  function renderPagination(totalPages) {
+    const container = document.getElementById('videos-pagination');
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
     }
-    
+  
+    let html = '<div class="pagination">';
+    if (currentPage > 1) {
+      html += `<button onclick="changePage(${currentPage - 1})">&laquo; Précédent</button>`;
+    }
+  
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+  
+    for (let i = startPage; i <= endPage; i++) {
+      html += i === currentPage 
+        ? `<span class="current-page">${i}</span>` 
+        : `<button onclick="changePage(${i})">${i}</button>`;
+    }
+  
+    if (currentPage < totalPages) {
+      html += `<button onclick="changePage(${currentPage + 1})">Suivant &raquo;</button>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  
+  function changePage(page) {
+    currentPage = page;
     renderVideos();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  
+  // Filtres (inchangés)
+  function setupFilters() {
+    document.getElementById('search-videos').addEventListener('input', (e) => {
+      currentPage = 1;
+      const term = e.target.value.toLowerCase();
+      filteredVideos = allVideos.filter(video =>
+        video.title.toLowerCase().includes(term) ||
+        video.subject.toLowerCase().includes(term) ||
+        video.username.toLowerCase().includes(term)
+      );
+      renderVideos();
+    });
+  
+    document.getElementById('sort-videos').addEventListener('change', (e) => {
+      currentPage = 1;
+      const sortBy = e.target.value;
+      filteredVideos.sort((a, b) => {
+        switch (sortBy) {
+          case 'date-desc': return new Date(b.created_at) - new Date(a.created_at);
+          case 'date-asc': return new Date(a.created_at) - new Date(b.created_at);
+          case 'title-asc': return a.title.localeCompare(b.title);
+          case 'title-desc': return b.title.localeCompare(a.title);
+          case 'likes-desc': return (b.likes || 0) - (a.likes || 0);
+          default: return 0;
+        }
+      });
+      renderVideos();
+    });
+  
+    document.getElementById('subject-filter').addEventListener('change', (e) => {
+      currentPage = 1;
+      const subject = e.target.value;
+      if (!subject) {
+        filteredVideos = [...allVideos];
+      } else if (subject === 'autre') {
+        const predefined = ['javascript', 'html', 'css', 'c++', 'algorithme', 'système'];
+        filteredVideos = allVideos.filter(v => !predefined.includes(v.subject.toLowerCase()));
+      } else {
+        filteredVideos = allVideos.filter(v => v.subject.toLowerCase() === subject.toLowerCase());
+      }
+      renderVideos();
+    });
+  }
+  
+  // Démarrage
+  document.addEventListener('DOMContentLoaded', () => {
+    loadVideos();
+    setupFilters();
   });
-}
-
-// Initialisation
-document.addEventListener('DOMContentLoaded', () => {
-  loadVideos();
-  setupFilters();
-});
-</script>
+  </script>
 {% endblock %}

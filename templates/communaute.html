@@ -443,6 +443,16 @@
     <button type="submit">Publier</button>
     <button type="button" onclick="fermerFormulaire()">Annuler</button>
   </div>
+  <!-- 🔵 Nouveau bouton pour YouTube (vidéos lourdes) -->
+  <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+    <p><strong>🎥 Vidéo trop lourde ?</strong> (plus de 100 Mo)</p>
+    <a href="{{ url_for('youtube_auth') }}" class="btn btn-primary" style="text-decoration: none; display: inline-block; padding: 8px 16px; background: #ff0000; color: white; border-radius: 4px;">
+      📤 Uploader sur YouTube
+    </a>
+    <p style="font-size: 0.9em; margin-top: 8px; color: #555;">
+      Votre vidéo sera uploadée sur <strong>votre propre chaîne YouTube</strong> et affichée ici.
+    </p>
+  </div>
 </form>
 </div>
 {% endblock %}
