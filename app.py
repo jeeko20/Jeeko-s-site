@@ -35,9 +35,9 @@ if not database_url:
     raise RuntimeError("❌ DATABASE_URL introuvable !")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
-
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -64,6 +64,7 @@ ALLOWED_EXTENSIONS = {
     'pdf', 'doc', 'docx',            # documents
     'mp4', 'mov', 'avi', 'mkv', 'webm'  # vidéos
 }
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -113,7 +114,6 @@ class Ressource(db.Model):
     page_count = db.Column(db.Integer, default=0)
     likes = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
     user = db.relationship('User', backref=db.backref('ressources', lazy=True))
 
     @property
@@ -128,7 +128,6 @@ class Discussion(db.Model):
     content = db.Column(db.Text, nullable=False)
     likes = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
     user = db.relationship('User', backref=db.backref('discussions', lazy=True))
 
     @property
@@ -141,7 +140,6 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
     user = db.relationship('User', backref=db.backref('comments', lazy=True))
     discussion = db.relationship('Discussion', backref=db.backref('comments', lazy=True, cascade="all, delete-orphan"))
 
@@ -154,12 +152,8 @@ class SavedRessource(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     ressource_id = db.Column(db.Integer, db.ForeignKey('ressource.id'), nullable=False)
     saved_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Relations
     user = db.relationship('User', backref=db.backref('saved_ressources', lazy=True))
     ressource = db.relationship('Ressource', backref=db.backref('saved_by', lazy=True))
-
-    # Contrainte d'unicité : un utilisateur ne peut sauvegarder qu'une fois la même ressource
     __table_args__ = (db.UniqueConstraint('user_id', 'ressource_id', name='unique_user_ressource'),)
 
 # -------------------- Filtre Jinja --------------------
@@ -261,7 +255,6 @@ def profile():
         year_of_study = request.form.get('year_of_study')
         avatar_file = request.files.get('avatar')
         avatar_path = current_user.profile.avatar_path if current_user.profile else None
-
         if avatar_file and avatar_file.filename != '':
             if allowed_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
@@ -272,7 +265,6 @@ def profile():
             else:
                 flash('Seules les images (png, jpg, jpeg, gif) sont autorisées.', 'danger')
                 return redirect(url_for('profile'))
-
         if current_user.profile:
             current_user.profile.complete_name = complete_name
             current_user.profile.email = email
@@ -289,7 +281,6 @@ def profile():
                 user_id=current_user.id
             )
             db.session.add(new_profile)
-
         try:
             db.session.commit()
             flash('Profil mis à jour avec succès !', 'success')
@@ -297,64 +288,74 @@ def profile():
             db.session.rollback()
             logger.error(f"Erreur lors de la mise à jour du profil : {e}")
             flash("Erreur lors de la sauvegarde.", "danger")
-
         return redirect(url_for('profile'))
-
     return render_template('profile.html', user=current_user, profile=current_user.profile)
 
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 Mo en octets
+# -------------------- Accès à la communauté : vérifie profil --------------------
+@app.route('/communaute')
+@login_required
+def communaute():
+    if not current_user.profile or not current_user.profile.year_of_study:
+        flash("Veuillez compléter votre profil (notamment votre année d'étude) pour accéder à la communauté.", "info")
+        return redirect(url_for('profile'))
+    return render_template('communaute.html')
+
+@app.route('/videos')
+@login_required
+def videos():
+    if not current_user.profile or not current_user.profile.year_of_study:
+        flash("Veuillez compléter votre profil pour accéder aux vidéos.", "info")
+        return redirect(url_for('profile'))
+    return render_template('videos.html')
+
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 Mo
 
 @app.route('/share_ressource', methods=['POST'])
 @login_required
 def share_ressource():
+    if not current_user.profile or not current_user.profile.year_of_study:
+        flash("Veuillez compléter votre profil avant de partager une ressource.", "warning")
+        return redirect(url_for('profile'))
+
     title = request.form.get('titre')
     subject = request.form.get('matiere')
-    files = request.files.getlist('files')  # Plusieurs fichiers
-
+    files = request.files.getlist('files')
     if not title or not subject or not files:
         flash('Tous les champs sont obligatoires.', 'danger')
         return redirect(url_for('communaute'))
 
-    # Filtrer les fichiers vides
     valid_files = [f for f in files if f and f.filename != '']
     if not valid_files:
         flash('Aucun fichier valide sélectionné.', 'danger')
         return redirect(url_for('communaute'))
 
     uploaded_count = 0
-
     for file in valid_files:
         filename = secure_filename(file.filename)
         if '.' not in filename:
             flash(f'Fichier invalide (pas d\'extension) : {filename}', 'warning')
             continue
-
         ext = filename.rsplit('.', 1)[1].lower()
         if ext not in ALLOWED_EXTENSIONS:
             flash(f'Type de fichier non autorisé : {ext} (fichier : {filename})', 'danger')
             continue
 
-        # ✅ VÉRIFICATION DE LA TAILLE DU FICHIER (sécurité backend)
         try:
-            # Obtenir la taille sans charger tout en mémoire
             file.seek(0, os.SEEK_END)
             file_size = file.tell()
-            file.seek(0)  # Remettre le curseur au début pour l'upload
-
+            file.seek(0)
             if file_size > MAX_FILE_SIZE:
                 flash(f"Fichier trop volumineux (max 100 Mo) : {filename}", "danger")
                 continue
         except Exception as e:
-            logger.error(f"Erreur lors de la vérification de la taille du fichier {filename}: {e}")
+            logger.error(f"Erreur taille fichier {filename}: {e}")
             flash(f"Erreur avec le fichier : {filename}", "danger")
             continue
 
-        # Déterminer le type de ressource pour Cloudinary
         is_video = ext in {'mp4', 'mov', 'avi', 'mkv', 'webm'}
         is_document = ext in {'pdf', 'doc', 'docx'}
         resource_type = 'video' if is_video else ('raw' if is_document else 'image')
 
-        # Compter les pages si PDF
         page_count = 0
         if ext == 'pdf':
             try:
@@ -367,7 +368,6 @@ def share_ressource():
             finally:
                 file.stream.seek(0)
 
-        # Upload vers Cloudinary
         try:
             upload_result = cloudinary.uploader.upload(
                 file,
@@ -377,10 +377,9 @@ def share_ressource():
                 overwrite=True,
                 invalidate=True,
                 use_filename=False,
-                unique_filename=True  # Évite les conflits de nom
+                unique_filename=True
             )
 
-            # Générer les URLs
             if resource_type == "image":
                 file_url = upload_result.get("secure_url")
                 download_url, _ = cloudinary_url(
@@ -390,9 +389,9 @@ def share_ressource():
                     secure=True
                 )
             elif resource_type == "video":
-                file_url = upload_result.get("secure_url")  # Pour balise <video>
-                download_url = file_url  # Même URL pour téléchargement
-            else:  # document (PDF, DOC, etc.)
+                file_url = upload_result.get("secure_url")
+                download_url = file_url
+            else:
                 file_url, _ = cloudinary_url(
                     upload_result.get("public_id"),
                     resource_type="raw",
@@ -404,13 +403,11 @@ def share_ressource():
                     flags="attachment",
                     secure=True
                 )
-
         except Exception as e:
             logger.error(f"Erreur Cloudinary pour {filename}: {e}")
             flash(f"Échec de l'upload : {filename}", "danger")
             continue
 
-        # Sauvegarder dans la base de données
         new_ressource = Ressource(
             user_id=current_user.id,
             title=title,
@@ -423,7 +420,6 @@ def share_ressource():
         db.session.add(new_ressource)
         uploaded_count += 1
 
-    # Commit final
     try:
         db.session.commit()
         if uploaded_count > 0:
@@ -434,20 +430,23 @@ def share_ressource():
         db.session.rollback()
         logger.error(f"Erreur lors de la sauvegarde en base : {e}")
         flash("Erreur critique lors de la publication.", "danger")
-
     return redirect(url_for('communaute'))
 
-# -------------------- API OPTIMISÉES --------------------
+# -------------------- API FILTRÉES PAR YEAR_OF_STUDY --------------------
+
 @app.route('/api/ressources')
 @login_required
 def api_ressources():
-    # Charger les relations en une seule requête
-    ressources = Ressource.query.options(
-        joinedload(Ressource.user)
-    ).all()
-    
+    if not current_user.profile or not current_user.profile.year_of_study:
+        return jsonify([])
+    current_year = current_user.profile.year_of_study
+
+    ressources = Ressource.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year
+    ).options(joinedload(Ressource.user)).all()
+
     saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
-    
+
     return jsonify([{
         "id": r.id,
         "title": r.title,
@@ -464,6 +463,103 @@ def api_ressources():
         "page_count": r.page_count
     } for r in ressources])
 
+@app.route('/api/videos')
+@login_required
+def api_videos():
+    if not current_user.profile or not current_user.profile.year_of_study:
+        return jsonify([])
+    current_year = current_user.profile.year_of_study
+
+    video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm']
+    videos = Ressource.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year,
+        Ressource.file_type.in_(video_types)
+    ).options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
+
+    saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
+    return jsonify([{
+        "id": r.id,
+        "title": r.title,
+        "subject": r.subject,
+        "file_type": r.file_type,
+        "likes": r.likes,
+        "created_at": r.created_at.isoformat(),
+        "user_avatar": r.user.avatar_url,
+        "username": r.user.username,
+        "file_url": r.file_url,
+        "download_url": r.download_url,
+        "is_saved": r.id in saved_ids
+    } for r in videos])
+
+@app.route('/api/discussions', methods=['GET'])
+@login_required
+def api_discussions():
+    if not current_user.profile or not current_user.profile.year_of_study:
+        return jsonify([])
+    current_year = current_user.profile.year_of_study
+
+    query = Discussion.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year
+    ).options(
+        joinedload(Discussion.user),
+        joinedload(Discussion.comments)
+    )
+
+    sort_by = request.args.get('sort', 'date')
+    if sort_by == 'likes':
+        query = query.order_by(Discussion.likes.desc())
+    elif sort_by == 'subject':
+        query = query.order_by(Discussion.subject)
+    else:
+        query = query.order_by(Discussion.created_at.desc())
+
+    discussions = query.all()
+    return jsonify([{
+        "id": d.id,
+        "title": d.title,
+        "subject": d.subject,
+        "content": d.content,
+        "likes": d.likes,
+        "created_at": d.created_at.isoformat(),
+        "user_avatar": d.user.avatar_url,
+        "username": d.user.username,
+        "comment_count": len(d.comments)
+    } for d in discussions])
+
+@app.route('/api/discussion', methods=['POST'])
+@login_required
+def create_discussion():
+    if not current_user.profile or not current_user.profile.year_of_study:
+        return jsonify({"error": "Veuillez compléter votre profil avant de créer une discussion."}), 403
+
+    data = request.get_json()
+    title = data.get('title')
+    subject = data.get('subject')
+    content = data.get('content')
+    if not title or not subject or not content:
+        return jsonify({"error": "Tous les champs sont requis"}), 400
+
+    new_discussion = Discussion(
+        user_id=current_user.id,
+        title=title,
+        subject=subject,
+        content=content
+    )
+    db.session.add(new_discussion)
+    db.session.commit()
+    return jsonify({
+        "id": new_discussion.id,
+        "title": new_discussion.title,
+        "subject": new_discussion.subject,
+        "content": new_discussion.content,
+        "likes": 0,
+        "created_at": new_discussion.created_at.isoformat(),
+        "user_avatar": new_discussion.user.avatar_url,
+        "username": new_discussion.user.username,
+        "comment_count": 0
+    }), 201
+
+# -------------------- Autres routes inchangées --------------------
 @app.route('/api/save_ressource/<int:ressource_id>', methods=['POST'])
 @login_required
 def save_ressource(ressource_id):
@@ -492,7 +588,6 @@ def api_saved_ressources():
     saved = SavedRessource.query.options(
         joinedload(SavedRessource.ressource).joinedload(Ressource.user)
     ).filter_by(user_id=current_user.id).all()
-    
     return jsonify([{
         "id": s.ressource.id,
         "title": s.ressource.title,
@@ -506,46 +601,13 @@ def api_saved_ressources():
         "username": s.ressource.user.username,
         "is_video": s.ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm']
     } for s in saved])
-    
-@app.route('/api/discussions', methods=['GET'])
-def api_discussions():
-    sort_by = request.args.get('sort', 'date')
-    
-    # Utiliser joinedload pour charger les relations en une seule requête
-    query = Discussion.query.options(
-        joinedload(Discussion.user),
-        joinedload(Discussion.comments)
-    )
-    
-    if sort_by == 'likes':
-        query = query.order_by(Discussion.likes.desc())
-    elif sort_by == 'subject':
-        query = query.order_by(Discussion.subject)
-    else:
-        query = query.order_by(Discussion.created_at.desc())
-        
-    discussions = query.all()
-    
-    return jsonify([{
-        "id": d.id,
-        "title": d.title,
-        "subject": d.subject,
-        "content": d.content,
-        "likes": d.likes,
-        "created_at": d.created_at.isoformat(),
-        "user_avatar": d.user.avatar_url,
-        "username": d.user.username,
-        "comment_count": len(d.comments)
-    } for d in discussions])
 
 @app.route('/api/my_ressources')
 @login_required
 def api_my_ressources():
-    # Récupérer toutes les ressources de l'utilisateur connecté
     ressources = Ressource.query.options(
         joinedload(Ressource.user)
     ).filter_by(user_id=current_user.id).order_by(Ressource.created_at.desc()).all()
-    
     return jsonify([{
         "id": r.id,
         "title": r.title,
@@ -558,41 +620,11 @@ def api_my_ressources():
         "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm']
     } for r in ressources])
 
-@app.route('/api/discussion', methods=['POST'])
-@login_required
-def create_discussion():
-    data = request.get_json()
-    title = data.get('title')
-    subject = data.get('subject')
-    content = data.get('content')
-    if not title or not subject or not content:
-        return jsonify({"error": "Tous les champs sont requis"}), 400
-    new_discussion = Discussion(
-        user_id=current_user.id,
-        title=title,
-        subject=subject,
-        content=content
-    )
-    db.session.add(new_discussion)
-    db.session.commit()
-    return jsonify({
-        "id": new_discussion.id,
-        "title": new_discussion.title,
-        "subject": new_discussion.subject,
-        "content": new_discussion.content,
-        "likes": 0,
-        "created_at": new_discussion.created_at.isoformat(),
-        "user_avatar": new_discussion.user.avatar_url,
-        "username": new_discussion.user.username,
-        "comment_count": 0
-    }), 201
-
 @app.route('/api/discussion/<int:discussion_id>/comments', methods=['GET'])
 def get_comments(discussion_id):
     comments = Comment.query.options(
         joinedload(Comment.user)
     ).filter_by(discussion_id=discussion_id).order_by(Comment.created_at.asc()).all()
-    
     return jsonify([{
         "id": c.id,
         "content": c.content,
@@ -600,7 +632,6 @@ def get_comments(discussion_id):
         "user_avatar": c.user.avatar_url,
         "username": c.user.username
     } for c in comments])
-
 
 @app.route('/api/discussion/<int:discussion_id>/comment', methods=['POST'])
 @login_required
@@ -640,39 +671,7 @@ def like_ressource(ressource_id):
     db.session.commit()
     return jsonify({"likes": ressource.likes}), 200
 
-@app.route('/api/videos')
-@login_required
-def api_videos():
-    """Route spécifique pour les vidéos seulement"""
-    video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm']
-    
-    # Charger seulement les vidéos avec les relations
-    videos = Ressource.query.options(
-        joinedload(Ressource.user)
-    ).filter(Ressource.file_type.in_(video_types)).order_by(Ressource.created_at.desc()).all()
-    
-    saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
-    
-    return jsonify([{
-        "id": r.id,
-        "title": r.title,
-        "subject": r.subject,
-        "file_type": r.file_type,
-        "likes": r.likes,
-        "created_at": r.created_at.isoformat(),
-        "user_avatar": r.user.avatar_url,
-        "username": r.user.username,
-        "file_url": r.file_url,
-        "download_url": r.download_url,
-        "is_saved": r.id in saved_ids
-    } for r in videos])
-
 # -------------------- Pages --------------------
-@app.route('/communaute')
-@login_required
-def communaute():
-    return render_template('communaute.html')
-
 @app.route('/notes')
 @login_required
 def notes():
@@ -693,11 +692,6 @@ def page_not_found():
 @app.route('/systeme')
 def systeme():
     return render_template('systeme.html')
-
-@app.route('/videos')
-@login_required
-def videos():
-    return render_template('videos.html')
 
 # --------------------------------------------------
 if __name__ == "__main__":
