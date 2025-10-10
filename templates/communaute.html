@@ -471,6 +471,126 @@
   let currentPageDiscussions = 1;
   let currentDiscussionId = null;
 
+  // =============== FONCTIONS POUR LE SCROLL VERS RESSOURCE ===============
+  function handleNotificationClick(notificationId, ressourceType, ressourceId) {
+    console.log('Clic sur notification:', notificationId, ressourceType, ressourceId);
+    
+    // Marquer comme lu
+    fetch(`/api/notifications/read/${notificationId}`, { method: 'POST' })
+      .then(() => {
+        console.log('Notification marquée comme lue');
+      })
+      .catch(err => console.error('Erreur marquage comme lu:', err));
+    
+    // Rediriger selon le type de ressource
+    if (ressourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(ressourceType)) {
+      window.location.href = `/videos#video-${ressourceId}`;
+    } else {
+      redirectToRessource(ressourceId);
+    }
+  }
+
+  function redirectToRessource(ressourceId) {
+    console.log('Redirection vers ressource:', ressourceId);
+    
+    // Stocker l'ID pour le scroll après chargement
+    sessionStorage.setItem('targetRessourceId', ressourceId);
+    
+    if (window.location.pathname === '/communaute') {
+      // Si déjà sur la page, forcer le rechargement et scroll
+      window.location.href = `/communaute#ressource-${ressourceId}`;
+      setTimeout(() => {
+        scrollToRessource(ressourceId);
+      }, 1000);
+    } else {
+      // Sinon aller sur la page
+      window.location.href = `/communaute#ressource-${ressourceId}`;
+    }
+  }
+
+  function scrollToRessource(ressourceId) {
+    console.log('Scroll vers ressource:', ressourceId);
+    
+    // S'assurer qu'on est sur le bon onglet
+    const partagesTab = document.querySelector('[data-page="partages"]');
+    if (partagesTab && !partagesTab.classList.contains('active')) {
+      partagesTab.click();
+      console.log('Changement vers onglet partages');
+    }
+    
+    // Attendre que l'onglet soit chargé
+    setTimeout(() => {
+      const maxAttempts = 10;
+      let attempts = 0;
+      
+      const tryScroll = setInterval(() => {
+        attempts++;
+        const targetElement = document.querySelector(`.ressources-list[data-ressource-id="${ressourceId}"]`);
+        console.log('Tentative', attempts, 'élément trouvé:', targetElement);
+        
+        if (targetElement) {
+          clearInterval(tryScroll);
+          
+          // Scroll vers l'élément
+          targetElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+          
+          // Effet visuel
+          targetElement.style.transition = 'all 0.5s ease';
+          targetElement.style.border = '3px solid blueviolet';
+          targetElement.style.borderRadius = '10px';
+          targetElement.style.padding = '5px';
+          
+          setTimeout(() => {
+            targetElement.style.boxShadow = '0 0 20px rgba(138, 43, 226, 0.5)';
+          }, 300);
+          
+          setTimeout(() => {
+            targetElement.style.boxShadow = '0 0 10px rgba(138, 43, 226, 0.3)';
+          }, 1500);
+          
+          setTimeout(() => {
+            targetElement.style.border = '';
+            targetElement.style.boxShadow = '';
+            targetElement.style.padding = '';
+          }, 4000);
+          
+          console.log('Scroll réussi vers ressource', ressourceId);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(tryScroll);
+          console.log('Échec scroll - ressource non trouvée après', maxAttempts, 'tentatives');
+        }
+      }, 300);
+    }, 500);
+  }
+
+  function handleHashOnLoad() {
+    const hash = window.location.hash;
+    console.log('Hash au chargement:', hash);
+    
+    if (hash && hash.startsWith('#ressource-')) {
+      const ressourceId = hash.replace('#ressource-', '');
+      console.log('Ressource ID depuis hash:', ressourceId);
+      
+      // Attendre un peu puis scroller
+      setTimeout(() => {
+        scrollToRessource(ressourceId);
+      }, 1000);
+    }
+    
+    // Vérifier aussi le sessionStorage
+    const storedRessourceId = sessionStorage.getItem('targetRessourceId');
+    if (storedRessourceId) {
+      console.log('Ressource ID depuis sessionStorage:', storedRessourceId);
+      setTimeout(() => {
+        scrollToRessource(storedRessourceId);
+        sessionStorage.removeItem('targetRessourceId');
+      }, 1500);
+    }
+  }
+
   // =============== CHARGEMENT DES RESSOURCES ===============
   async function loadRessources() {
     try {
@@ -483,6 +603,9 @@
 
       // Afficher la première page
       renderPaginatedRessources(filteredRessources, currentPageRessources);
+      
+      // Après chargement, vérifier si on doit scroller
+      setTimeout(handleHashOnLoad, 500);
     } catch (err) {
       console.error('Erreur loadRessources:', err);
       document.getElementById('ressource-list').innerHTML = '<p style="color:red; text-align:center;">Erreur lors du chargement des ressources.</p>';
@@ -530,7 +653,6 @@
 
         let mediaHtml = '';
         if (isVideo) {
-            // AFFICHER LA VIDÉO MAIS AVEC UN LIEN VERS LA PAGE DÉDIÉE
             mediaHtml = `
                 <div class="ressource-media" style="cursor: pointer;" onclick="window.location.href='/videos#video-${r.id}'">
                     <div class="icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
@@ -565,7 +687,7 @@
         }
 
         grid.innerHTML += `
-            <div class="ressources-list">
+            <div class="ressources-list" data-ressource-id="${r.id}">
                 <div class="ressource-header">
                     <img src="${r.user_avatar}" 
                          alt="Avatar" 
@@ -573,7 +695,6 @@
                          loading="lazy"
                          onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSI+QXZhdGFyPC90ZXh0Pjwvc3ZnPg=='">
                     <h3 class="ressource-title">${r.title}</h3>
-                    <!-- ICÔNE DE SAUVEGARDE RÉTABLIE -->
                     <div class="save-icon" onclick="toggleSaveRessource(${r.id}, this)">
                         <i class="${bookmarkIconClass}" style="color: ${bookmarkColor};"></i>
                     </div>
@@ -607,47 +728,39 @@
                 </div>
             </div>`;
     });
-}
+  }
 
-// =============== FONCTION DE SAUVEGARDE ===============
-function toggleSaveRessource(ressourceId, element) {
-  const icon = element.querySelector('i');
-  const isCurrentlySaved = icon.classList.contains('fa-solid');
+  // =============== FONCTION DE SAUVEGARDE ===============
+  function toggleSaveRessource(ressourceId, element) {
+    const icon = element.querySelector('i');
+    const isCurrentlySaved = icon.classList.contains('fa-solid');
 
-  const url = isCurrentlySaved 
-    ? `/api/unsave_ressource/${ressourceId}` 
-    : `/api/save_ressource/${ressourceId}`;
+    const url = isCurrentlySaved 
+      ? `/api/unsave_ressource/${ressourceId}` 
+      : `/api/save_ressource/${ressourceId}`;
 
-  fetch(url, { method: 'POST' })
-    .then(response => response.json())
-    .then(data => {
-      if (data.saved) {
-        icon.className = 'fa-solid fa-bookmark';
-        icon.style.color = '#007bff';
-        
-        // Mettre à jour la ressource locale
-        const ressource = ressources.find(r => r.id === ressourceId);
-        if (ressource) ressource.is_saved = true;
-        
-        // Recharger les ressources sauvegardées dans note.html (si ouvert)
-        console.log('Ressource sauvegardée !');
-      } else {
-        icon.className = 'fa-regular fa-bookmark';
-        icon.style.color = '#ccc';
-        
-        // Mettre à jour la ressource locale
-        const ressource = ressources.find(r => r.id === ressourceId);
-        if (ressource) ressource.is_saved = false;
-        
-        console.log('Ressource désauvegardée !');
-      }
-    })
-    .catch(err => {
-      console.error('Erreur:', err);
-      alert('Impossible de sauvegarder.');
-    });
-}
-  // =============== PAGINATION GÉNÉRIQUE CORRIGÉE ===============
+    fetch(url, { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.saved) {
+          icon.className = 'fa-solid fa-bookmark';
+          icon.style.color = '#007bff';
+          const ressource = ressources.find(r => r.id === ressourceId);
+          if (ressource) ressource.is_saved = true;
+        } else {
+          icon.className = 'fa-regular fa-bookmark';
+          icon.style.color = '#ccc';
+          const ressource = ressources.find(r => r.id === ressourceId);
+          if (ressource) ressource.is_saved = false;
+        }
+      })
+      .catch(err => {
+        console.error('Erreur:', err);
+        alert('Impossible de sauvegarder.');
+      });
+  }
+
+  // =============== PAGINATION ===============
   function renderPagination(totalPages, currentPage, onPageChange, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -658,13 +771,10 @@ function toggleSaveRessource(ressourceId, element) {
     }
 
     let html = '<div class="pagination">';
-
-    // Bouton précédent
     if (currentPage > 1) {
       html += `<button onclick="pageChangeHandler(${currentPage - 1}, '${containerId}')">&laquo; Précédent</button>`;
     }
 
-    // Pages
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -681,19 +791,15 @@ function toggleSaveRessource(ressourceId, element) {
       }
     }
 
-    // Bouton suivant
     if (currentPage < totalPages) {
       html += `<button onclick="pageChangeHandler(${currentPage + 1}, '${containerId}')">Suivant &raquo;</button>`;
     }
 
     html += '</div>';
     container.innerHTML = html;
-
-    // Stocker la fonction de callback dans l'élément
     container._pageChangeCallback = onPageChange;
   }
 
-  // Gestionnaire global pour les changements de page
   function pageChangeHandler(page, containerId) {
     const container = document.getElementById(containerId);
     if (container && container._pageChangeCallback) {
@@ -701,13 +807,13 @@ function toggleSaveRessource(ressourceId, element) {
     }
   }
 
-  // =============== TRI & RECHERCHE pour les partages ===============
+  // =============== TRI & RECHERCHE ===============
   document.getElementById('sort')?.addEventListener('change', (e) => {
     currentPageRessources = 1;
     const v = e.target.value;
     if (!ressources) return;
     
-    filteredRessources = [...ressources]; // Réinitialiser avant de trier
+    filteredRessources = [...ressources];
     
     if (v === 'date-desc') {
       filteredRessources.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -793,7 +899,7 @@ function toggleSaveRessource(ressourceId, element) {
       el.className = 'discussion-list';
       el.innerHTML = `
         <div class="discussion-head">
-          <img src="${d.user_avatar || 'https://via.placeholder.com/150'}" alt="avatar" onerror="this.src='https://via.placeholder.com/150'">
+          <img src="${d.user_avatar || 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'}" alt="avatar" onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
           <div class="discussion-list-info">
             <p class="p1">
               <span>${d.title}</span>
@@ -814,7 +920,6 @@ function toggleSaveRessource(ressourceId, element) {
       container.appendChild(el);
     });
 
-    // Pagination pour discussions
     renderPagination(totalPages, currentPageDiscussions, (page) => {
       currentPageDiscussions = page;
       renderDiscussions(discussions);
@@ -858,7 +963,7 @@ function toggleSaveRessource(ressourceId, element) {
         list.innerHTML = comments.length ? comments.map(c => `
           <div style="margin-bottom:12px; padding:10px; border-bottom:1px solid #eee;">
             <div style="display:flex; align-items:start; gap:8px;">
-              <img src="${c.user_avatar || 'https://via.placeholder.com/30'}" width="30" style="border-radius:50%;">
+              <img src="${c.user_avatar || 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'}" width="30" style="border-radius:50%;">
               <div>
                 <strong>${c.username}</strong> • <span style="color:#777;">${formatTimeAgo(c.created_at)}</span>
                 <p style="margin:6px 0 0 0;">${c.content}</p>
@@ -880,190 +985,177 @@ function toggleSaveRessource(ressourceId, element) {
   }
 
   // =============== EVENTS ===============
-// =============== GESTION DU CHAMP "AUTRE" POUR LES MATIÈRES ===============
-document.getElementById('discussion-subject')?.addEventListener('change', function(e) {
-  const autreInput = document.getElementById('autre-subject');
-  if (e.target.value === 'autre') {
-    autreInput.style.display = 'block';
-    autreInput.required = true;
-  } else {
-    autreInput.style.display = 'none';
-    autreInput.required = false;
-    autreInput.value = '';
-  }
-});
-
-// Modifiez la fonction de soumission du formulaire de discussion
-document.getElementById('new-discussion-form')?.addEventListener('submit', function(e) {
-  e.preventDefault();
-  const content = document.getElementById('discussion-content').value.trim();
-  let subject = document.getElementById('discussion-subject').value;
-  const autreSubject = document.getElementById('autre-subject').value.trim();
-  
-  // Si "Autre" est sélectionné, utiliser la valeur du champ texte
-  if (subject === 'autre') {
-    if (!autreSubject) {
-      alert("Veuillez préciser la matière.");
-      return;
-    }
-    subject = autreSubject;
-  }
-  
-  if (!content || !subject) return alert("Veuillez remplir tous les champs.");
-  const title = content.length > 60 ? content.substring(0, 60) + "…" : content;
-
-  fetch('/api/discussion', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, subject, content })
-  }).then(() => {
-    document.getElementById('discussion-content').value = '';
-    document.getElementById('discussion-subject').value = '';
-    document.getElementById('autre-subject').value = '';
-    document.getElementById('autre-subject').style.display = 'none';
-    loadAllDiscussions();
-  }).catch(() => alert("Erreur lors de la publication."));
-});
-
-document.getElementById('search-discussions')?.addEventListener('input', applyFilters);
-document.getElementById('sort-discussions')?.addEventListener('change', applyFilters);
-
-document.querySelector('.close')?.addEventListener('click', () => {
-  document.getElementById('comment-modal').style.display = 'none';
-});
-window.addEventListener('click', e => {
-  if (e.target.id === 'comment-modal') {
-    document.getElementById('comment-modal').style.display = 'none';
-  }
-});
-
-document.getElementById('comment-form')?.addEventListener('submit', function(e) {
-  e.preventDefault();
-  const content = document.getElementById('comment-input').value.trim();
-  if (!content) return;
-  fetch(`/api/discussion/${currentDiscussionId}/comment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content })
-  }).then(() => {
-    document.getElementById('comment-input').value = '';
-    loadComments(currentDiscussionId);
-  });
-});
-
-// =============== MODAL PARTAGE ===============
-const partages = document.querySelectorAll('.share-ressource');
-const modalOverlay = document.getElementById('modal-overlay');
-const form_p = document.getElementById('form-partage');
-
-function ouvrirFormulaire() {
-  if (modalOverlay) modalOverlay.style.display = 'flex';
-}
-
-function fermerFormulaire() {
-  if (modalOverlay) {
-    modalOverlay.style.display = 'none';
-    // Réinitialiser les champs "Autre" quand on ferme le modal
-    const autreInput = document.getElementById('autre-matiere');
-    if (autreInput) {
+  document.getElementById('discussion-subject')?.addEventListener('change', function(e) {
+    const autreInput = document.getElementById('autre-subject');
+    if (e.target.value === 'autre') {
+      autreInput.style.display = 'block';
+      autreInput.required = true;
+    } else {
       autreInput.style.display = 'none';
+      autreInput.required = false;
       autreInput.value = '';
     }
-    const matiereSelect = document.getElementById('MYmatiere');
-    if (matiereSelect) {
-      matiereSelect.disabled = false;
-      matiereSelect.value = '';
-    }
-  }
-}
-
-partages.forEach(btn => {
-  btn.addEventListener('click', ouvrirFormulaire);
-});
-
-if (modalOverlay) {
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) fermerFormulaire();
   });
-}
 
-if (form_p) {
-  form_p.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
-}
-
-// =============== GESTION DU CHAMP "AUTRE" POUR LE PARTAGE DE RESSOURCES ===============
-document.getElementById('MYmatiere')?.addEventListener('change', function(e) {
-  const autreInput = document.getElementById('autre-matiere');
-  if (e.target.value === 'autre') {
-    autreInput.style.display = 'block';
-    autreInput.required = true;
-  } else {
-    autreInput.style.display = 'none';
-    autreInput.required = false;
-    autreInput.value = '';
-  }
-});
-
-if (form_p) {
-  form_p.addEventListener('submit', function(e) {
-    const matiereSelect = document.getElementById('MYmatiere');
-    const autreInput = document.getElementById('autre-matiere');
+  document.getElementById('new-discussion-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const content = document.getElementById('discussion-content').value.trim();
+    let subject = document.getElementById('discussion-subject').value;
+    const autreSubject = document.getElementById('autre-subject').value.trim();
     
-    // Si "Autre" est sélectionné, remplacer la valeur
-    if (matiereSelect && matiereSelect.value === 'autre') {
-      if (!autreInput || !autreInput.value.trim()) {
-        e.preventDefault();
+    if (subject === 'autre') {
+      if (!autreSubject) {
         alert("Veuillez préciser la matière.");
-        return false;
+        return;
       }
-      // Créer un champ hidden pour envoyer la valeur
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.name = 'matiere';
-      hiddenInput.value = autreInput.value.trim();
-      e.target.appendChild(hiddenInput);
-      
-      // Désactiver le select original pour qu'il ne soit pas envoyé
-      matiereSelect.disabled = true;
+      subject = autreSubject;
     }
     
-    // Vérification de la taille des fichiers
-    const files = document.getElementById('file').files;
-    const maxSize = 100 * 1024 * 1024; // 100 Mo
-    
-    for (let file of files) {
-      if (file.size > maxSize) {
-        e.preventDefault();
-        alert(`Le fichier "${file.name}" est trop volumineux.\nTaille maximale : 100 Mo.`);
-        return false;
-      }
+    if (!content || !subject) return alert("Veuillez remplir tous les champs.");
+    const title = content.length > 60 ? content.substring(0, 60) + "…" : content;
+
+    fetch('/api/discussion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, subject, content })
+    }).then(() => {
+      document.getElementById('discussion-content').value = '';
+      document.getElementById('discussion-subject').value = '';
+      document.getElementById('autre-subject').value = '';
+      document.getElementById('autre-subject').style.display = 'none';
+      loadAllDiscussions();
+    }).catch(() => alert("Erreur lors de la publication."));
+  });
+
+  document.getElementById('search-discussions')?.addEventListener('input', applyFilters);
+  document.getElementById('sort-discussions')?.addEventListener('change', applyFilters);
+
+  document.querySelector('.close')?.addEventListener('click', () => {
+    document.getElementById('comment-modal').style.display = 'none';
+  });
+  window.addEventListener('click', e => {
+    if (e.target.id === 'comment-modal') {
+      document.getElementById('comment-modal').style.display = 'none';
     }
   });
-}
 
-// Réinitialiser le formulaire quand il est soumis avec succès
-form_p?.addEventListener('submit', function() {
-  // Réinitialiser après un délai pour laisser le temps à l'envoi
-  setTimeout(() => {
+  document.getElementById('comment-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const content = document.getElementById('comment-input').value.trim();
+    if (!content) return;
+    fetch(`/api/discussion/${currentDiscussionId}/comment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    }).then(() => {
+      document.getElementById('comment-input').value = '';
+      loadComments(currentDiscussionId);
+    });
+  });
+
+  // =============== MODAL PARTAGE ===============
+  const partages = document.querySelectorAll('.share-ressource');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const form_p = document.getElementById('form-partage');
+
+  function ouvrirFormulaire() {
+    if (modalOverlay) modalOverlay.style.display = 'flex';
+  }
+
+  function fermerFormulaire() {
+    if (modalOverlay) {
+      modalOverlay.style.display = 'none';
+      const autreInput = document.getElementById('autre-matiere');
+      if (autreInput) {
+        autreInput.style.display = 'none';
+        autreInput.value = '';
+      }
+      const matiereSelect = document.getElementById('MYmatiere');
+      if (matiereSelect) {
+        matiereSelect.disabled = false;
+        matiereSelect.value = '';
+      }
+    }
+  }
+
+  partages.forEach(btn => {
+    btn.addEventListener('click', ouvrirFormulaire);
+  });
+
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) fermerFormulaire();
+    });
+  }
+
+  if (form_p) {
+    form_p.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  document.getElementById('MYmatiere')?.addEventListener('change', function(e) {
     const autreInput = document.getElementById('autre-matiere');
-    const matiereSelect = document.getElementById('MYmatiere');
-    
-    if (autreInput) {
+    if (e.target.value === 'autre') {
+      autreInput.style.display = 'block';
+      autreInput.required = true;
+    } else {
       autreInput.style.display = 'none';
+      autreInput.required = false;
       autreInput.value = '';
     }
-    if (matiereSelect) {
-      matiereSelect.disabled = false;
-      matiereSelect.value = '';
-    }
-    
-    // Réinitialiser les autres champs
-    document.getElementById('titre').value = '';
-    document.getElementById('file').value = '';
-  }, 1000);
-});
+  });
+
+  if (form_p) {
+    form_p.addEventListener('submit', function(e) {
+      const matiereSelect = document.getElementById('MYmatiere');
+      const autreInput = document.getElementById('autre-matiere');
+      
+      if (matiereSelect && matiereSelect.value === 'autre') {
+        if (!autreInput || !autreInput.value.trim()) {
+          e.preventDefault();
+          alert("Veuillez préciser la matière.");
+          return false;
+        }
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'matiere';
+        hiddenInput.value = autreInput.value.trim();
+        e.target.appendChild(hiddenInput);
+        matiereSelect.disabled = true;
+      }
+      
+      const files = document.getElementById('file').files;
+      const maxSize = 50 * 1024 * 1024;
+      
+      for (let file of files) {
+        if (file.size > maxSize) {
+          e.preventDefault();
+          alert(`Le fichier "${file.name}" est trop volumineux.\nTaille maximale : 50 Mo.`);
+          return false;
+        }
+      }
+    });
+  }
+
+  form_p?.addEventListener('submit', function() {
+    setTimeout(() => {
+      const autreInput = document.getElementById('autre-matiere');
+      const matiereSelect = document.getElementById('MYmatiere');
+      
+      if (autreInput) {
+        autreInput.style.display = 'none';
+        autreInput.value = '';
+      }
+      if (matiereSelect) {
+        matiereSelect.disabled = false;
+        matiereSelect.value = '';
+      }
+      
+      document.getElementById('titre').value = '';
+      document.getElementById('file').value = '';
+    }, 1000);
+  });
  
   // =============== NAVIGATION ENTRE ONGLETS ===============
   const tabs = document.querySelectorAll(".tab");
@@ -1094,6 +1186,12 @@ form_p?.addEventListener('submit', function() {
     loadAllDiscussions();
     loadRessources();
     loadStats();
+    
+    // Écouter les changements de hash
+    window.addEventListener('hashchange', function() {
+      console.log('Hash changé:', window.location.hash);
+      setTimeout(handleHashOnLoad, 500);
+    });
   });
 </script>
 {% endblock %}

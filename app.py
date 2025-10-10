@@ -89,14 +89,30 @@ ALLOWED_EXTENSIONS = {
 }
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS    
+
+def allow_avatar_file(filename):
+     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png','jpg','jpeg','gif'}
+
 
 def upload_avatar_to_cloudinary(file):
     try:
-        result = cloudinary.uploader.upload(file)
-        return result.get("secure_url")
+        result = cloudinary.uploader.upload(
+            file,
+            folder="edushare/avatars",
+            public_id=f"avatar_{current_user.id}_{int(datetime.utcnow().timestamp())}",
+            overwrite=True,
+            invalidate=True,
+            use_filename=False,
+            unique_filename=True,
+            access_mode="public",  # 🔥 CRITIQUE
+            type="upload"
+        )
+        secure_url = result.get("secure_url")
+        logger.info(f"✅ Avatar uploadé avec permissions publiques: {secure_url}")
+        return secure_url
     except Exception as e:
-        logger.error(f"Erreur Cloudinary: {e}")
+        logger.error(f"❌ Erreur Cloudinary: {e}")
         flash("Échec de l'upload de l'image.", "danger")
         return None
 
@@ -112,13 +128,12 @@ class User(UserMixin, db.Model):
     profile = db.relationship('Profile', backref='user', uselist=False)
     youtube_credentials = db.Column(db.LargeBinary, nullable=True)  # <-- ajout
    
-
     @property
     def avatar_url(self):
         if self.profile and self.profile.avatar_path:
-            return self.profile.avatar_path
+            return fix_cloudinary_url(self.profile.avatar_path)
         return "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg"
-
+    
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -180,6 +195,35 @@ class SavedRessource(db.Model):
     user = db.relationship('User', backref=db.backref('saved_ressources', lazy=True))
     ressource = db.relationship('Ressource', backref=db.backref('saved_by', lazy=True))
     __table_args__ = (db.UniqueConstraint('user_id', 'ressource_id', name='unique_user_ressource'),)
+
+# -------------------- Modèles --------------------
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    ressource_id = db.Column(db.Integer, db.ForeignKey('ressource.id'), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('notifications', lazy=True))
+    ressource = db.relationship('Ressource', backref=db.backref('notifications', lazy=True))
+
+def fix_cloudinary_url(url):
+    """Corrige les URLs Cloudinary si nécessaire"""
+    if not url:
+        return "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg"
+    
+    # Si c'est déjà une URL complète, la retourner telle quelle
+    if url.startswith('http'):
+        return url
+    
+    # Si c'est un public_id Cloudinary, construire l'URL complète
+    if '/' in url and '.' in url:
+        # Nettoyer le public_id
+        clean_public_id = url.replace('edushare/avatars/', '').replace('edushare/ressources/', '')
+        return f"https://res.cloudinary.com/ddzx1fktv/image/upload/{clean_public_id}"
+    
+    return "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg"
 
 # -------------------- Filtre Jinja --------------------
 def time_ago(dt):
@@ -280,8 +324,12 @@ def profile():
         year_of_study = request.form.get('year_of_study')
         avatar_file = request.files.get('avatar')
         avatar_path = current_user.profile.avatar_path if current_user.profile else None
+        email_exist=Profile.query.filter_by(email=email).first()
+        if email_exist:
+            flash('cet email est deja pris','danger')
+            return redirect(url_for('profile'))
         if avatar_file and avatar_file.filename != '':
-            if allowed_file(avatar_file.filename):
+            if allow_avatar_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
                 if upload_result:
                     avatar_path = upload_result
@@ -333,7 +381,7 @@ def videos():
         return redirect(url_for('profile'))
     return render_template('videos.html')
 
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 Mo
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 100 Mo
 
 @app.route('/share_ressource', methods=['POST'])
 @login_required
@@ -355,6 +403,8 @@ def share_ressource():
         return redirect(url_for('communaute'))
 
     uploaded_count = 0
+    new_ressources = []  # Pour stocker les nouvelles ressources créées
+
     for file in valid_files:
         filename = secure_filename(file.filename)
         if '.' not in filename:
@@ -370,7 +420,7 @@ def share_ressource():
             file_size = file.tell()
             file.seek(0)
             if file_size > MAX_FILE_SIZE:
-                flash(f"Fichier trop volumineux (max 100 Mo) : {filename}", "danger")
+                flash(f"Fichier trop volumineux (max 50 Mo) : {filename}", "danger")
                 continue
         except Exception as e:
             logger.error(f"Erreur taille fichier {filename}: {e}")
@@ -402,7 +452,9 @@ def share_ressource():
                 overwrite=True,
                 invalidate=True,
                 use_filename=False,
-                unique_filename=True
+                unique_filename=True,
+                access_mode="public",
+                type="upload"
             )
 
             if resource_type == "image":
@@ -446,18 +498,202 @@ def share_ressource():
         uploaded_count += 1
 
     try:
+        # Sauvegarder d'abord les ressources pour avoir leurs IDs
         db.session.commit()
+        
+        # Maintenant créer les notifications
+        if uploaded_count > 0 and current_user.profile and current_user.profile.year_of_study:
+            # Récupérer les ressources fraîchement créées
+            new_ressources = Ressource.query.filter_by(
+                user_id=current_user.id, 
+                title=title, 
+                subject=subject
+            ).order_by(Ressource.created_at.desc()).limit(uploaded_count).all()
+            
+            # 🔔 MODIFICATION : INCLURE L'UTILISATEUR ACTUEL DANS LES NOTIFICATIONS
+            users_same_year = User.query.join(Profile).filter(
+                Profile.year_of_study == current_user.profile.year_of_study,
+                User.is_active == True
+                # SUPPRIMÉ : User.id != current_user.id
+            ).all()
+            
+            logger.info(f"📢 Création de notifications pour {len(users_same_year)} utilisateurs (année {current_user.profile.year_of_study})")
+            
+            for new_ressource in new_ressources:
+                resource_type_label = "vidéo" if new_ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm'] else "ressource"
+                
+                for user in users_same_year:
+                    # Message différent si c'est l'utilisateur actuel
+                    if user.id == current_user.id:
+                        message = f"Vous avez partagé une nouvelle {resource_type_label} : {new_ressource.title}"
+                    else:
+                        message = f"{current_user.username} a partagé une nouvelle {resource_type_label} : {new_ressource.title}"
+                    
+                    notification = Notification(
+                        user_id=user.id,
+                        ressource_id=new_ressource.id,
+                        message=message
+                    )
+                    db.session.add(notification)
+            
+            # Sauvegarder les notifications
+            db.session.commit()
+            logger.info(f"✅ {len(users_same_year) * len(new_ressources)} notifications créées avec succès")
+        
         if uploaded_count > 0:
             flash(f'✅ {uploaded_count} ressource(s) partagée(s) avec succès !', 'success')
         else:
             flash('Aucune ressource n\'a pu être partagée.', 'warning')
+            
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erreur lors de la sauvegarde en base : {e}")
         flash("Erreur critique lors de la publication.", "danger")
+        
     return redirect(url_for('communaute'))
 
-# -------------------- API FILTRÉES PAR YEAR_OF_STUDY --------------------
+# ------------------- DEBUG -------------------
+@app.route('/debug/user_notifications')
+@login_required
+def debug_user_notifications():
+    """Debug des notifications de l'utilisateur actuel"""
+    notifications = Notification.query.filter_by(user_id=current_user.id)\
+        .options(joinedload(Notification.ressource))\
+        .order_by(Notification.created_at.desc())\
+        .all()
+    
+    debug_info = {
+        "current_user_id": current_user.id,
+        "current_user_username": current_user.username,
+        "notifications_count": len(notifications),
+        "notifications": [{
+            "id": n.id,
+            "message": n.message,
+            "is_read": n.is_read,
+            "ressource_id": n.ressource_id,
+            "ressource_type": n.ressource.file_type if n.ressource else None,
+            "created_at": n.created_at.isoformat()
+        } for n in notifications]
+    }
+    
+    return jsonify(debug_info)
+
+@app.route('/debug/cloudinary_config')
+def debug_cloudinary_config():
+    """Teste la configuration Cloudinary"""
+    try:
+        # Tester un upload simple
+        test_result = cloudinary.uploader.upload(
+            "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg",
+            public_id="test_config",
+            folder="edushare/test",
+            access_mode="public",
+            overwrite=True
+        )
+        
+        return jsonify({
+            "status": "success", 
+            "test_url": test_result.get("secure_url"),
+            "cloud_name": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+            "api_key_set": bool(os.environ.get("CLOUDINARY_API_KEY")),
+            "api_secret_set": bool(os.environ.get("CLOUDINARY_API_SECRET"))
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e),
+            "cloud_name": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+            "api_key_set": bool(os.environ.get("CLOUDINARY_API_KEY")),
+            "api_secret_set": bool(os.environ.get("CLOUDINARY_API_SECRET"))
+        })
+
+@app.route('/debug/avatars')
+@login_required
+def debug_avatars():
+    """Debug des avatars des utilisateurs"""
+    users = User.query.options(joinedload(User.profile)).all()
+    
+    avatars_info = []
+    for user in users:
+        avatar_path = user.profile.avatar_path if user.profile else None
+        avatars_info.append({
+            'user_id': user.id,
+            'username': user.username,
+            'avatar_path': avatar_path,
+            'avatar_url': user.avatar_url,
+            'is_full_url': avatar_path.startswith('http') if avatar_path else False
+        })
+    
+    return jsonify(avatars_info)
+
+@app.route('/fix/cloudinary_permissions')
+@login_required
+def fix_cloudinary_permissions():
+    """Ré-uploader tous les avatars avec les bonnes permissions"""
+    if current_user.id != 1:  # Seul l'admin
+        return "Accès non autorisé", 403
+    
+    users = User.query.options(joinedload(User.profile)).filter(
+        User.profile.has(Profile.avatar_path.isnot(None))
+    ).all()
+    
+    fixed_count = 0
+    for user in users:
+        if user.profile.avatar_path and 'cloudinary.com' in user.profile.avatar_path:
+            try:
+                # Télécharger et ré-uploader avec les bonnes permissions
+                response = requests.get(user.profile.avatar_path, timeout=10)
+                if response.status_code == 200:
+                    # Ré-uploader avec permissions publiques
+                    new_upload = cloudinary.uploader.upload(
+                        response.content,
+                        folder="edushare/avatars_fixed",
+                        public_id=f"avatar_fixed_{user.id}",
+                        overwrite=True,
+                        invalidate=True,
+                        access_mode="public",
+                        type="upload"
+                    )
+                    
+                    user.profile.avatar_path = new_upload.get("secure_url")
+                    fixed_count += 1
+                    logger.info(f"✅ Avatar réparé pour {user.username}")
+                else:
+                    logger.warning(f"❌ Impossible de télécharger l'avatar de {user.username}")
+                    
+            except Exception as e:
+                logger.error(f"❌ Erreur réparation avatar {user.username}: {e}")
+                continue
+    
+    db.session.commit()
+    
+    return jsonify({
+        "message": f"{fixed_count} avatars réparés avec les bonnes permissions",
+        "fixed_count": fixed_count
+    })
+
+@app.route('/debug/notifications')
+@login_required
+def debug_notifications():
+    """Route pour debugger les notifications"""
+    notifications = Notification.query.all()
+    users_count = User.query.count()
+    current_year = current_user.profile.year_of_study if current_user.profile else None
+    
+    debug_info = {
+        "total_notifications": len(notifications),
+        "total_users": users_count,
+        "current_user_year": current_year,
+        "notifications": [{
+            "id": n.id,
+            "user_id": n.user_id,
+            "message": n.message,
+            "is_read": n.is_read,
+            "created_at": n.created_at.isoformat()
+        } for n in notifications]
+    }
+    
+    return jsonify(debug_info)
 
 @app.route('/api/ressources')
 @login_required
@@ -696,6 +932,49 @@ def like_ressource(ressource_id):
     db.session.commit()
     return jsonify({"likes": ressource.likes}), 200
 
+@app.route('/api/notifications')
+@login_required
+def api_notifications():
+    notifications = Notification.query.filter_by(user_id=current_user.id)\
+        .options(joinedload(Notification.ressource))\
+        .order_by(Notification.created_at.desc())\
+        .limit(50)\
+        .all()
+    
+    return jsonify([{
+        "id": n.id,
+        "message": n.message,
+        "is_read": n.is_read,
+        "created_at": n.created_at.isoformat(),
+        "ressource_id": n.ressource_id,
+        "ressource_type": n.ressource.file_type if n.ressource else None,
+        "ressource_title": n.ressource.title if n.ressource else None
+    } for n in notifications])
+
+@app.route('/api/notifications/read/<int:notification_id>', methods=['POST'])
+@login_required
+def mark_notification_read(notification_id):
+    notification = Notification.query.filter_by(id=notification_id, user_id=current_user.id).first()
+    if notification:
+        notification.is_read = True
+        db.session.commit()
+        return jsonify({"success": True})
+    return jsonify({"error": "Notification non trouvée"}), 404
+
+@app.route('/api/notifications/read_all', methods=['POST'])
+@login_required
+def mark_all_notifications_read():
+    Notification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/notifications/count')
+@login_required
+def unread_notifications_count():
+    count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+    return jsonify({"count": count})
+
+
 # -------------------- Pages --------------------
 @app.route('/notes')
 @login_required
@@ -757,8 +1036,7 @@ def youtube_oauth2callback():
     flash("✅ Auth YouTube réussie !", "success")
     return redirect(url_for('share_youtube_video'))
 
-
-# -------------------- Route Upload YouTube --------------------
+# -------------------- Routes Upload YouTube --------------------
 @app.route('/share_youtube_video', methods=['GET', 'POST'])
 @login_required
 def share_youtube_video():
@@ -816,24 +1094,51 @@ def share_youtube_video():
                 page_count=0
             )
             db.session.add(new_ressource)
-            db.session.commit()
+            db.session.commit()  # Sauvegarder d'abord la ressource
+
+            # 🔔 CRÉATION DES NOTIFICATIONS AVEC INCLUSION DE L'UTILISATEUR ACTUEL
+            if current_user.profile and current_user.profile.year_of_study:
+                users_same_year = User.query.join(Profile).filter(
+                    Profile.year_of_study == current_user.profile.year_of_study,
+                    User.is_active == True
+                    # SUPPRIMÉ : User.id != current_user.id
+                ).all()
+                
+                logger.info(f"📢 Création de notifications YouTube pour {len(users_same_year)} utilisateurs")
+                
+                for user in users_same_year:
+                    # Message différent si c'est l'utilisateur actuel
+                    if user.id == current_user.id:
+                        message = f"Vous avez partagé une nouvelle vidéo YouTube : {title}"
+                    else:
+                        message = f"{current_user.username} a partagé une nouvelle vidéo YouTube : {title}"
+                    
+                    notification = Notification(
+                        user_id=user.id,
+                        ressource_id=new_ressource.id,
+                        message=message
+                    )
+                    db.session.add(notification)
+                
+                db.session.commit()  # Sauvegarder les notifications
+                logger.info(f"✅ {len(users_same_year)} notifications YouTube créées avec succès")
 
             flash("✅ Vidéo uploadée sur YouTube et partagée !", "success")
             return redirect(url_for('videos'))
 
         except Exception as e:
+            db.session.rollback()
+            logger.error(f"❌ Échec de l'upload YouTube : {e}")
             flash(f"❌ Échec de l'upload YouTube : {e}", "danger")
             return render_template('share_youtube.html')
 
         finally:
             try:
                 os.remove(temp_path)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Impossible de supprimer le fichier temporaire: {e}")
 
     return render_template('share_youtube.html')
-
-
 # --------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

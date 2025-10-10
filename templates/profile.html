@@ -67,12 +67,6 @@
   <button class="tab active" data-page="overview">
     <i class="fas fa-chart-line"></i> Vue d’ensemble
   </button>
-  <button class="tab" data-page="resources">
-    <i class="fas fa-folder-open"></i> Mes ressources
-  </button>
-  <button class="tab" data-page="saved">
-    <i class="fas fa-bookmark"></i> Sauvegardées
-  </button>
   <button class="tab" data-page="settings">
     <i class="fas fa-cog"></i> Paramètres
   </button>
@@ -81,149 +75,58 @@
 <!-- Contenu dynamique -->
 <main>
   <!-- OVERVIEW -->
-  <section id="overview" class="page active">
-    <!-- Colonne gauche : activités récentes -->
-    <div class="section1">
-      <div class="recent-ativities">
-        <h3>Dernières activités</h3>
-        <ul>
-          <li>
-            Vous avez partagé une nouvelle ressource: "Algorithmes de tri"
-          </li>
-          <li>
-            Vous avez sauvegardé la ressource: "Structures de données avancées"
-          </li>
-          <li>
-            Vous avez commenté la ressource: "Introduction à la programmation en
-            C++"
-          </li>
-        </ul>
+<section id="overview" class="page active">
+  <div class="section1">
+    <!-- Colonne gauche : activités récentes AVEC NOTIFICATIONS -->
+    <div class="recent-activities">
+      <h3>Activités récentes</h3>
+      
+      <!-- Filtres par date -->
+      <div class="activity-filters">
+        <select id="dateFilter">
+          <option value="all">Toutes les activités</option>
+          <option value="today">Aujourd'hui</option>
+          <option value="week">Cette semaine</option>
+          <option value="month">Ce mois</option>
+        </select>
+        <input type="date" id="customDate" style="display: none;">
       </div>
+      
+      <!-- Liste des activités -->
+      <div id="activities-list" class="activities-list">
+        <div class="loading-activities">
+          <div class="spinner"></div>
+          <p>Chargement des activités...</p>
+        </div>
+      </div>
+      
+      <!-- Pagination -->
+      <div id="activities-pagination" class="pagination"></div>
+    </div>
 
-      <!-- Colonne droite : actions rapides -->
-      <div class="action-rapides">
-        <h2>Actions rapides</h2>
-        <div class="cards">
-          <div class="action-card">
-            <i class="fas fa-upload"></i>
-            <span>Partager une nouvelle ressource</span>
-          </div>
+    <!-- Colonne droite : actions rapides -->
+    <div class="action-rapides">
+      <h2>Actions rapides</h2>
+      <div class="cards">
+        <div class="action-card" onclick="window.location.href='{{ url_for('communaute') }}'">
+          <i class="fas fa-upload"></i>
+          <span>Partager une nouvelle ressource</span>
+        </div>
 
-          <div class="action-card">
-            <i class="fas fa-users"></i>
-            <span>Voir les étudiants actifs</span>
-          </div>
+        <div class="action-card" onclick="window.location.href='{{ url_for('communaute') }}'">
+          <i class="fas fa-users"></i>
+          <span>Voir les étudiants actifs</span>
+        </div>
 
-          <div class="action-card">
-            <i class="fas fa-star"></i>
-            <span>Voir les ressources populaires</span>
-          </div>
+        <div class="action-card" onclick="window.location.href='{{ url_for('videos') }}'">
+          <i class="fas fa-star"></i>
+          <span>Voir les ressources populaires</span>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- RESOURCES -->
-  <section id="resources" class="page">
-    <div class="head-section">
-      <h2>Mes ressources</h2>
-      <p><a href="#">Nouvelles ressources</a></p>
-    </div>
-    <div class="section2">
-      <div class="ressources-list">
-        <div class="ressource-head">
-          <span>Notes de cours</span>
-          <span>Publie</span>
-        </div>
-        <h3>Notes sur les designs patterns</h3>
-        <p>C++</p>
-        <div>
-          <i class="fa-solid fa-arrow-up-from-bracket"></i
-          ><span style="padding: 0 10px 0 15px">45</span
-          ><i style="color: yellow" class="fa-solid fa-star"></i
-          ><span>3.9</span>
-        </div>
-
-        <div class="lien-icon">
-          <a href="#"><i class="fa-solid fa-pen-to-square"></i>modifier</a>
-          <a><i class="fa-chisel fa-regular fa-truck"></i></a>
-        </div>
-      </div>
-      <div class="ressources-list">
-        <div class="ressource-head">
-          <span>Projets</span>
-          <span>Publie</span>
-        </div>
-        <h3>Projet Final -Application Web Complete</h3>
-        <p>JavaScript</p>
-        <div>
-          <i class="fa-solid fa-arrow-up-from-bracket"></i
-          ><span style="padding: 0 10px 0 15px">45</span
-          ><i style="color: yellow" class="fa-solid fa-star"></i
-          ><span>3.9</span>
-        </div>
-        <div class="lien-icon">
-          <a href="#"><i class="fa-solid fa-pen-to-square"></i>modifier</a>
-          <a><i class="fa-chisel fa-regular fa-truck"></i></a>
-        </div>
-      </div>
-      <div class="ressources-list">
-        <div class="ressource-head">
-          <span>Aide memoire</span>
-          <span>Publie</span>
-        </div>
-        <h3>Guide des bonnes pratiques CSS</h3>
-        <p>HTML/CSS</p>
-        <div>
-          <i class="fa-solid fa-arrow-up-from-bracket"></i
-          ><span style="padding: 0 10px 0 0px">45</span
-          ><i style="color: yellow" class="fa-solid fa-star"></i
-          ><span>3.9</span>
-        </div>
-        <div class="lien-icon">
-          <a href="#"><i class="fa-solid fa-pen-to-square"></i>modifier</a>
-          <a><i class="fa-chisel fa-regular fa-truck"></i></a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SAVED -->
-  <section id="saved" class="page">
-    <h2>Ressources sauvegardées</h2>
-    <div class="section3">
-      <div class="save-ressources">
-        <div class="text">
-          <h3>Algorithmes de tri-Comparaisons et performances</h3>
-          <p>Par Emma simmons-Algorithmes -sauvegrades le 16/01/2024</p>
-        </div>
-        <div class="lien">
-          <a href="">Telecharger</a>
-          <i class="fa-solid fa-bookmark" style="color: rgb(255, 208, 0)"></i>
-        </div>
-      </div>
-      <div class="save-ressources">
-        <div class="text">
-          <h3>Algorithmes de tri-Comparaisons et performances</h3>
-          <p>Par Emma simmons-Algorithmes -sauvegrades le 16/01/2024</p>
-        </div>
-        <div>
-          <a href="">Telecharger</a>
-          <i class="fa-solid fa-bookmark" style="color: rgb(255, 208, 0)"></i>
-        </div>
-      </div>
-      <div class="save-ressources">
-        <div class="text">
-          <h3>Algorithmes de tri-Comparaisons et performances</h3>
-          <p>Par Emma simmons-Algorithmes -sauvegrades le 16/01/2024</p>
-        </div>
-        <div>
-          <a href="">Telecharger</a>
-          <i class="fa-solid fa-bookmark" style="color: rgb(255, 208, 0)"></i>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- SETTINGS -->
   <section id="settings" class="page">
@@ -294,6 +197,283 @@
       document.getElementById(target).classList.add("active");
     });
   });
+
+  /*=====================script ACTIVITIES=======================*/
+  // ================= ACTIVITIES SYSTEM =================
+let currentActivitiesPage = 1;
+const ACTIVITIES_PER_PAGE = 10;
+let allActivities = [];
+
+function loadActivities(filter = 'all', customDate = null) {
+  console.log('Chargement des activités...');
+  
+  fetch('/api/notifications')
+    .then(res => {
+      if (!res.ok) throw new Error('Network response was not ok');
+      return res.json();
+    })
+    .then(notifications => {
+      console.log('Activités reçues:', notifications);
+      allActivities = notifications;
+      let filtered = filterActivities(notifications, filter, customDate);
+      renderActivities(filtered, currentActivitiesPage);
+    })
+    .catch(err => {
+      console.error('Erreur chargement activités:', err);
+      document.getElementById('activities-list').innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #e74c3c;">
+          <p>Erreur lors du chargement des activités</p>
+          <button onclick="loadActivities()" style="padding: 10px 20px; background: #6c5ce7; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+            Réessayer
+          </button>
+        </div>
+      `;
+    });
+}
+
+function filterActivities(activities, filter, customDate) {
+  const now = new Date();
+  let startDate;
+  
+  switch(filter) {
+    case 'today':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      break;
+    case 'week':
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case 'month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case 'custom':
+      if (customDate) startDate = new Date(customDate);
+      break;
+    default:
+      return activities;
+  }
+  
+  if (startDate) {
+    return activities.filter(activity => new Date(activity.created_at) >= startDate);
+  }
+  
+  return activities;
+}
+
+function renderActivities(activities, page) {
+  const container = document.getElementById('activities-list');
+  const totalPages = Math.ceil(activities.length / ACTIVITIES_PER_PAGE);
+  const start = (page - 1) * ACTIVITIES_PER_PAGE;
+  const paginated = activities.slice(start, start + ACTIVITIES_PER_PAGE);
+  
+  console.log('Rendu des activités:', paginated.length, 'sur page', page);
+  
+  if (paginated.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #666;">
+        <i class="fas fa-inbox" style="font-size: 3em; margin-bottom: 15px; opacity: 0.5;"></i>
+        <h4>Aucune activité récente</h4>
+        <p>Les nouvelles ressources partagées apparaîtront ici</p>
+      </div>
+    `;
+    document.getElementById('activities-pagination').innerHTML = '';
+    return;
+  }
+  
+  container.innerHTML = paginated.map(activity => {
+    const typeClass = getActivityTypeClass(activity.ressource_type);
+    const typeLabel = getResourceTypeLabel(activity.ressource_type);
+    
+    return `
+      <div class="activity-item ${typeClass}" 
+           onclick="navigateToResource('${activity.ressource_type}', ${activity.ressource_id})">
+        <div class="activity-message">${activity.message}</div>
+        <div class="activity-meta">
+          <span>${formatTimeAgo(activity.created_at)}</span>
+          <span class="activity-type">${typeLabel}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  renderActivitiesPagination(totalPages, page);
+}
+
+function getActivityTypeClass(resourceType) {
+  if (resourceType === 'youtube') return 'activity-youtube';
+  if (['mp4','mov','avi','mkv','webm'].includes(resourceType)) return 'activity-video';
+  if (resourceType === 'pdf') return 'activity-pdf';
+  if (['png','jpg','jpeg','gif'].includes(resourceType)) return 'activity-image';
+  if (['doc','docx'].includes(resourceType)) return 'activity-document';
+  return 'activity-document';
+}
+
+function getResourceTypeLabel(resourceType) {
+  const types = {
+    'youtube': 'YouTube',
+    'mp4': 'Vidéo', 'mov': 'Vidéo', 'avi': 'Vidéo', 'mkv': 'Vidéo', 'webm': 'Vidéo',
+    'pdf': 'PDF',
+    'png': 'Image', 'jpg': 'Image', 'jpeg': 'Image', 'gif': 'Image',
+    'doc': 'Word', 'docx': 'Word'
+  };
+  return types[resourceType] || 'Fichier';
+}
+
+function navigateToResource(resourceType, resourceId) {
+  console.log('Navigation vers ressource:', resourceType, resourceId);
+  
+  // Marquer comme lu si ce n'est pas déjà fait
+  const activity = allActivities.find(a => a.ressource_id === resourceId);
+  if (activity && !activity.is_read) {
+    fetch(`/api/notifications/read/${activity.id}`, { method: 'POST' })
+      .then(() => {
+        console.log('Notification marquée comme lue');
+      })
+      .catch(err => console.error('Erreur marquage comme lu:', err));
+  }
+  
+  // Rediriger selon le type de ressource
+  if (resourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(resourceType)) {
+    window.location.href = `/videos#video-${resourceId}`;
+  } else {
+    window.location.href = `/communaute#ressource-${resourceId}`;
+  }
+}
+
+function renderActivitiesPagination(totalPages, currentPage) {
+  const container = document.getElementById('activities-pagination');
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  let html = '<div class="pagination">';
+  
+  // Bouton précédent
+  if (currentPage > 1) {
+    html += `<button onclick="changeActivitiesPage(${currentPage - 1})">&laquo; Précédent</button>`;
+  }
+  
+  // Pages
+  const maxVisible = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+  
+  if (endPage - startPage + 1 < maxVisible) {
+    startPage = Math.max(1, endPage - maxVisible + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    if (i === currentPage) {
+      html += `<span class="current-page">${i}</span>`;
+    } else {
+      html += `<button onclick="changeActivitiesPage(${i})">${i}</button>`;
+    }
+  }
+  
+  // Bouton suivant
+  if (currentPage < totalPages) {
+    html += `<button onclick="changeActivitiesPage(${currentPage + 1})">Suivant &raquo;</button>`;
+  }
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function changeActivitiesPage(page) {
+  currentActivitiesPage = page;
+  const filter = document.getElementById('dateFilter').value;
+  const customDate = document.getElementById('customDate').value;
+  loadActivities(filter, customDate);
+  
+  // Scroll vers le haut de la liste
+  document.getElementById('activities-list').scrollTo(0, 0);
+}
+
+// Fonction formatTimeAgo (identique à celle de base.html)
+function formatTimeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffSec = Math.floor((now - date) / 1000);
+  
+  if (diffSec < 60) return "à l'instant";
+  if (diffSec < 3600) {
+    const m = Math.floor(diffSec / 60);
+    return `il y a ${m} minute${m > 1 ? 's' : ''}`;
+  }
+  if (diffSec < 86400) {
+    const h = Math.floor(diffSec / 3600);
+    return `il y a ${h} heure${h > 1 ? 's' : ''}`;
+  }
+  if (diffSec < 604800) {
+    const d = Math.floor(diffSec / 86400);
+    return `il y a ${d} jour${d > 1 ? 's' : ''}`;
+  }
+  return date.toLocaleDateString('fr-FR');
+}
+
+// Initialisation des activités
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Initialisation des activités...');
+  
+  // Vérifier si on est sur la page de profil et dans l'onglet overview
+  if (document.getElementById('activities-list') && document.getElementById('overview').classList.contains('active')) {
+    console.log('Chargement des activités...');
+    loadActivities();
+    
+    // Écouter les changements de filtre
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) {
+      dateFilter.addEventListener('change', function(e) {
+        currentActivitiesPage = 1;
+        if (e.target.value === 'custom') {
+          document.getElementById('customDate').style.display = 'block';
+        } else {
+          document.getElementById('customDate').style.display = 'none';
+          loadActivities(e.target.value);
+        }
+      });
+    }
+    
+    const customDate = document.getElementById('customDate');
+    if (customDate) {
+      customDate.addEventListener('change', function(e) {
+        currentActivitiesPage = 1;
+        loadActivities('custom', e.target.value);
+      });
+    }
+  }
+  
+  // Recharger les activités quand on change d'onglet
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      setTimeout(() => {
+        if (document.getElementById('overview').classList.contains('active')) {
+          console.log('Onglet overview activé - rechargement activités');
+          loadActivities();
+        }
+      }, 100);
+    });
+  });
+});
+
+// Recharger aussi quand on arrive sur la page avec le hash #overview
+window.addEventListener('hashchange', function() {
+  if (window.location.hash === '#overview') {
+    setTimeout(() => {
+      console.log('Hash changé vers overview - rechargement activités');
+      loadActivities();
+    }, 500);
+  }
+});
+
+// Recharger au chargement si hash #overview
+if (window.location.hash === '#overview') {
+  setTimeout(() => {
+    console.log('Page chargée avec hash overview - rechargement activités');
+    loadActivities();
+  }, 1000);
+}
 </script>
 
 {%endblock%}

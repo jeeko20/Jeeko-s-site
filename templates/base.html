@@ -107,46 +107,132 @@
 <body>
 
  
-  <!-- ================= NAVBAR ================= -->
-  <nav class="custom-navbar">
-    <!-- Logo -->
-    <h3>Edushare</h3> 
+<!-- ================= NAVBAR ================= -->
+<nav class="custom-navbar">
+  <!-- Logo -->
+  <h3>Edushare</h3> 
 
-    <!-- Menu Desktop -->
-    <div class="menu">
-      <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
-      <a href="{{url_for('communaute')}}" class="navbar-menu">Communauté</a>
-      <a href="{{url_for('notes')}}" class="navbar-menu">Mes notes</a>
-      <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
+  <!-- Menu Desktop -->
+  <div class="menu">
+    <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
+    <a href="{{url_for('communaute')}}" class="navbar-menu">Communauté</a>
+    <a href="{{url_for('notes')}}" class="navbar-menu">Mes notes</a>
+    <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
+  </div>
+
+  <!-- Notifications et utilisateur -->
+  <div class="nav-right">
+    {% if current_user.is_authenticated %}
+    <!-- Cloche de notifications -->
+    <div class="notification-bell">
+      <i class="fa-solid fa-bell" id="notificationBell"></i>
+      <span class="notification-count" id="notificationCount">0</span>
+      <div class="notification-dropdown" id="notificationDropdown">
+        <div class="notification-header">
+          <h4>Notifications</h4>
+          <button id="markAllRead">Tout marquer comme lu</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-item">
+            <div class="notification-message">Chargement des notifications...</div>
+          </div>
+        </div>
+        <div class="notification-footer">
+          <a href="{{url_for('profile')}}#overview">Voir tout dans le profil</a>
+        </div>
+      </div>
     </div>
-
-    <!-- Boutons connexion / inscription -->
-    <p>
-      {% if current_user.is_authenticated %}
-      <a href="{{url_for('logout')}}" class="btn-signup" style="cursor: pointer;">Déconnexion</a>
-      {%else%}
-      <a class="btn-connexion" id="openLogin" style="cursor: pointer;">Connexion</a>
-      <a class="btn-signup" id="openRegister" style="cursor: pointer;">S'inscrire</a>
-      {%endif%}
-    </p>
-
-    <!-- Menu Mobile (caché au départ) -->
-    <div class="menu-hamburger" id="menu-hamburger">
-      <a href="{{url_for('home')}}" class="navbar-menu">Accueil</a>
-      <a href="{{url_for('communaute')}}" class="navbar-menu">Communauté</a>
-      <a href="{{url_for('notes')}}" class="navbar-menu">Mes notes</a>
-      <a href="{{url_for('profile')}}" class="navbar-menu">Profil</a>
-      {% if current_user.is_authenticated %}
-      <a href="{{url_for('logout')}}" class="btn-signup" style="cursor: pointer;">Déconnexion</a>
-      {%else%}
-      <a  class="btn-connexion" id="openLogin" style="cursor: pointer;">Connexion</a>
-      <a  class="btn-signup" id="openRegister" style="cursor: pointer;">S'inscrire</a>
-      {%endif%}
+    
+    <!-- Menu utilisateur avec avatar -->
+    <div class="user-menu">
+      <div class="user-avatar">
+        <img src="{{ current_user.avatar_url }}" alt="Avatar" />
+        <div class="user-dropdown">
+          <a href="{{url_for('profile')}}">
+            <i class="fa-solid fa-user"></i>
+            Mon profil
+          </a>
+          <a href="{{url_for('notes')}}">
+            <i class="fa-solid fa-note-sticky"></i>
+            Mes notes
+          </a>
+        </div>
+      </div>
+      
+      <!-- Bouton déconnexion visible -->
+      <a href="{{url_for('logout')}}" class="logout-btn-visible">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Déconnexion
+      </a>
     </div>
+    {% else %}
+    <!-- Boutons connexion/inscription -->
+    <div class="auth-buttons">
+      <a class="btn-connexion" id="openLogin">Connexion</a>
+      <a class="btn-signup" id="openRegister">S'inscrire</a>
+    </div>
+    {% endif %}
+  </div>
 
-    <!-- Bouton hamburger -->
-    <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
-  </nav>
+  <!-- Menu Mobile -->
+  <div class="menu-hamburger" id="menu-hamburger">
+    {% if current_user.is_authenticated %}
+    <!-- Avatar utilisateur mobile -->
+    <div class="mobile-user-info">
+      <img src="{{ current_user.avatar_url }}" alt="Avatar" class="mobile-avatar" />
+      <div class="mobile-user-details">
+        <strong>{{ current_user.username }}</strong>
+        <span>{{ current_user.profile.complete_name if current_user.profile else 'Utilisateur' }}</span>
+      </div>
+    </div>
+    <div class="dropdown-divider"></div>
+    {% endif %}
+    
+    <a href="{{url_for('home')}}" class="navbar-menu">
+      <i class="fa-solid fa-house"></i>
+      Accueil
+    </a>
+    <a href="{{url_for('communaute')}}" class="navbar-menu">
+      <i class="fa-solid fa-users"></i>
+      Communauté
+    </a>
+    <a href="{{url_for('notes')}}" class="navbar-menu">
+      <i class="fa-solid fa-note-sticky"></i>
+      Mes notes
+    </a>
+    <a href="{{url_for('profile')}}" class="navbar-menu">
+      <i class="fa-solid fa-user"></i>
+      Profil
+    </a>
+    
+    {% if current_user.is_authenticated %}
+    <!-- Notification dans le menu mobile -->
+    <div class="mobile-notification">
+      <a href="{{url_for('profile')}}#overview" class="navbar-menu">
+        <i class="fa-solid fa-bell"></i>
+        Notifications <span class="mobile-notification-count" id="mobileNotificationCount">0</span>
+      </a>
+    </div>
+    <div class="dropdown-divider"></div>
+    <a href="{{url_for('logout')}}" class="navbar-menu logout-mobile">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Déconnexion
+    </a>
+    {% else %}
+    <a class="btn-connexion mobile-auth-btn" id="openLoginMobile">
+      <i class="fa-solid fa-right-to-bracket"></i>
+      Connexion
+    </a>
+    <a class="btn-signup mobile-auth-btn" id="openRegisterMobile">
+      <i class="fa-solid fa-user-plus"></i>
+      S'inscrire
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Bouton hamburger -->
+  <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
+</nav>
  <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -325,6 +411,165 @@ toLogin.addEventListener("click", () => {
       setTimeout(() => flash.remove(), 500); // supprime après fade out
     }
   }, 4000);
+
+  // ================= NOTIFICATIONS SYSTEM =================
+let notificationCheckInterval;
+
+function loadNotifications() {
+  if (!document.getElementById('notificationBell')) return;
+  
+  fetch('/api/notifications')
+    .then(res => {
+      if (!res.ok) throw new Error('Network response was not ok');
+      return res.json();
+    })
+    .then(notifications => {
+      console.log('Notifications chargées:', notifications); // Debug
+      updateNotificationUI(notifications);
+    })
+    .catch(err => {
+      console.error('Erreur chargement notifications:', err);
+      // Afficher un état d'erreur
+      updateNotificationUI([]);
+    });
+}
+
+function updateNotificationUI(notifications) {
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+  
+  console.log('Notifications non lues:', unreadCount); // Debug
+  
+  // Mettre à jour les compteurs
+  const notificationCount = document.getElementById('notificationCount');
+  const mobileCount = document.getElementById('mobileNotificationCount');
+  
+  if (notificationCount) {
+    notificationCount.textContent = unreadCount;
+    notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
+  }
+  
+  if (mobileCount) {
+    mobileCount.textContent = unreadCount;
+    mobileCount.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+  }
+  
+  // Mettre à jour la liste
+  const list = document.getElementById('notificationList');
+  if (list) {
+    if (notifications.length === 0) {
+      list.innerHTML = '<div class="notification-item"><div class="notification-message">Aucune notification</div></div>';
+    } else {
+      list.innerHTML = notifications.map(notif => `
+        <div class="notification-item ${notif.is_read ? '' : 'unread'}" 
+             onclick="handleNotificationClick(${notif.id}, '${notif.ressource_type}', ${notif.ressource_id})">
+          <div class="notification-message">${notif.message}</div>
+          <div class="notification-time">${formatTimeAgo(notif.created_at)}</div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+function handleNotificationClick(notificationId, ressourceType, ressourceId) {
+  console.log('Clic sur notification:', notificationId, ressourceType, ressourceId); // Debug
+  
+  // Marquer comme lu
+  fetch(`/api/notifications/read/${notificationId}`, { method: 'POST' })
+    .then(() => {
+      // Recharger les notifications pour mettre à jour l'UI
+      loadNotifications();
+    })
+    .catch(err => console.error('Erreur marquage comme lu:', err));
+  
+  // Rediriger selon le type de ressource
+  if (ressourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(ressourceType)) {
+    window.location.href = `/videos#video-${ressourceId}`;
+  } else {
+    window.location.href = `/communaute#ressource-${ressourceId}`;
+  }
+}
+
+function formatTimeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffSec = Math.floor((now - date) / 1000);
+  
+  if (diffSec < 60) return "à l'instant";
+  if (diffSec < 3600) {
+    const m = Math.floor(diffSec / 60);
+    return `il y a ${m} minute${m > 1 ? 's' : ''}`;
+  }
+  if (diffSec < 86400) {
+    const h = Math.floor(diffSec / 3600);
+    return `il y a ${h} heure${h > 1 ? 's' : ''}`;
+  }
+  if (diffSec < 604800) {
+    const d = Math.floor(diffSec / 86400);
+    return `il y a ${d} jour${d > 1 ? 's' : ''}`;
+  }
+  return date.toLocaleDateString('fr-FR');
+}
+
+// Gestionnaire d'événements pour la cloche
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM chargé - Initialisation notifications'); // Debug
+  
+  const bell = document.getElementById('notificationBell');
+  const dropdown = document.getElementById('notificationDropdown');
+  const markAllRead = document.getElementById('markAllRead');
+  
+  // Charger les notifications immédiatement au chargement de la page
+  loadNotifications();
+  
+  if (bell && dropdown) {
+    bell.addEventListener('click', function(e) {
+      e.stopPropagation();
+      console.log('Clic sur cloche'); // Debug
+      dropdown.classList.toggle('show');
+      loadNotifications(); // Recharger à chaque ouverture
+    });
+    
+    // Fermer en cliquant ailleurs
+    document.addEventListener('click', function() {
+      dropdown.classList.remove('show');
+    });
+    
+    dropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+  
+  if (markAllRead) {
+    markAllRead.addEventListener('click', function() {
+      console.log('Marquer tout comme lu'); // Debug
+      fetch('/api/notifications/read_all', { method: 'POST' })
+        .then(() => {
+          loadNotifications();
+          dropdown.classList.remove('show');
+        })
+        .catch(err => console.error('Erreur marquage tout comme lu:', err));
+    });
+  }
+  
+  // Boutons mobile
+  const openLoginMobile = document.getElementById('openLoginMobile');
+  const openRegisterMobile = document.getElementById('openRegisterMobile');
+  
+  if (openLoginMobile) openLoginMobile.addEventListener('click', showLogin);
+  if (openRegisterMobile) openRegisterMobile.addEventListener('click', showRegister);
+  
+  // Vérifier les nouvelles notifications toutes les 30 secondes
+  if (document.getElementById('notificationBell')) {
+    notificationCheckInterval = setInterval(loadNotifications, 30000);
+  }
+});
+
+// Nettoyer l'intervalle quand la page est quittée
+window.addEventListener('beforeunload', function() {
+  if (notificationCheckInterval) {
+    clearInterval(notificationCheckInterval);
+  }
+});
 
   </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
