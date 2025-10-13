@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask, render_template,session, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template,session, request, redirect, url_for, flash, jsonify,send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,6 +16,7 @@ from cloudinary.utils import cloudinary_url
 from sqlalchemy.orm import joinedload
 from flask_compress import Compress
 import secrets
+
 # ====================
 
 # -------------------- Imports --------------------
@@ -1162,6 +1163,18 @@ def page_not_found():
 @app.route('/systeme')
 def systeme():
     return render_template('systeme.html')
+
+@app.route('/robots.txt')
+def robots_txt():
+    # Sert le fichier robots.txt depuis la racine du projet
+    return send_from_directory('.', 'robots.txt', mimetype='text/plain')
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    # Sert le fichier sitemap.xml depuis la racine du projet
+    return send_from_directory('.', 'sitemap.xml', mimetype='application/xml')
+
+
 
 
 
