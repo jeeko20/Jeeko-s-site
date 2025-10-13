@@ -1165,15 +1165,84 @@ def systeme():
     return render_template('systeme.html')
 
 @app.route('/robots.txt')
-def robots_txt():
-    # Sert le fichier robots.txt depuis la racine du projet
-    return send_from_directory('.', 'robots.txt', mimetype='text/plain')
+def robots():
+    return app.send_static_file('robots.txt')
 
-@app.route('/sitemap.xml')
-def sitemap_xml():
-    # Sert le fichier sitemap.xml depuis la racine du projet
-    return send_from_directory('.', 'sitemap.xml', mimetype='application/xml')
 
+from flask import Response, url_for, request
+from datetime import datetime
+
+@app.route('/sitemap.xml', methods=['GET'])
+def sitemap():
+    """Génère un sitemap XML dynamique complet pour Google"""
+
+    pages = []
+
+    # 1️⃣ Pages statiques sans paramètres
+    for rule in app.url_map.iter_rules():
+        if "GET" in rule.methods and len(rule.arguments) == 0:
+            # On ignore les pages admin, login, api, etc.
+            if not any(x in rule.rule for x in ['/admin', '/login', '/register', '/forgot_password', '/reset_password', '/security_question', '/debug', '/api']):
+                pages.append({
+                    'loc': request.url_root[:-1] + rule.rule,
+                    'lastmod': datetime.utcnow().date().isoformat(),
+                    'changefreq': 'weekly',
+                    'priority': '0.8'
+                })
+
+    # 2️⃣ Pages dynamiques : Ressources
+    try:
+        ressources = Ressource.query.all()
+        for r in ressources:
+            pages.append({
+                'loc': url_for('api_my_ressources', _external=True) + f"/{r.id}",
+                'lastmod': r.updated_at.date().isoformat() if hasattr(r, 'updated_at') else r.created_at.date().isoformat(),
+                'changefreq': 'weekly',
+                'priority': '0.7'
+            })
+    except Exception:
+        pass  # Pas d'erreur si modèle vide
+
+    # 3️⃣ Pages dynamiques : Discussions
+    try:
+        discussions = Discussion.query.all()
+        for d in discussions:
+            pages.append({
+                'loc': url_for('api_discussion', discussion_id=d.id, _external=True),
+                'lastmod': d.updated_at.date().isoformat() if hasattr(d, 'updated_at') else d.created_at.date().isoformat(),
+                'changefreq': 'weekly',
+                'priority': '0.7'
+            })
+    except Exception:
+        pass
+
+    # 4️⃣ Pages dynamiques : Partages
+    try:
+        partages = Partage.query.all()
+        for p in partages:
+            pages.append({
+                'loc': url_for('partage_detail', partage_id=p.id, _external=True),
+                'lastmod': p.updated_at.date().isoformat() if hasattr(p, 'updated_at') else p.created_at.date().isoformat(),
+                'changefreq': 'weekly',
+                'priority': '0.7'
+            })
+    except Exception:
+        pass
+
+    # 5️⃣ Génération du XML
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    for page in pages:
+        sitemap_xml += f"""
+        <url>
+            <loc>{page['loc']}</loc>
+            <lastmod>{page['lastmod']}</lastmod>
+            <changefreq>{page['changefreq']}</changefreq>
+            <priority>{page['priority']}</priority>
+        </url>"""
+    sitemap_xml += '</urlset>'
+
+    return Response(sitemap_xml, mimetype='application/xml')
 
 
 

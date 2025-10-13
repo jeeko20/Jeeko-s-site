@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /forgot_password
+Disallow: /reset_password
+Disallow: /security_question
+Disallow: /debug
+Disallow: /api
+
+Sitemap: https://www.tonsite.com/sitemap.xml
