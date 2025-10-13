@@ -10,7 +10,7 @@
 <header class="header">
   <div class="header-content">
     <h1>Partagez vos connaissances</h1>
-    <p>La plateforme collaborative pour les étudiants ou les passionnés de la programmation</p>
+    <p>La plateforme collaborative pour les étudiants</p>
 
     <!-- Barre de recherche -->
     <input type="search" class="input-search" placeholder="Rechercher des notes, des tutoriels...">
@@ -204,14 +204,14 @@
       <i class="fa-solid fa-comments"></i>
       <h3>Discussions actives</h3>
       <p>Posez vos questions, participez aux débats et aidez les autres étudiants.</p>
-      <a href="#" class="join-button">Voir les discussions</a>
+      <a href="{{url_for('communaute')}}" class="join-button">Voir les discussions</a>
     </div>
 
     <div class="partage">
       <i class="fa-solid fa-share-nodes"></i>
       <h3>Partagez vos ressources</h3>
       <p>Découvrez les dernières ressources partagées par la communauté.</p>
-      <a href="#" class="join-button">Explorez les partages</a>
+      <a href="{{url_for('communaute')}}" class="join-button">Explorez les partages</a>
     </div>
   </div>
 

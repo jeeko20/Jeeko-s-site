@@ -12,13 +12,9 @@
   <div class="header-content">
   {% if profile %}
   <div class="profile-details">
-    <img
-  src="{{ profile.avatar_path if profile.avatar_path else 'https://via.placeholder.com/150' }}"
-  alt="Photo de profil"
-/>
-
+    <img src="{{ profile.avatar_path if profile.avatar_path else 'https://via.placeholder.com/150' }}" alt="Photo de profil" />
     <h2>{{ profile.complete_name }}</h2>
-    <span>{{ profile.year_of_study}} année</span>
+    <span>{{ profile.year_of_study }} année - {{ get_field_display_name(profile.field_of_study, profile.custom_field) }}</span>
   </div>
   <p>{{ profile.bio }}</p>
   <a href="#" class="btn-edit-profile">Modifier le profil</a>
@@ -129,52 +125,79 @@
 
 
   <!-- SETTINGS -->
-  <section id="settings" class="page">
-    <h2>Paramètres</h2>
-    <form action="{{ url_for('profile') }}" method="POST" class="settings-form" enctype="multipart/form-data">
-      <label for="fullname">Nom complet :</label>
+<section id="settings" class="page">
+  <h2>Paramètres</h2>
+  <form action="{{ url_for('profile') }}" method="POST" class="settings-form" enctype="multipart/form-data">
+    <label for="fullname">Nom complet :</label>
+    <input
+      type="text"
+      id="fullname"
+      name="complete_name"
+      placeholder="Votre nom complet"
+      required
+      value="{{profile.complete_name}}"
+    />
+
+    <label for="email">Email :</label>
+    <input
+      type="email"
+      id="email"
+      name="email"
+      placeholder="exemple@mail.com"
+      required
+      value="{{profile.email}}"
+    />
+
+    <!-- NOUVEAU : Sélection de la filière -->
+    <label for="field">Filière :</label>
+    <select style="width: 70%;" id="field" name="field_of_study" required onchange="toggleCustomField()">
+      <option value="">-- Sélectionnez votre filière --</option>
+      <option value="informatique" {% if profile.field_of_study == 'informatique' %}selected{% endif %}>Informatique</option>
+      <option value="administration" {% if profile.field_of_study == 'administration' %}selected{% endif %}>Administration</option>
+      <option value="education" {% if profile.field_of_study == 'education' %}selected{% endif %}>Éducation</option>
+      <option value="medecine" {% if profile.field_of_study == 'medecine' %}selected{% endif %}>Médecine</option>
+      <option value="droit" {% if profile.field_of_study == 'droit' %}selected{% endif %}>Droit</option>
+      <option value="ingenierie" {% if profile.field_of_study == 'ingenierie' %}selected{% endif %}>Ingénierie</option>
+      <option value="commerce" {% if profile.field_of_study == 'commerce' %}selected{% endif %}>Commerce</option>
+      <option value="autre" {% if profile.field_of_study == 'autre' %}selected{% endif %}>Autre</option>
+    </select>
+
+    <!-- Champ pour préciser si "autre" est sélectionné -->
+    <div id="customFieldContainer" style="display: {% if profile.field_of_study == 'autre' %}block{% else %}none{% endif %};">
+      <label for="custom_field">Précisez votre filière :</label>
       <input
         type="text"
-        id="fullname"
-        name="complete_name"
-        placeholder="Votre nom complet"
-        required
-        value="{{profile.complete_name}}"
+        id="custom_field"
+        name="custom_field"
+        placeholder="Ex: Architecture, Psychologie, etc."
+        value="{{ profile.custom_field if profile.custom_field else '' }}"
       />
+    </div>
 
-      <label for="email">Email :</label>
-      <input
-        type="email"
-        id="email"
-        name="email"
-        placeholder="exemple@mail.com"
-        required
-        value="{{profile.email}}"
-      />
+    <label for="year">Année d'étude :</label>
+    <select id="year" name="year_of_study" required>
+      <option value="">-- Sélectionnez --</option>
+      <option value="1" {% if profile.year_of_study == '1' %}selected{% endif %}>1ère année</option>
+      <option value="2" {% if profile.year_of_study == '2' %}selected{% endif %}>2ème année</option>
+      <option value="3" {% if profile.year_of_study == '3' %}selected{% endif %}>3ème année</option>
+      <option value="4" {% if profile.year_of_study == '4' %}selected{% endif %}>4ème année</option>
+      <option value="5" {% if profile.year_of_study == '5' %}selected{% endif %}>5ème année</option>
+    </select>
 
-      <label for="year">Année d’étude :</label>
-      <select id="year" name="year_of_study" required>
-        <option value="">-- Sélectionnez --</option>
-        <option value="1">1ère année</option>
-        <option value="2">2ème année</option>
-        <option value="3">3ème année</option>
-        <option value="4">4ème année</option>
-        <option value="5">5ème année</option>
-      </select>
-      <label for="avatar">Photo de profil :</label>
-      <input type="file" id="avatar" name="avatar" accept="image/*" />
+    <label for="avatar">Photo de profil :</label>
+    <input type="file" id="avatar" name="avatar" accept="image/*" />
 
-      <label for="bio">Bio :</label>
-      <textarea
-        id="bio"
-        name="bio"
-        rows="4"
-        placeholder="Écrivez une courte description..."
-      >{{profile.bio}}</textarea>
+    <label for="bio">Bio :</label>
+    <textarea
+      id="bio"
+      name="bio"
+      rows="4"
+      placeholder="Écrivez une courte description..."
+    >{{profile.bio}}</textarea>
 
-      <button type="submit">Sauvegarder</button>
-    </form>
-  </section>
+    <button type="submit">Sauvegarder</button>
+  </form>
+</section>
 </main>
 {%endblock%} {%block script%}
 <script>
@@ -474,6 +497,23 @@ if (window.location.hash === '#overview') {
     loadActivities();
   }, 1000);
 }
+
+//champ autre pour la filiere
+function toggleCustomField() {
+    const fieldSelect = document.getElementById('field');
+    const customContainer = document.getElementById('customFieldContainer');
+    
+    if (fieldSelect.value === 'autre') {
+        customContainer.style.display = 'block';
+    } else {
+        customContainer.style.display = 'none';
+    }
+}
+
+// Initialisation au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    toggleCustomField();
+});
 </script>
 
 {%endblock%}

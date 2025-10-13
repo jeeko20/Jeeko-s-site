@@ -15,6 +15,7 @@ from werkzeug.utils import secure_filename
 from cloudinary.utils import cloudinary_url
 from sqlalchemy.orm import joinedload
 from flask_compress import Compress
+import secrets
 # ====================
 
 # -------------------- Imports --------------------
@@ -127,7 +128,10 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     profile = db.relationship('Profile', backref='user', uselist=False)
     youtube_credentials = db.Column(db.LargeBinary, nullable=True)  # <-- ajout
-   
+    security_question = db.Column(db.String(200))  # Nouveau
+    security_answer = db.Column(db.String(200))    # Nouveau
+
+
     @property
     def avatar_url(self):
         if self.profile and self.profile.avatar_path:
@@ -141,6 +145,8 @@ class Profile(db.Model):
     email = db.Column(db.String(150))
     bio = db.Column(db.Text)
     year_of_study = db.Column(db.String(50))
+    field_of_study = db.Column(db.String(100))  # Nouveau champ : filière
+    custom_field = db.Column(db.String(100))    # Pour "autre" filière
     avatar_path = db.Column(db.String(200))
 
 class Ressource(db.Model):
@@ -255,6 +261,10 @@ def update_last_seen():
 def home():
     return render_template('index.html')
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 @app.route('/api/stats')
 def api_stats():
     total_users = User.query.count()
@@ -286,26 +296,109 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        if not username or not email or not password:
+        security_question = request.form['security_question']  # Nouveau
+        security_answer = request.form['security_answer']      # Nouveau
+        
+        if not all([username, email, password, security_question, security_answer]):
             flash('Tous les champs sont obligatoires.', 'danger')
-            return render_template('register.html')
+            return render_template('index.html')
+            
         if User.query.filter_by(email=email).first():
             flash('Cet email est déjà utilisé.', 'danger')
         elif User.query.filter_by(username=username).first():
             flash('Ce nom d\'utilisateur est déjà pris.', 'danger')
         else:
             hash_password = generate_password_hash(password)
-            new_user = User(username=username, email=email, password=hash_password)
+            new_user = User(
+                username=username, 
+                email=email, 
+                password=hash_password,
+                security_question=security_question,
+                security_answer=security_answer.lower()  # Stocke en minuscule
+            )
             db.session.add(new_user)
             try:
                 db.session.commit()
-                flash('Inscription réussie ! Connectez-vous.', 'success')
-                return redirect(url_for('login'))
+                flash('Inscription réussie, veuillez creer un profile !', 'success')
+                login_user(user, remember=True)
+                return redirect(url_for('profile'))
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Erreur lors de l'inscription : {e}")
                 flash("Une erreur est survenue. Veuillez réessayer.", "danger")
     return render_template('index.html')
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Redirige vers la page de question secrète
+            return redirect(url_for('security_question', user_id=user.id))
+        else:
+            flash('Aucun compte trouvé avec cet email.', 'danger')
+    
+    return render_template('forgot_password.html')
+
+@app.route('/security_question/<int:user_id>', methods=['GET', 'POST'])
+def security_question(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        answer = request.form.get('security_answer')
+        
+        # Vérifie la réponse (case insensitive)
+        if answer and answer.lower() == user.security_answer.lower():
+            # Génère un token simple pour réinitialisation
+            token = secrets.token_urlsafe(16)
+            session['reset_token'] = token
+            session['reset_user_id'] = user.id
+            session['reset_expires'] = (datetime.utcnow() + timedelta(hours=1)).timestamp()
+            
+            return redirect(url_for('reset_password'))
+        else:
+            flash('Réponse incorrecte.', 'danger')
+    
+    return render_template('security_question.html', user=user)
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    # Vérifie le token de session
+    token = session.get('reset_token')
+    user_id = session.get('reset_user_id')
+    expires = session.get('reset_expires')
+    
+    if not token or not user_id or datetime.utcnow().timestamp() > expires:
+        flash('Lien expiré ou invalide.', 'danger')
+        return redirect(url_for('forgot_password'))
+    
+    user = User.query.get(user_id)
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password != confirm_password:
+            flash('Les mots de passe ne correspondent pas.', 'danger')
+        elif len(password) < 6:
+            flash('Le mot de passe doit contenir au moins 6 caractères.', 'danger')
+        else:
+            # Met à jour le mot de passe
+            user.password = generate_password_hash(password)
+            db.session.commit()
+            
+            # Nettoie la session
+            session.pop('reset_token', None)
+            session.pop('reset_user_id', None)
+            session.pop('reset_expires', None)
+            
+            flash('Votre mot de passe a été réinitialisé avec succès !', 'success')
+            login_user(user)
+            return redirect(url_for('home'))
+    
+    return render_template('reset_password.html')
 
 @app.route('/logout')
 @login_required
@@ -313,6 +406,25 @@ def logout():
     logout_user()
     flash('Vous êtes déconnecté.', 'info')
     return redirect(url_for('home'))
+
+def get_field_display_name(field_value, custom_value=None):
+    """Retourne le nom d'affichage de la filière"""
+    fields = {
+        'informatique': 'Informatique',
+        'administration': 'Administration',
+        'education': 'Éducation',
+        'medecine': 'Médecine',
+        'droit': 'Droit',
+        'ingenierie': 'Ingénierie',
+        'commerce': 'Commerce',
+        'autre': custom_value or 'Autre'
+    }
+    return fields.get(field_value, 'Non spécifiée')
+
+# Passe la fonction aux templates
+@app.context_processor
+def utility_processor():
+    return dict(get_field_display_name=get_field_display_name)
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -322,12 +434,21 @@ def profile():
         email = request.form['email']
         bio = request.form['bio']
         year_of_study = request.form.get('year_of_study')
+        field_of_study = request.form.get('field_of_study')  # Nouveau
+        custom_field = request.form.get('custom_field')      # Nouveau
         avatar_file = request.files.get('avatar')
         avatar_path = current_user.profile.avatar_path if current_user.profile else None
-        email_exist=Profile.query.filter_by(email=email).first()
+        
+        # Vérification email unique
+        email_exist = Profile.query.filter(
+            Profile.email == email, 
+            Profile.user_id != current_user.id
+        ).first()
         if email_exist:
-            flash('cet email est deja pris','danger')
+            flash('Cet email est déjà pris', 'danger')
             return redirect(url_for('profile'))
+
+        # Gestion avatar
         if avatar_file and avatar_file.filename != '':
             if allow_avatar_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
@@ -338,11 +459,15 @@ def profile():
             else:
                 flash('Seules les images (png, jpg, jpeg, gif) sont autorisées.', 'danger')
                 return redirect(url_for('profile'))
+
+        # Mise à jour ou création du profil
         if current_user.profile:
             current_user.profile.complete_name = complete_name
             current_user.profile.email = email
             current_user.profile.bio = bio
             current_user.profile.year_of_study = year_of_study
+            current_user.profile.field_of_study = field_of_study
+            current_user.profile.custom_field = custom_field if field_of_study == 'autre' else None
             current_user.profile.avatar_path = avatar_path
         else:
             new_profile = Profile(
@@ -350,10 +475,13 @@ def profile():
                 email=email,
                 bio=bio,
                 year_of_study=year_of_study,
+                field_of_study=field_of_study,
+                custom_field=custom_field if field_of_study == 'autre' else None,
                 avatar_path=avatar_path,
                 user_id=current_user.id
             )
             db.session.add(new_profile)
+        
         try:
             db.session.commit()
             flash('Profil mis à jour avec succès !', 'success')
@@ -361,23 +489,26 @@ def profile():
             db.session.rollback()
             logger.error(f"Erreur lors de la mise à jour du profil : {e}")
             flash("Erreur lors de la sauvegarde.", "danger")
+        
         return redirect(url_for('profile'))
+    
     return render_template('profile.html', user=current_user, profile=current_user.profile)
+
 
 # -------------------- Accès à la communauté : vérifie profil --------------------
 @app.route('/communaute')
 @login_required
 def communaute():
-    if not current_user.profile or not current_user.profile.year_of_study:
-        flash("Veuillez compléter votre profil (notamment votre année d'étude) pour accéder à la communauté.", "info")
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
+        flash("Veuillez compléter votre profil (notamment votre année d'étude et votre filière) pour accéder à la communauté.", "info")
         return redirect(url_for('profile'))
     return render_template('communaute.html')
 
 @app.route('/videos')
 @login_required
 def videos():
-    if not current_user.profile or not current_user.profile.year_of_study:
-        flash("Veuillez compléter votre profil pour accéder aux vidéos.", "info")
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
+        flash("Veuillez compléter votre profil (notamment votre année d'étude et votre filière) pour accéder aux vidéos.", "info")
         return redirect(url_for('profile'))
     return render_template('videos.html')
 
@@ -386,7 +517,7 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 100 Mo
 @app.route('/share_ressource', methods=['POST'])
 @login_required
 def share_ressource():
-    if not current_user.profile or not current_user.profile.year_of_study:
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
         flash("Veuillez compléter votre profil avant de partager une ressource.", "warning")
         return redirect(url_for('profile'))
 
@@ -502,7 +633,7 @@ def share_ressource():
         db.session.commit()
         
         # Maintenant créer les notifications
-        if uploaded_count > 0 and current_user.profile and current_user.profile.year_of_study:
+        if uploaded_count > 0 and current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study:
             # Récupérer les ressources fraîchement créées
             new_ressources = Ressource.query.filter_by(
                 user_id=current_user.id, 
@@ -513,16 +644,17 @@ def share_ressource():
             # 🔔 MODIFICATION : INCLURE L'UTILISATEUR ACTUEL DANS LES NOTIFICATIONS
             users_same_year = User.query.join(Profile).filter(
                 Profile.year_of_study == current_user.profile.year_of_study,
+                Profile.field_of_study == current_user.profile.field_of_study,
                 User.is_active == True
                 # SUPPRIMÉ : User.id != current_user.id
             ).all()
             
-            logger.info(f"📢 Création de notifications pour {len(users_same_year)} utilisateurs (année {current_user.profile.year_of_study})")
+            logger.info(f"📢 Création de notifications pour {len(users_same_year)} utilisateurs (année {current_user.profile.year_of_study}), filière {current_user.profile.field_of_study}")
             
             for new_ressource in new_ressources:
                 resource_type_label = "vidéo" if new_ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm'] else "ressource"
                 
-                for user in users_same_year:
+                for user in users_same_year_and_field:
                     # Message différent si c'est l'utilisateur actuel
                     if user.id == current_user.id:
                         message = f"Vous avez partagé une nouvelle {resource_type_label} : {new_ressource.title}"
@@ -698,12 +830,15 @@ def debug_notifications():
 @app.route('/api/ressources')
 @login_required
 def api_ressources():
-    if not current_user.profile or not current_user.profile.year_of_study:
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
         return jsonify([])
     current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study
+
 
     ressources = Ressource.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year
+        Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field
     ).options(joinedload(Ressource.user)).all()
 
     saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
@@ -727,13 +862,16 @@ def api_ressources():
 @app.route('/api/videos')
 @login_required
 def api_videos():
-    if not current_user.profile or not current_user.profile.year_of_study:
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
         return jsonify([])
+    
     current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study  # Nouveau filtre
 
     video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm','youtube']
     videos = Ressource.query.join(User).join(Profile).filter(
         Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field,  # Filtre par filière
         Ressource.file_type.in_(video_types)
     ).options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
 
@@ -755,12 +893,15 @@ def api_videos():
 @app.route('/api/discussions', methods=['GET'])
 @login_required
 def api_discussions():
-    if not current_user.profile or not current_user.profile.year_of_study:
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
         return jsonify([])
+    
     current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study  # Nouveau filtre
 
     query = Discussion.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year
+        Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field  # Filtre par filière
     ).options(
         joinedload(Discussion.user),
         joinedload(Discussion.comments)
@@ -790,8 +931,8 @@ def api_discussions():
 @app.route('/api/discussion', methods=['POST'])
 @login_required
 def create_discussion():
-    if not current_user.profile or not current_user.profile.year_of_study:
-        return jsonify({"error": "Veuillez compléter votre profil avant de créer une discussion."}), 403
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
+        return jsonify({"error": "Veuillez compléter votre profil (année d'étude ET filière) avant de créer une discussion."}), 403
 
     data = request.get_json()
     title = data.get('title')
@@ -985,6 +1126,31 @@ def notes():
 def learn_html():
     return render_template('learn_html.html')
 
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        
+        # Créer le message pour WhatsApp
+        whatsapp_message = f"*Nouveau message de contact:*%0A%0A" \
+                          f"*Nom:* {name}%0A" \
+                          f"*Email:* {email}%0A" \
+                          f"*Sujet:* {subject}%0A" \
+                          f"*Message:*%0A{message}"
+        
+        # Numéro WhatsApp (le tien)
+        whatsapp_number = "50933970083"  # Sans le +
+        
+        # URL WhatsApp
+        whatsapp_url = f"https://wa.me/{whatsapp_number}?text={whatsapp_message}"
+        
+        return redirect(whatsapp_url)
+    
+    return render_template('contact.html')
+
 @app.route('/learn_css')
 def learn_css():
     return render_template('learn_css.html')
@@ -1097,16 +1263,17 @@ def share_youtube_video():
             db.session.commit()  # Sauvegarder d'abord la ressource
 
             # 🔔 CRÉATION DES NOTIFICATIONS AVEC INCLUSION DE L'UTILISATEUR ACTUEL
-            if current_user.profile and current_user.profile.year_of_study:
-                users_same_year = User.query.join(Profile).filter(
+            if current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study :
+                users_same_year_and_field = User.query.join(Profile).filter(
                     Profile.year_of_study == current_user.profile.year_of_study,
+                    Profile.field_of_study == current_user.profile.field_of_study,
                     User.is_active == True
                     # SUPPRIMÉ : User.id != current_user.id
                 ).all()
                 
                 logger.info(f"📢 Création de notifications YouTube pour {len(users_same_year)} utilisateurs")
                 
-                for user in users_same_year:
+                for user in users_same_year_and_field:
                     # Message différent si c'est l'utilisateur actuel
                     if user.id == current_user.id:
                         message = f"Vous avez partagé une nouvelle vidéo YouTube : {title}"

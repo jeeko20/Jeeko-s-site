@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container" style="margin-top: 100px;">
+    <div class="auth-form">
+        <h2>✅ Vérification de sécurité</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>Question secrète :</label>
+                <p style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <strong>{{ user.security_question }}</strong>
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label>Ta réponse :</label>
+                <input type="text" name="security_answer" placeholder="Ta réponse..." required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary mb-3">Vérifier</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

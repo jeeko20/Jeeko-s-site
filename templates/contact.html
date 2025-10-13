@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+.contact-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.contact-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.contact-header h1 {
+    font-size: 2.5em;
+    color: #6c5ce7;
+    margin-bottom: 15px;
+}
+
+.contact-header p {
+    font-size: 1.1em;
+    color: #666;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.contact-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 50px;
+}
+
+@media (max-width: 768px) {
+    .contact-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+.contact-info {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.contact-form {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    transition: transform 0.3s;
+}
+
+.info-item:hover {
+    transform: translateX(5px);
+    background: #e9ecef;
+}
+
+.info-item i {
+    color: #6c5ce7;
+    font-size: 1.2em;
+    margin-top: 3px;
+    min-width: 20px;
+}
+
+.info-content h3 {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.info-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95em;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    border-color: #6c5ce7;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.btn-whatsapp {
+    background: #25D366;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-whatsapp:hover {
+    background: #128C7E;
+}
+
+.btn-whatsapp:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.social-links-contact {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.social-link-contact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: #6c5ce7;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s;
+    font-size: 1.2em;
+}
+
+.social-link-contact:hover {
+    background: #5b4bc4;
+    transform: translateY(-3px);
+}
+
+.quick-actions {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #6c5ce7;
+}
+
+.quick-actions h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.quick-action-btn {
+    display: inline-block;
+    background: #6c5ce7;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    transition: background 0.3s;
+}
+
+.quick-action-btn:hover {
+    background: #5b4bc4;
+    color: white;
+    text-decoration: none;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    color: #1565c0;
+}
+
+.alert-warning {
+    background: #fff3e0;
+    border-color: #ff9800;
+    color: #e65100;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-container" style="margin-top: 50px;">
+    <!-- En-tête -->
+    <div class="contact-header">
+        <h1>📞 Contactez-Moi</h1>
+        <p>Une question, un projet ou simplement envie d'échanger ? N'hésitez pas à me contacter !</p>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="contact-content">
+        <!-- Informations de contact -->
+        <div class="contact-info">
+            <h2 style="color: #6c5ce7; margin-bottom: 25px;">Mes Coordonnées</h2>
+            
+            <div class="info-item">
+                <i class="fas fa-user"></i>
+                <div class="info-content">
+                    <h3>Développeur</h3>
+                    <p>Jeeko The Best</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <i class="fas fa-phone"></i>
+                <div class="info-content">
+                    <h3>Téléphone/WhatsApp</h3>
+                    <p>+509 33970083</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <div class="info-content">
+                    <h3>Email</h3>
+                    <p>jeekothebest@gmail.com</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <i class="fas fa-graduation-cap"></i>
+                <div class="info-content">
+                    <h3>Statut</h3>
+                    <p>Étudiant en Informatique</p>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="quick-actions">
+                <h3>🚀 Actions Rapides</h3>
+                <a href="https://wa.me/50933970083" class="quick-action-btn" target="_blank">
+                    <i class="fab fa-whatsapp"></i> Message Direct
+                </a>
+                <a href="mailto:jeekothebest@gmail.com" class="quick-action-btn">
+                    <i class="fas fa-envelope"></i> Envoyer un Email
+                </a>
+                <a href="{{ url_for('about') }}" class="quick-action-btn">
+                    <i class="fas fa-info-circle"></i> À Propos
+                </a>
+            </div>
+
+            <!-- Réseaux sociaux -->
+            <div class="social-links-contact">
+                <a href="#" class="social-link-contact" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="#" class="social-link-contact" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="#" class="social-link-contact" title="Twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="social-link-contact" title="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Formulaire de contact -->
+        <div class="contact-form">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Comment ça marche ?</strong> Remplissez le formulaire et vous serez redirigé vers WhatsApp pour envoyer votre message.
+            </div>
+
+            <form method="POST" id="contactForm">
+                <div class="form-group">
+                    <label for="name">Votre Nom *</label>
+                    <input type="text" id="name" name="name" class="form-control" required 
+                           placeholder="Votre nom complet">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Votre Email *</label>
+                    <input type="email" id="email" name="email" class="form-control" required 
+                           placeholder="votre.email@exemple.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Sujet *</label>
+                    <select id="subject" name="subject" class="form-control" required>
+                        <option value="">-- Choisissez un sujet --</option>
+                        <option value="Question sur Edushare">Question sur Edushare</option>
+                        <option value="Problème technique">Problème technique</option>
+                        <option value="Suggestion d'amélioration">Suggestion d'amélioration</option>
+                        <option value="Collaboration">Collaboration</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Votre Message *</label>
+                    <textarea id="message" name="message" class="form-control" required 
+                              placeholder="Décrivez votre question ou projet en détail..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-whatsapp" id="submitBtn">
+                    <i class="fab fa-whatsapp"></i>
+                    Envoyer via WhatsApp
+                </button>
+            </form>
+
+            <div class="alert alert-warning" style="margin-top: 20px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Important :</strong> Assurez-vous d'avoir WhatsApp installé sur votre appareil.
+            </div>
+        </div>
+    </div>
+
+    <!-- Section FAQ rapide -->
+    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 30px;">
+        <h2 style="color: #6c5ce7; margin-bottom: 20px;">❓ Questions Fréquentes</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div>
+                <h4 style="color: #333;">🤔 Comment utiliser Edushare ?</h4>
+                <p style="color: #666; margin: 10px 0;">Créez un compte, complétez votre profil avec votre filière et année, puis commencez à partager des ressources !</p>
+            </div>
+            <div>
+                <h4 style="color: #333;">📹 Comment partager des vidéos ?</h4>
+                <p style="color: #666; margin: 10px 0;">Utilisez la fonction "Uploader sur YouTube" pour les vidéos lourdes, ou uploadez directement les petits fichiers.</p>
+            </div>
+            <div>
+                <h4 style="color: #333;">🔐 Mot de passe oublié ?</h4>
+                <p style="color: #666; margin: 10px 0;">Utilisez la fonction "Mot de passe oublié" sur la page de connexion avec votre question secrète.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contactForm = document.getElementById('contactForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    contactForm.addEventListener('submit', function(e) {
+        // Validation simple
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const subject = document.getElementById('subject').value;
+        const message = document.getElementById('message').value.trim();
+        
+        if (!name || !email || !subject || !message) {
+            e.preventDefault();
+            alert('Veuillez remplir tous les champs obligatoires.');
+            return;
+        }
+        
+        // Désactiver le bouton pour éviter les doubles clics
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirection vers WhatsApp...';
+        
+        // Le formulaire sera soumis normalement, redirigeant vers WhatsApp
+    });
+    
+    // Compter les caractères du message
+    const messageTextarea = document.getElementById('message');
+    const charCount = document.createElement('div');
+    charCount.style.fontSize = '12px';
+    charCount.style.color = '#666';
+    charCount.style.textAlign = 'right';
+    charCount.style.marginTop = '5px';
+    charCount.textContent = '0 caractères';
+    
+    messageTextarea.parentNode.appendChild(charCount);
+    
+    messageTextarea.addEventListener('input', function() {
+        const length = this.value.length;
+        charCount.textContent = `${length} caractères`;
+        charCount.style.color = length > 10 ? '#666' : '#ff4444';
+    });
+});
+</script>
+{% endblock %}
