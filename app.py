@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask, render_template,session, request, redirect, url_for, flash, jsonify,send_from_directory
+from flask import Flask, render_template,session, request, redirect,Response, url_for, flash, jsonify,send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1169,80 +1169,41 @@ def robots():
     return app.send_static_file('robots.txt')
 
 
-from flask import Response, url_for, request
-from datetime import datetime
+# Liste des routes publiques à indexer
+public_routes = [
+    "home",
+    "about",
+    "profile",
+    "communaute",
+    "videos",
+    "notes",
+    "learn_html",
+    "learn_css",
+    "contact",
+    "systeme"
+]
 
-@app.route('/sitemap.xml', methods=['GET'])
+@app.route("/sitemap.xml", methods=['GET'])
 def sitemap():
-    """Génère un sitemap XML dynamique complet pour Google"""
+    """Génère le sitemap XML dynamique"""
+    sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
-    pages = []
-
-    # 1️⃣ Pages statiques sans paramètres
-    for rule in app.url_map.iter_rules():
-        if "GET" in rule.methods and len(rule.arguments) == 0:
-            # On ignore les pages admin, login, api, etc.
-            if not any(x in rule.rule for x in ['/admin', '/login', '/register', '/forgot_password', '/reset_password', '/security_question', '/debug', '/api']):
-                pages.append({
-                    'loc': request.url_root[:-1] + rule.rule,
-                    'lastmod': datetime.utcnow().date().isoformat(),
-                    'changefreq': 'weekly',
-                    'priority': '0.8'
-                })
-
-    # 2️⃣ Pages dynamiques : Ressources
-    try:
-        ressources = Ressource.query.all()
-        for r in ressources:
-            pages.append({
-                'loc': url_for('api_my_ressources', _external=True) + f"/{r.id}",
-                'lastmod': r.updated_at.date().isoformat() if hasattr(r, 'updated_at') else r.created_at.date().isoformat(),
-                'changefreq': 'weekly',
-                'priority': '0.7'
-            })
-    except Exception:
-        pass  # Pas d'erreur si modèle vide
-
-    # 3️⃣ Pages dynamiques : Discussions
-    try:
-        discussions = Discussion.query.all()
-        for d in discussions:
-            pages.append({
-                'loc': url_for('api_discussion', discussion_id=d.id, _external=True),
-                'lastmod': d.updated_at.date().isoformat() if hasattr(d, 'updated_at') else d.created_at.date().isoformat(),
-                'changefreq': 'weekly',
-                'priority': '0.7'
-            })
-    except Exception:
-        pass
-
-    # 4️⃣ Pages dynamiques : Partages
-    try:
-        partages = Partage.query.all()
-        for p in partages:
-            pages.append({
-                'loc': url_for('partage_detail', partage_id=p.id, _external=True),
-                'lastmod': p.updated_at.date().isoformat() if hasattr(p, 'updated_at') else p.created_at.date().isoformat(),
-                'changefreq': 'weekly',
-                'priority': '0.7'
-            })
-    except Exception:
-        pass
-
-    # 5️⃣ Génération du XML
-    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>'
-    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-    for page in pages:
-        sitemap_xml += f"""
+    for route in public_routes:
+        url = url_for(route, _external=True)
+        sitemap_xml.append(f"""
         <url>
-            <loc>{page['loc']}</loc>
-            <lastmod>{page['lastmod']}</lastmod>
-            <changefreq>{page['changefreq']}</changefreq>
-            <priority>{page['priority']}</priority>
-        </url>"""
-    sitemap_xml += '</urlset>'
+            <loc>{url}</loc>
+            <lastmod>{datetime.utcnow().date()}</lastmod>
+            <changefreq>weekly</changefreq>
+            <priority>0.8</priority>
+        </url>
+        """)
 
-    return Response(sitemap_xml, mimetype='application/xml')
+    sitemap_xml.append('</urlset>')
+    sitemap_content = "\n".join(sitemap_xml)
+    return Response(sitemap_content, mimetype='application/xml')
+
 
 
 
