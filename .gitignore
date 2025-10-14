@@ -12,6 +12,7 @@ env/
 venv/
 python/
 pip-selfcheck.json
+esssai.py
 
 # Fichiers de build
 *.egg-info/
@@ -34,3 +35,6 @@ session.*
 
 # Gunicorn
 *.pid
+#html
+note.txt
+file.html

@@ -113,7 +113,7 @@
           <span>Partager une nouvelle ressource</span>
         </div>
 
-        <div class="action-card" onclick="window.location.href='{{ url_for('communaute') }}'">
+        <div class="action-card" onclick="shareRessourceFromProfile()">
           <i class="fas fa-users"></i>
           <span>Voir les étudiants actifs</span>
         </div>
@@ -518,6 +518,14 @@ function toggleCustomField() {
 document.addEventListener('DOMContentLoaded', function() {
     toggleCustomField();
 });
+
+function shareRessourceFromProfile() {
+    // Marquer qu'on veut ouvrir le formulaire
+    sessionStorage.setItem('openShareForm', 'true');
+    
+    // Rediriger
+    window.location.href = "{{ url_for('communaute') }}";
+}
 </script>
 
 {%endblock%}

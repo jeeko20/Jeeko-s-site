@@ -622,23 +622,27 @@
   // =============== CHARGEMENT DES RESSOURCES ===============
   async function loadRessources() {
     try {
-      const res = await fetch('/api/ressources');
-      ressources = await res.json();
-      filteredRessources = [...ressources];
+        const res = await fetch('/api/ressources');
+        let ressources = await res.json();
+        
+        // 🔥 REGROUPEMENT DES RESSOURCES
+        ressources = groupRessourcesByTitle(ressources);
+        
+        filteredRessources = [...ressources];
+        
+        // Mettre à jour compteur
+        document.getElementById('total-ressources').textContent = ressources.length || 0;
 
-      // Mettre à jour compteur
-      document.getElementById('total-ressources').textContent = ressources.length || 0;
-
-      // Afficher la première page
-      renderPaginatedRessources(filteredRessources, currentPageRessources);
-      
-      // Après chargement, vérifier si on doit scroller
-      setTimeout(handleHashOnLoad, 500);
+        // Afficher la première page
+        renderPaginatedRessources(filteredRessources, currentPageRessources);
+        
+        // Après chargement, vérifier si on doit scroller
+        setTimeout(handleHashOnLoad, 500);
     } catch (err) {
-      console.error('Erreur loadRessources:', err);
-      document.getElementById('ressource-list').innerHTML = '<p style="color:red; text-align:center;">Erreur lors du chargement des ressources.</p>';
+        console.error('Erreur loadRessources:', err);
+        document.getElementById('ressource-list').innerHTML = '<p style="color:red; text-align:center;">Erreur lors du chargement des ressources.</p>';
     }
-  }
+}
 
   // =============== FONCTIONS DE RENDU POUR RESSOURCES ===============
   function renderPaginatedRessources(list, page) {
@@ -659,7 +663,7 @@
   function renderRessources(list, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
-
+    
     if (list.length === 0) {
         container.innerHTML = '<p style="text-align:center; padding:30px; color:#777; font-size:1.1em;">Aucune ressource.</p>';
         return;
@@ -670,47 +674,24 @@
 
     list.forEach(r => {
         const date = new Date(r.created_at).toLocaleDateString('fr-FR');
-        const isImage = ['png','jpg','jpeg','gif'].includes(r.file_type);
-        const isPdf = r.file_type === 'pdf';
-        const isVideo = ['mp4','mov','avi','mkv','webm'].includes(r.file_type);
         
         // État de sauvegarde
         const isSaved = r.is_saved || false;
         const bookmarkIconClass = isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
         const bookmarkColor = isSaved ? '#007bff' : '#ccc';
 
+        // 🔥 AFFICHAGE INTELLIGENT (CAROUSEL OU SIMPLE)
         let mediaHtml = '';
-        if (isVideo) {
-            mediaHtml = `
-                <div class="ressource-media" style="cursor: pointer;" onclick="window.location.href='/videos#video-${r.id}'">
-                    <div class="icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
-                        <i class="fa-solid fa-video" style="font-size: 2.5em; margin-bottom: 12px;"></i>
-                        <p style="margin: 0; font-weight: 500;">📹 Vidéo disponible</p>
-                        <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.9;">Cliquez pour voir dans la page Vidéos</p>
-                    </div>
-                </div>`;
-        } else if (isImage) {
+        if (r.is_multiple) {
             mediaHtml = `
                 <div class="ressource-media">
-                    <img src="${r.file_url}" alt="${r.title}" 
-                         loading="lazy" 
-                         style="width: 100%; height: 100%; object-fit: contain;">
-                </div>`;
-        } else if (isPdf) {
-            mediaHtml = `
-                <div class="ressource-media">
-                    <div class="icon-placeholder">
-                        <i class="fa-solid fa-file-pdf"></i>
-                        <p>Document PDF</p>
-                    </div>
+                    ${createCarouselHtml(r.files, r.id)}
                 </div>`;
         } else {
+            const singleFile = r.files[0];
             mediaHtml = `
                 <div class="ressource-media">
-                    <div class="icon-placeholder">
-                        <i class="fa-solid fa-file-lines"></i>
-                        <p>${(r.file_type || '').toUpperCase()}</p>
-                    </div>
+                    ${createSingleMediaHtml(singleFile, r.id, false)}
                 </div>`;
         }
 
@@ -737,27 +718,31 @@
 
                 <div class="ressource-meta">
                     <span>${date}</span>
-                    <span>${r.page_count ? r.page_count + ' pages' : '—'}</span>
+                    <span>${r.files[0].page_count ? r.files[0].page_count + ' pages' : '—'}</span>
                 </div>
 
                 <div class="ressource-actions">
-                    ${isVideo ? `
+                    ${r.files[0].is_video ? `
                         <button class="btn-view" onclick="window.location.href='/videos#video-${r.id}'" style="background: #667eea;">
                             <i class="fa-solid fa-video"></i> Voir la vidéo
                         </button>
                     ` : `
-                        <button class="btn-view" onclick="window.open('${r.file_url}', '_blank')">
+                        <button class="btn-view" onclick="window.open('${r.files[0].file_url}', '_blank')">
                             <i class="fa-solid fa-eye"></i> Voir
                         </button>
                     `}
-                    <button class="btn-download" onclick="window.open('${r.download_url || r.file_url}', '_blank')">
+                    <button class="btn-download" onclick="window.open('${r.files[0].download_url || r.files[0].file_url}', '_blank')">
                         <i class="fa-solid fa-download"></i> Télécharger
                     </button>
                 </div>
             </div>`;
     });
-  }
 
+    // Initialiser les carousels après le rendu
+    setTimeout(initializeCarousels, 100);
+}
+
+  
   // =============== FONCTION DE SAUVEGARDE ===============
   function toggleSaveRessource(ressourceId, element) {
     const icon = element.querySelector('i');
@@ -1221,5 +1206,258 @@
       setTimeout(handleHashOnLoad, 500);
     });
   });
+
+  // Version simplifiée - à ajouter dans communaute.html
+function checkAndOpenShareForm() {
+    const shouldOpenForm = sessionStorage.getItem('openShareForm');
+    
+    if (shouldOpenForm === 'true') {
+        sessionStorage.removeItem('openShareForm');
+        
+        // Ouvrir directement le formulaire
+        setTimeout(() => {
+            ouvrirFormulaire(); // Cette fonction existe déjà dans ton code
+        }, 1000);
+    }
+}
+
+// Appeler au chargement
+document.addEventListener('DOMContentLoaded', checkAndOpenShareForm);
+
+// carroussel
+// =============== FONCTIONS DE REGROUPEMENT ===============
+
+function groupRessourcesByTitle(ressources) {
+    const grouped = {};
+    
+    ressources.forEach(ressource => {
+        const key = `${ressource.title}-${ressource.subject}-${ressource.user_id}`;
+        
+        if (!grouped[key]) {
+            grouped[key] = {
+                id: ressource.id, // Garder le premier ID
+                title: ressource.title,
+                subject: ressource.subject,
+                user_id: ressource.user_id,
+                username: ressource.username,
+                user_avatar: ressource.user_avatar,
+                created_at: ressource.created_at,
+                likes: ressource.likes,
+                is_saved: ressource.is_saved,
+                page_count: ressource.page_count,
+                files: [{
+                    id: ressource.id, // 🔥 TRÈS IMPORTANT : inclure l'ID original
+                    file_url: ressource.file_url,
+                    download_url: ressource.download_url,
+                    file_type: ressource.file_type,
+                    page_count: ressource.page_count,
+                    is_video: ressource.is_video
+                }],
+                is_multiple: false
+            };
+        } else {
+            grouped[key].files.push({
+                id: ressource.id, // 🔥 TRÈS IMPORTANT : inclure l'ID original
+                file_url: ressource.file_url,
+                download_url: ressource.download_url,
+                file_type: ressource.file_type,
+                page_count: ressource.page_count,
+                is_video: ressource.is_video
+            });
+        }
+    });
+    
+    // Marquer les groupes multiples
+    const result = Object.values(grouped).map(group => {
+        if (group.files.length > 1) {
+            group.is_multiple = true;
+        }
+        return group;
+    });
+    
+    return result;
+}
+// =============== FONCTIONS POUR LE CAROUSEL ===============
+
+function createCarouselHtml(files, ressourceId) {
+    let slidesHtml = '';
+    files.forEach((file, index) => {
+        slidesHtml += `
+            <div class="carousel-slide" data-index="${index}">
+                ${createSingleMediaHtml(file, ressourceId, true)}
+            </div>`;
+    });
+
+    let indicatorsHtml = '';
+    files.forEach((_, index) => {
+        const isActive = index === 0 ? 'active' : '';
+        indicatorsHtml += `<button class="carousel-indicator ${isActive}" data-index="${index}"></button>`;
+    });
+
+    return `
+        <div class="ressource-carousel" id="carousel-${ressourceId}">
+            <div class="carousel-count">1/${files.length}</div>
+            <div class="multi-file-badge">
+                <i class="fa-solid fa-layer-group"></i> ${files.length} fichiers
+            </div>
+            <div class="carousel-track">
+                ${slidesHtml}
+            </div>
+            ${files.length > 1 ? `
+                <button class="carousel-nav carousel-prev" onclick="carouselPrev('${ressourceId}')">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="carousel-nav carousel-next" onclick="carouselNext('${ressourceId}')">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <div class="carousel-indicators">
+                    ${indicatorsHtml}
+                </div>
+            ` : ''}
+        </div>`;
+}
+
+function createSingleMediaHtml(file, ressourceId, isInCarousel = false) {
+    const containerClass = isInCarousel ? 'carousel-media' : '';
+    const { file_url, file_type, is_video } = file;
+
+    if (is_video || ['mp4','mov','avi','mkv','webm'].includes(file_type)) {
+        return `
+            <div class="${containerClass}" style="cursor: pointer;" onclick="window.location.href='/videos#video-${ressourceId}'">
+                <div class="carousel-icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+                    <i class="fa-solid fa-video" style="font-size: 2.5em; margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: 500;">📹 Vidéo disponible</p>
+                    <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.9;">Cliquez pour voir dans la page Vidéos</p>
+                </div>
+            </div>`;
+    } else if (['png','jpg','jpeg','gif'].includes(file_type)) {
+        return `
+            <div class="${containerClass}">
+                <img src="${file_url}" alt="Image" 
+                     loading="lazy" 
+                     style="width: 100%; height: 100%; object-fit: contain;"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5JbWFnZTwvdGV4dD48L3N2Zz4='">
+            </div>`;
+    } else if (file_type === 'pdf') {
+        return `
+            <div class="${containerClass}">
+                <div class="carousel-icon-placeholder">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <p>Document PDF</p>
+                    ${file.page_count ? `<small>${file.page_count} pages</small>` : ''}
+                </div>
+            </div>`;
+    } else {
+        return `
+            <div class="${containerClass}">
+                <div class="carousel-icon-placeholder">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <p>${(file_type || 'DOC').toUpperCase()}</p>
+                </div>
+            </div>`;
+    }
+}
+
+// =============== FONCTIONS DE NAVIGATION CAROUSEL ===============
+
+function initializeCarousels() {
+    document.querySelectorAll('.ressource-carousel').forEach(carousel => {
+        const carouselId = carousel.id.replace('carousel-', '');
+        carousel.currentSlide = 0;
+        updateCarousel(carouselId);
+    });
+}
+
+function carouselNext(carouselId) {
+    const carousel = document.getElementById(`carousel-${carouselId}`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    carousel.currentSlide = (carousel.currentSlide + 1) % slides.length;
+    updateCarousel(carouselId);
+}
+
+function carouselPrev(carouselId) {
+    const carousel = document.getElementById(`carousel-${carouselId}`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    carousel.currentSlide = (carousel.currentSlide - 1 + slides.length) % slides.length;
+    updateCarousel(carouselId);
+}
+
+function updateCarousel(carouselId) {
+    const carousel = document.getElementById(`carousel-${carouselId}`);
+    if (!carousel) return;
+    
+    const track = carousel.querySelector('.carousel-track');
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const indicators = carousel.querySelectorAll('.carousel-indicator');
+    const count = carousel.querySelector('.carousel-count');
+    
+    if (!track || !slides.length) return;
+    
+    const slideWidth = 100; // 100% par slide
+    track.style.transform = `translateX(-${carousel.currentSlide * slideWidth}%)`;
+    
+    // Mettre à jour les indicateurs
+    indicators.forEach((indicator, index) => {
+        indicator.classList.toggle('active', index === carousel.currentSlide);
+    });
+    
+    // Mettre à jour le compteur
+    if (count) {
+        count.textContent = `${carousel.currentSlide + 1}/${slides.length}`;
+    }
+}
+
+// Navigation par indicateurs et swipe
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('carousel-indicator')) {
+        const carousel = e.target.closest('.ressource-carousel');
+        const carouselId = carousel.id.replace('carousel-', '');
+        const index = parseInt(e.target.getAttribute('data-index'));
+        if (carousel && !isNaN(index)) {
+            carousel.currentSlide = index;
+            updateCarousel(carouselId);
+        }
+    }
+});
+
+// Support du swipe sur mobile
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+        const activeCarousel = document.querySelector('.ressource-carousel:hover') || 
+                             document.querySelector('.ressource-media:has(.ressource-carousel:hover)');
+        
+        if (activeCarousel) {
+            const carouselId = activeCarousel.id.replace('carousel-', '');
+            if (diff > 0) {
+                // Swipe gauche → suivant
+                carouselNext(carouselId);
+            } else {
+                // Swipe droite → précédent
+                carouselPrev(carouselId);
+            }
+        }
+    }
+}
+
+
 </script>
 {% endblock %}

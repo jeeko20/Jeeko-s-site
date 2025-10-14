@@ -321,6 +321,7 @@ def register():
             try:
                 db.session.commit()
                 flash('Inscription réussie, veuillez creer un profile !', 'success')
+                user = User.query.filter_by(email=email).first()      
                 login_user(user, remember=True)
                 return redirect(url_for('profile'))
             except Exception as e:
@@ -518,145 +519,142 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 100 Mo
 @app.route('/share_ressource', methods=['POST'])
 @login_required
 def share_ressource():
-    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
-        flash("Veuillez compléter votre profil avant de partager une ressource.", "warning")
-        return redirect(url_for('profile'))
-
-    title = request.form.get('titre')
-    subject = request.form.get('matiere')
-    files = request.files.getlist('files')
-    if not title or not subject or not files:
-        flash('Tous les champs sont obligatoires.', 'danger')
-        return redirect(url_for('communaute'))
-
-    valid_files = [f for f in files if f and f.filename != '']
-    if not valid_files:
-        flash('Aucun fichier valide sélectionné.', 'danger')
-        return redirect(url_for('communaute'))
-
-    uploaded_count = 0
-    new_ressources = []  # Pour stocker les nouvelles ressources créées
-
-    for file in valid_files:
-        filename = secure_filename(file.filename)
-        if '.' not in filename:
-            flash(f'Fichier invalide (pas d\'extension) : {filename}', 'warning')
-            continue
-        ext = filename.rsplit('.', 1)[1].lower()
-        if ext not in ALLOWED_EXTENSIONS:
-            flash(f'Type de fichier non autorisé : {ext} (fichier : {filename})', 'danger')
-            continue
-
-        try:
-            file.seek(0, os.SEEK_END)
-            file_size = file.tell()
-            file.seek(0)
-            if file_size > MAX_FILE_SIZE:
-                flash(f"Fichier trop volumineux (max 50 Mo) : {filename}", "danger")
-                continue
-        except Exception as e:
-            logger.error(f"Erreur taille fichier {filename}: {e}")
-            flash(f"Erreur avec le fichier : {filename}", "danger")
-            continue
-
-        is_video = ext in {'mp4', 'mov', 'avi', 'mkv', 'webm'}
-        is_document = ext in {'pdf', 'doc', 'docx'}
-        resource_type = 'video' if is_video else ('raw' if is_document else 'image')
-
-        page_count = 0
-        if ext == 'pdf':
-            try:
-                file.stream.seek(0)
-                pdf_reader = PyPDF2.PdfReader(file.stream)
-                page_count = len(pdf_reader.pages)
-            except Exception as e:
-                logger.warning(f"Impossible de lire le PDF {filename}: {e}")
-                page_count = 0
-            finally:
-                file.stream.seek(0)
-
-        try:
-            upload_result = cloudinary.uploader.upload(
-                file,
-                resource_type=resource_type,
-                folder="edushare/ressources",
-                public_id=filename,
-                overwrite=True,
-                invalidate=True,
-                use_filename=False,
-                unique_filename=True,
-                access_mode="public",
-                type="upload"
-            )
-
-            if resource_type == "image":
-                file_url = upload_result.get("secure_url")
-                download_url, _ = cloudinary_url(
-                    upload_result.get("public_id"),
-                    resource_type="image",
-                    flags="attachment",
-                    secure=True
-                )
-            elif resource_type == "video":
-                file_url = upload_result.get("secure_url")
-                download_url = file_url
-            else:
-                file_url, _ = cloudinary_url(
-                    upload_result.get("public_id"),
-                    resource_type="raw",
-                    secure=True
-                )
-                download_url, _ = cloudinary_url(
-                    upload_result.get("public_id"),
-                    resource_type="raw",
-                    flags="attachment",
-                    secure=True
-                )
-        except Exception as e:
-            logger.error(f"Erreur Cloudinary pour {filename}: {e}")
-            flash(f"Échec de l'upload : {filename}", "danger")
-            continue
-
-        new_ressource = Ressource(
-            user_id=current_user.id,
-            title=title,
-            subject=subject,
-            file_url=file_url,
-            download_url=download_url,
-            file_type=ext,
-            page_count=page_count
-        )
-        db.session.add(new_ressource)
-        uploaded_count += 1
-
     try:
-        # Sauvegarder d'abord les ressources pour avoir leurs IDs
+        if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
+            flash("Veuillez compléter votre profil avant de partager une ressource.", "warning")
+            return redirect(url_for('profile'))
+
+        title = request.form.get('titre')
+        subject = request.form.get('matiere')
+        files = request.files.getlist('files')
+        if not title or not subject or not files:
+            flash('Tous les champs sont obligatoires.', 'danger')
+            return redirect(url_for('communaute'))
+
+        valid_files = [f for f in files if f and f.filename != '']
+        if not valid_files:
+            flash('Aucun fichier valide sélectionné.', 'danger')
+            return redirect(url_for('communaute'))
+
+        uploaded_count = 0
+        new_ressources = []
+
+        for file in valid_files:
+            filename = secure_filename(file.filename)
+            if '.' not in filename:
+                flash(f'Fichier invalide (pas d\'extension) : {filename}', 'warning')
+                continue
+            ext = filename.rsplit('.', 1)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                flash(f'Type de fichier non autorisé : {ext} (fichier : {filename})', 'danger')
+                continue
+
+            try:
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+                if file_size > MAX_FILE_SIZE:
+                    flash(f"Fichier trop volumineux (max 50 Mo) : {filename}", "danger")
+                    continue
+            except Exception as e:
+                logger.error(f"Erreur taille fichier {filename}: {e}")
+                flash(f"Erreur avec le fichier : {filename}", "danger")
+                continue
+
+            is_video = ext in {'mp4', 'mov', 'avi', 'mkv', 'webm'}
+            is_document = ext in {'pdf', 'doc', 'docx'}
+            resource_type = 'video' if is_video else ('raw' if is_document else 'image')
+
+            page_count = 0
+            if ext == 'pdf':
+                try:
+                    file.stream.seek(0)
+                    pdf_reader = PyPDF2.PdfReader(file.stream)
+                    page_count = len(pdf_reader.pages)
+                except Exception as e:
+                    logger.warning(f"Impossible de lire le PDF {filename}: {e}")
+                    page_count = 0
+                finally:
+                    file.stream.seek(0)
+
+            try:
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    resource_type=resource_type,
+                    folder="edushare/ressources",
+                    public_id=filename,
+                    overwrite=True,
+                    invalidate=True,
+                    use_filename=False,
+                    unique_filename=True,
+                    access_mode="public",
+                    type="upload"
+                )
+
+                if resource_type == "image":
+                    file_url = upload_result.get("secure_url")
+                    download_url, _ = cloudinary_url(
+                        upload_result.get("public_id"),
+                        resource_type="image",
+                        flags="attachment",
+                        secure=True
+                    )
+                elif resource_type == "video":
+                    file_url = upload_result.get("secure_url")
+                    download_url = file_url
+                else:
+                    file_url, _ = cloudinary_url(
+                        upload_result.get("public_id"),
+                        resource_type="raw",
+                        secure=True
+                    )
+                    download_url, _ = cloudinary_url(
+                        upload_result.get("public_id"),
+                        resource_type="raw",
+                        flags="attachment",
+                        secure=True
+                    )
+            except Exception as e:
+                logger.error(f"Erreur Cloudinary pour {filename}: {e}")
+                flash(f"Échec de l'upload : {filename}", "danger")
+                continue
+
+            new_ressource = Ressource(
+                user_id=current_user.id,
+                title=title,
+                subject=subject,
+                file_url=file_url,
+                download_url=download_url,
+                file_type=ext,
+                page_count=page_count
+            )
+            db.session.add(new_ressource)
+            uploaded_count += 1
+
+        # Sauvegarder d'abord les ressources
         db.session.commit()
         
-        # Maintenant créer les notifications
+        # Créer les notifications
         if uploaded_count > 0 and current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study:
-            # Récupérer les ressources fraîchement créées
             new_ressources = Ressource.query.filter_by(
                 user_id=current_user.id, 
                 title=title, 
                 subject=subject
             ).order_by(Ressource.created_at.desc()).limit(uploaded_count).all()
             
-            # 🔔 MODIFICATION : INCLURE L'UTILISATEUR ACTUEL DANS LES NOTIFICATIONS
-            users_same_year = User.query.join(Profile).filter(
+            # 🔥 CORRECTION FINALE
+            users_same_year_and_field = User.query.join(Profile).filter(
                 Profile.year_of_study == current_user.profile.year_of_study,
                 Profile.field_of_study == current_user.profile.field_of_study,
                 User.is_active == True
-                # SUPPRIMÉ : User.id != current_user.id
             ).all()
             
-            logger.info(f"📢 Création de notifications pour {len(users_same_year)} utilisateurs (année {current_user.profile.year_of_study}), filière {current_user.profile.field_of_study}")
+            logger.info(f"📢 Création de notifications pour {len(users_same_year_and_field)} utilisateurs")
             
             for new_ressource in new_ressources:
                 resource_type_label = "vidéo" if new_ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm'] else "ressource"
                 
                 for user in users_same_year_and_field:
-                    # Message différent si c'est l'utilisateur actuel
                     if user.id == current_user.id:
                         message = f"Vous avez partagé une nouvelle {resource_type_label} : {new_ressource.title}"
                     else:
@@ -669,9 +667,8 @@ def share_ressource():
                     )
                     db.session.add(notification)
             
-            # Sauvegarder les notifications
             db.session.commit()
-            logger.info(f"✅ {len(users_same_year) * len(new_ressources)} notifications créées avec succès")
+            logger.info(f"✅ {len(users_same_year_and_field) * len(new_ressources)} notifications créées avec succès")
         
         if uploaded_count > 0:
             flash(f'✅ {uploaded_count} ressource(s) partagée(s) avec succès !', 'success')
@@ -680,10 +677,14 @@ def share_ressource():
             
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erreur lors de la sauvegarde en base : {e}")
-        flash("Erreur critique lors de la publication.", "danger")
+        logger.error(f"Erreur lors du partage de ressource : {e}")
+        if "users_same_year" in str(e):
+            flash("Les fichiers ont été uploadés mais erreur lors de la création des notifications.", "warning")
+        else:
+            flash("Erreur lors de la publication. Veuillez réessayer.", "danger")
         
     return redirect(url_for('communaute'))
+
 
 # ------------------- DEBUG -------------------
 @app.route('/debug/user_notifications')
@@ -1245,8 +1246,7 @@ def youtube_oauth2callback():
     flash("✅ Auth YouTube réussie !", "success")
     return redirect(url_for('share_youtube_video'))
 
-# -------------------- Routes Upload YouTube --------------------
-@app.route('/share_youtube_video', methods=['GET', 'POST'])
+@app.route('/share_youtube_video', methods=['GET', 'POST'])  # 🔥 AJOUT DE 'GET' ICI
 @login_required
 def share_youtube_video():
     """Upload de vidéos sur YouTube et sauvegarde dans la DB."""
@@ -1305,16 +1305,15 @@ def share_youtube_video():
             db.session.add(new_ressource)
             db.session.commit()  # Sauvegarder d'abord la ressource
 
-            # 🔔 CRÉATION DES NOTIFICATIONS AVEC INCLUSION DE L'UTILISATEUR ACTUEL
-            if current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study :
+            # 🔔 CORRECTION : utiliser le bon nom de variable
+            if current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study:
                 users_same_year_and_field = User.query.join(Profile).filter(
                     Profile.year_of_study == current_user.profile.year_of_study,
                     Profile.field_of_study == current_user.profile.field_of_study,
                     User.is_active == True
-                    # SUPPRIMÉ : User.id != current_user.id
                 ).all()
                 
-                logger.info(f"📢 Création de notifications YouTube pour {len(users_same_year)} utilisateurs")
+                logger.info(f"📢 Création de notifications YouTube pour {len(users_same_year_and_field)} utilisateurs")
                 
                 for user in users_same_year_and_field:
                     # Message différent si c'est l'utilisateur actuel
@@ -1331,7 +1330,7 @@ def share_youtube_video():
                     db.session.add(notification)
                 
                 db.session.commit()  # Sauvegarder les notifications
-                logger.info(f"✅ {len(users_same_year)} notifications YouTube créées avec succès")
+                logger.info(f"✅ {len(users_same_year_and_field)} notifications YouTube créées avec succès")
 
             flash("✅ Vidéo uploadée sur YouTube et partagée !", "success")
             return redirect(url_for('videos'))
@@ -1348,6 +1347,7 @@ def share_youtube_video():
             except Exception as e:
                 logger.warning(f"Impossible de supprimer le fichier temporaire: {e}")
 
+    # 🔥 AJOUT : Gestion de la méthode GET
     return render_template('share_youtube.html')
 # --------------------------------------------------
 if __name__ == "__main__":
