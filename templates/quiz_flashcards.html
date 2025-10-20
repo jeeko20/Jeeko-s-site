@@ -746,6 +746,259 @@ flashcards.{% endblock %} {% block extra_css %}
       justify-content: center;
     }
   }
+
+  /* === FIX : Modal de quiz avec scroll interne === */
+#quiz-modal {
+  overflow: hidden; /* Empêche tout scroll sur le modal lui-même */
+}
+
+#quiz-modal .modal-content {
+  max-height: 90vh;
+  overflow-y: auto; /* Scroll interne uniquement dans le contenu */
+  padding: 20px;
+  position: relative;
+}
+
+/* === FIX : Bloquer le scroll de la page quand un modal est ouvert === */
+body.modal-open {
+  overflow: hidden;
+  padding-right: 0 !important; /* Évite le décalage si la barre de scroll disparaît */
+}
+
+.question-container {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+.question-text {
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+/* ✅ Ajout de padding top pour améliorer la visibilité du texte */
+
+#flashcard-viewing-container .flashcard-back {
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+}
+
+/* ============================= */
+/* CORRECTIONS POUR LE TABLEAU PARTICIPANTS */
+/* ============================= */
+
+.participants-table-container {
+    width: 100%;
+    overflow-x: auto; /* ✅ Permet le scroll horizontal */
+    margin-top: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+}
+
+.participants-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* ✅ Largeur minimale pour forcer le scroll si nécessaire */
+}
+
+.participants-table th {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap; /* ✅ Empêche le texte de se casser */
+}
+
+.participants-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.participants-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* ✅ Styles pour les écrans mobiles */
+@media (max-width: 768px) {
+    .participants-table-container {
+        font-size: 0.9em; /* ✅ Texte plus petit sur mobile */
+        border-radius: 6px;
+    }
+    
+    .participants-table th,
+    .participants-table td {
+        padding: 10px 8px; /* ✅ Padding réduit */
+    }
+    
+    .participants-table {
+        min-width: 500px; /* ✅ Largeur minimale réduite sur mobile */
+    }
+    
+    /* ✅ Masquer certaines colonnes moins importantes sur très petits écrans */
+    @media (max-width: 480px) {
+        .participants-table .time-column,
+        .participants-table .date-column {
+            display: none;
+        }
+        
+        .participants-table {
+            min-width: 300px; /* ✅ Encore plus étroit */
+        }
+    }
+}
+
+/* ✅ Version carte pour les très petits écrans (alternative) */
+.participants-cards {
+    display: none; /* ✅ Caché par défaut */
+    flex-direction: column;
+    gap: 10px;
+}
+
+.participant-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.participant-card-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.participant-card-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.participant-card-info {
+    flex: 1;
+}
+
+.participant-card-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.participant-card-meta {
+    font-size: 0.8em;
+    color: #666;
+    display: flex;
+    gap: 10px;
+}
+
+.participant-card-score {
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+/* ✅ Afficher les cartes seulement sur très petits écrans */
+@media (max-width: 480px) {
+    .participants-table-container {
+        display: none; /* ✅ Cache le tableau */
+    }
+    
+    .participants-cards {
+        display: flex; /* ✅ Affiche les cartes */
+    }
+}
+
+/* ✅ Indicateur de scroll pour mobile */
+.participants-table-container::after {
+    content: "← Faites glisser pour voir plus →";
+    display: none;
+    text-align: center;
+    padding: 10px;
+    color: #666;
+    font-size: 0.8em;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .participants-table-container::after {
+        display: block; /* ✅ Affiche l'indicateur sur mobile */
+    }
+}
+
+/* ✅ Améliorations générales pour mobile */
+@media (max-width: 480px) {
+    #detailed-participants-container {
+        margin: 0 -15px;
+        padding: 0 15px;
+    }
+    
+    .participants-summary {
+        margin: 0 -15px 20px -15px !important;
+        border-radius: 0 !important;
+        padding: 15px !important;
+    }
+    
+    .participant-card {
+        padding: 12px;
+    }
+    
+    .participant-card-meta {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .participant-card-meta span {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.75em;
+    }
+}
+
+/* ✅ Animation de scroll pour attirer l'attention */
+@keyframes pulse-scroll {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+.mobile-scroll-hint {
+    animation: pulse-scroll 2s infinite;
+}
+
+/* ✅ Style pour le container détaillé */
+#detailed-participants-container {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* ✅ Bouton pour revenir en haut */
+.back-to-stats {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 20px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.back-to-stats:hover {
+    background: #5a6268;
+}
 </style>
 {% endblock %} {% block content %}
 <div class="quiz-flashcards-container mt-3">
@@ -763,11 +1016,43 @@ flashcards.{% endblock %} {% block extra_css %}
     <button class="tab-btn active" data-tab="browse">Parcourir</button>
     <button class="tab-btn" data-tab="my-content">Mes créations</button>
     <button class="tab-btn" data-tab="create-quiz">Créer un Quiz</button>
-    <button class="tab-btn" data-tab="create-flashcard">
-      Créer Flashcards
-    </button>
+    <button class="tab-btn" data-tab="create-flashcard">  Créer Flashcards </button>
+    <button class="tab-btn" data-tab="quiz-participant">Quiz Participant</button>
+    
   </div>
+<!-- Section Quiz Participant -->
+ <!-- Section Quiz Participant -->
+<div id="quiz-participant" class="content-section">
+    <div class="header-section">
+        <h2>📊 Statistiques des Participants</h2>
+        <p>Analysez les performances des participants à vos quiz</p>
+    </div>
 
+    <!-- Statistiques globales -->
+    <div class="stats-overview" id="stats-overview">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Chargement des statistiques...</p>
+        </div>
+    </div>
+
+    <!-- Détails par quiz -->
+    <div class="quiz-stats-details">
+        <h3>Détails par Quiz</h3>
+        <div id="quiz-stats-list">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Chargement des détails...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Participants détaillés (chargé dynamiquement) -->
+    <div id="detailed-participants-container" style="display: none;">
+        <h3 id="detailed-quiz-title"></h3>
+        <div id="detailed-participants-list"></div>
+    </div>
+</div>
   <!-- Section Parcourir -->
   <div id="browse" class="content-section active">
     <div class="tab-subnav">
@@ -2018,13 +2303,7 @@ flashcards.{% endblock %} {% block extra_css %}
     }
   }
 
-  function openQuizModal() {
-    const modal = document.getElementById("quiz-modal");
-    if (modal) {
-      modal.style.display = "block";
-    }
-  }
-
+ 
   function showQuestion(index) {
     const question = currentQuestions[index];
     const container = document.getElementById("quiz-taking-container");
@@ -2559,26 +2838,39 @@ flashcards.{% endblock %} {% block extra_css %}
   }
 
   // Gestion des modals
-  function setupModals() {
-    document.querySelectorAll(".modal .close").forEach((closeBtn) => {
-      closeBtn.addEventListener("click", function () {
-        this.closest(".modal").style.display = "none";
-      });
-    });
-
-    window.addEventListener("click", function (e) {
-      if (e.target.classList.contains("modal")) {
-        e.target.style.display = "none";
-      }
-    });
-  }
-
-  function closeQuizModal() {
-    const modal = document.getElementById("quiz-modal");
-    if (modal) {
+function setupModals() {
+  document.querySelectorAll(".modal .close").forEach((closeBtn) => {
+    closeBtn.addEventListener("click", function () {
+      const modal = this.closest(".modal");
       modal.style.display = "none";
+      document.body.classList.remove("modal-open"); // ✅
+    });
+  });
+
+  window.addEventListener("click", function (e) {
+    if (e.target.classList.contains("modal")) {
+      e.target.style.display = "none";
+      document.body.classList.remove("modal-open"); // ✅
     }
+  });
+}
+
+  function openQuizModal() {
+  const modal = document.getElementById("quiz-modal");
+  if (modal) {
+    modal.style.display = "block";
+    document.body.classList.add("modal-open"); // 🔒 Bloque le scroll de la page
   }
+}
+
+function closeQuizModal() {
+  const modal = document.getElementById("quiz-modal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.classList.remove("modal-open"); // ✅ Réautorise le scroll
+  }
+}
+  
 
   function closeFlashcardModal() {
     const modal = document.getElementById("flashcard-modal");
@@ -2728,6 +3020,318 @@ flashcards.{% endblock %} {% block extra_css %}
       }, 400);
     }, 300);
   }
+
+// quiz-participant
+// Fonctions pour la section Quiz Participant
+async function loadQuizParticipantsStats() {
+    try {
+        showLoading('stats-overview');
+        showLoading('quiz-stats-list');
+
+        const response = await fetch('/api/quiz_participants/stats');
+        if (!response.ok) throw new Error('Erreur chargement stats');
+
+        const data = await response.json();
+        
+        if (data.success) {
+            renderStatsOverview(data.total_stats);
+            renderQuizStatsList(data.quiz_details);
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        console.error('Erreur chargement stats participants:', error);
+        document.getElementById('stats-overview').innerHTML = 
+            '<p style="color: red; text-align: center;">Erreur de chargement des statistiques</p>';
+        document.getElementById('quiz-stats-list').innerHTML = 
+            '<p style="color: red; text-align: center;">Erreur de chargement des détails</p>';
+    }
+}
+
+function renderStatsOverview(stats) {
+    const container = document.getElementById('stats-overview');
+    
+    container.innerHTML = `
+        <div class="stat-card">
+            <h3>${stats.total_quizzes}</h3>
+            <p>Quiz Créés</p>
+        </div>
+        <div class="stat-card">
+            <h3>${stats.total_participants}</h3>
+            <p>Participants Uniques</p>
+        </div>
+        <div class="stat-card">
+            <h3>${stats.total_attempts}</h3>
+            <p>Tentatives Total</p>
+        </div>
+        <div class="stat-card">
+            <h3>${stats.average_score}%</h3>
+            <p>Moyenne Générale</p>
+        </div>
+        <div class="stat-card">
+            <h3>${stats.best_score}%</h3>
+            <p>Meilleur Score</p>
+        </div>
+        <div class="stat-card">
+            <h3>${stats.quizzes_with_participants}</h3>
+            <p>Quiz Actifs</p>
+        </div>
+    `;
+}
+
+function renderQuizStatsList(quizDetails) {
+    const container = document.getElementById('quiz-stats-list');
+    
+    if (quizDetails.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: #666; padding: 40px;">
+                <i class="fas fa-chart-bar" style="font-size: 3em; margin-bottom: 15px;"></i>
+                <p>Aucun participant pour le moment.</p>
+                <p>Créez des quiz et partagez-les pour voir les statistiques !</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = quizDetails.map(quiz => `
+        <div class="quiz-stats-item" onclick="toggleQuizDetails(${quiz.quiz_id})">
+            <div class="quiz-stats-header">
+                <div class="quiz-stats-title">
+                    <h4>${quiz.quiz_title}</h4>
+                    <p>${quiz.total_questions} question(s)</p>
+                </div>
+                <div class="quiz-stats-numbers">
+                    <div class="stat-number">
+                        <span class="value">${quiz.participant_count}</span>
+                        <span class="label">Participants</span>
+                    </div>
+                    <div class="stat-number">
+                        <span class="value">${quiz.attempt_count}</span>
+                        <span class="label">Tentatives</span>
+                    </div>
+                    <div class="stat-number">
+                        <span class="value">${quiz.average_score}%</span>
+                        <span class="label">Moyenne</span>
+                    </div>
+                    <div class="stat-number">
+                        <span class="value">${quiz.best_score}%</span>
+                        <span class="label">Meilleur</span>
+                    </div>
+                </div>
+            </div>
+            <div class="quiz-stats-details-content">
+                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); viewQuizParticipants(${quiz.quiz_id}, '${quiz.quiz_title}')">
+                    <i class="fas fa-users"></i> Voir les participants détaillés
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleQuizDetails(quizId) {
+    const item = document.querySelector(`.quiz-stats-item[onclick="toggleQuizDetails(${quizId})"]`);
+    item.classList.toggle('expanded');
+}
+
+async function viewQuizParticipants(quizId, quizTitle) {
+    try {
+        const response = await fetch(`/api/quiz/${quizId}/participants_detailed`);
+        if (!response.ok) throw new Error('Erreur chargement participants');
+        
+        const data = await response.json();
+        renderDetailedParticipants(data, quizTitle);
+        
+    } catch (error) {
+        console.error('Erreur chargement participants détaillés:', error);
+        showNotification('❌ Erreur lors du chargement des participants', 'error');
+    }
+}
+
+function renderDetailedParticipants(data, quizTitle) {
+    const container = document.getElementById('detailed-participants-container');
+    const titleEl = document.getElementById('detailed-quiz-title');
+    const listEl = document.getElementById('detailed-participants-list');
+    
+    titleEl.textContent = `Participants - ${quizTitle}`;
+    
+    if (data.participants.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align: center; color: #666; padding: 40px;">
+                <i class="fas fa-users" style="font-size: 3em; margin-bottom: 15px;"></i>
+                <p>Aucun participant pour ce quiz.</p>
+            </div>
+        `;
+    } else {
+        listEl.innerHTML = `
+            <div class="participants-summary" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <strong>${data.participants.length}</strong> participant(s) - 
+                <strong>${data.total_questions}</strong> question(s) au total
+            </div>
+            
+            <!-- ✅ Indicateur de scroll AVANT le tableau -->
+            <div class="mobile-scroll-hint">
+                <i class="fas fa-arrows-left-right"></i> Faites glisser horizontalement pour voir toutes les colonnes
+            </div>
+            
+            <!-- ✅ Bouton pour basculer entre les vues -->
+            <div style="text-align: center; margin: 10px 0;">
+                <button id="toggle-view-btn" class="btn btn-outline-primary btn-sm" onclick="toggleView()">
+                    <i class="fas fa-table"></i> Passer en vue cartes
+                </button>
+            </div>
+            
+            <!-- ✅ Version tableau avec container scrollable -->
+            <div class="participants-table-container">
+                <table class="participants-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Participant</th>
+                            <th>Score</th>
+                            <th>Temps</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.participants.map(participant => `
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-weight: bold; color: #666; min-width: 25px; text-align: center;">${participant.rank}</span>
+                                        <img src="${participant.user_avatar}" 
+                                             alt="${participant.username}" 
+                                             style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; flex-shrink: 0;"
+                                             onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="min-width: 150px;">
+                                        <div style="font-weight: 600;">${participant.username}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="participant-score ${participant.score_class}" style="padding: 6px 12px; font-size: 0.9em; display: inline-block; min-width: 60px; text-align: center;">
+                                        ${participant.score}%
+                                    </span>
+                                </td>
+                                <td style="min-width: 80px; text-align: center;">${participant.time_taken}</td>
+                                <td style="min-width: 120px;">${participant.completed_at}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- ✅ Version cartes pour mobile (cachée par défaut) -->
+            <div class="participants-cards" style="display: none;">
+                ${data.participants.map(participant => `
+                    <div class="participant-card">
+                        <div class="participant-card-main">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                <span style="font-weight: bold; color: #666; min-width: 25px; text-align: center;">${participant.rank}</span>
+                                <img src="${participant.user_avatar}" 
+                                     alt="${participant.username}" 
+                                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"
+                                     onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; margin-bottom: 4px;">${participant.username}</div>
+                                    <div style="font-size: 0.8em; color: #666;">
+                                        <div style="margin-bottom: 2px;"><i class="fas fa-clock"></i> Temps: ${participant.time_taken}</div>
+                                        <div><i class="fas fa-calendar"></i> Date: ${participant.completed_at}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="participant-score ${participant.score_class}" style="padding: 8px 12px; border-radius: 20px; font-weight: bold; min-width: 70px; text-align: center;">
+                                ${participant.score}%
+                            </span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <button class="back-to-stats" onclick="scrollToStats()" style="display: block; margin: 25px auto 0; padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background 0.3s ease;">
+                <i class="fas fa-arrow-up"></i> Revenir aux statistiques
+            </button>
+        `;
+        
+        // ✅ FORCER le recalcul du layout
+        setTimeout(() => {
+            const tableContainer = listEl.querySelector('.participants-table-container');
+            if (tableContainer) {
+                // Forcer le navigateur à recalculer le layout
+                tableContainer.style.display = 'none';
+                tableContainer.offsetHeight; // Trigger reflow
+                tableContainer.style.display = 'block';
+            }
+        }, 100);
+    }
+    
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function scrollToStats() {
+    document.getElementById('quiz-stats-list').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+}
+
+// Fonction pour basculer entre la vue tableau et la vue cartes
+function toggleView() {
+    const tableContainer = document.querySelector('.participants-table-container');
+    const cardsContainer = document.querySelector('.participants-cards');
+    const toggleBtn = document.getElementById('toggle-view-btn');
+    const scrollHint = document.querySelector('.mobile-scroll-hint');
+    
+    if (tableContainer && tableContainer.style.display !== 'none') {
+        // Passer aux cartes
+        tableContainer.style.display = 'none';
+        if (cardsContainer) cardsContainer.style.display = 'flex';
+        if (scrollHint) scrollHint.style.display = 'none';
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-list"></i> Passer en vue tableau';
+            toggleBtn.classList.remove('btn-outline-primary');
+            toggleBtn.classList.add('btn-outline-success');
+        }
+    } else {
+        // Revenir au tableau
+        if (tableContainer) tableContainer.style.display = 'block';
+        if (cardsContainer) cardsContainer.style.display = 'none';
+        if (scrollHint) scrollHint.style.display = 'block';
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-table"></i> Passer en vue cartes';
+            toggleBtn.classList.remove('btn-outline-success');
+            toggleBtn.classList.add('btn-outline-primary');
+        }
+    }
+}
+
+
+// Mettre à jour la fonction switchTab pour inclure la nouvelle section
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+
+    const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+
+    const activeSection = document.getElementById(tabName);
+    if (activeSection) {
+        activeSection.classList.add('active');
+    }
+
+    if (tabName === 'my-content') {
+        loadMyContent();
+    } else if (tabName === 'browse') {
+        loadQuizzes();
+        loadFlashcards();
+    } else if (tabName === 'quiz-participant') {
+        loadQuizParticipantsStats();
+    }
+}
+
 
   function debugTabs() {
     console.log("=== DEBUG ONGLETS ===");

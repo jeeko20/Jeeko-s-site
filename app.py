@@ -55,17 +55,12 @@ compress = Compress()
 compress.init_app(app)
 
 # -------------------- Database --------------------
-database_url = os.environ.get("DATABASE_URL")
-if not database_url:
-    raise RuntimeError("❌ DATABASE_URL introuvable !")
-if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SECRET_KEY"] = "supersecret"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///todo.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
 # -------------------- Flask-Login --------------------
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -1522,6 +1517,131 @@ def api_flashcards_search():
         "username": f.user.username
     } for f in flashcards])
 
+# Route pour les statistiques des participants aux quiz
+@app.route('/api/quiz_participants/stats')
+@login_required
+def api_quiz_participants_stats():
+    try:
+        # Récupérer tous les quiz créés par l'utilisateur
+        user_quizzes = Quiz.query.filter_by(user_id=current_user.id).all()
+        
+        total_stats = {
+            "total_quizzes": len(user_quizzes),
+            "total_participants": 0,
+            "total_attempts": 0,
+            "average_score": 0,
+            "best_score": 0,
+            "quizzes_with_participants": 0
+        }
+        
+        quiz_details = []
+        
+        for quiz in user_quizzes:
+            # Récupérer les tentatives pour ce quiz
+            attempts = QuizAttempt.query.filter_by(quiz_id=quiz.id).all()
+            
+            if attempts:
+                total_stats["quizzes_with_participants"] += 1
+                total_stats["total_attempts"] += len(attempts)
+                total_stats["total_participants"] += len(set([attempt.user_id for attempt in attempts]))
+                
+                quiz_scores = [attempt.score for attempt in attempts]
+                quiz_avg_score = sum(quiz_scores) / len(quiz_scores)
+                quiz_best_score = max(quiz_scores)
+                
+                total_stats["best_score"] = max(total_stats["best_score"], quiz_best_score)
+                
+                # Détails par quiz
+                quiz_details.append({
+                    "quiz_id": quiz.id,
+                    "quiz_title": quiz.title,
+                    "participant_count": len(set([attempt.user_id for attempt in attempts])),
+                    "attempt_count": len(attempts),
+                    "average_score": round(quiz_avg_score, 1),
+                    "best_score": round(quiz_best_score, 1),
+                    "total_questions": len(quiz.questions)
+                })
+        
+        # Calculer la moyenne générale
+        if total_stats["total_attempts"] > 0:
+            all_scores = []
+            for quiz in user_quizzes:
+                attempts = QuizAttempt.query.filter_by(quiz_id=quiz.id).all()
+                all_scores.extend([attempt.score for attempt in attempts])
+            
+            total_stats["average_score"] = round(sum(all_scores) / len(all_scores), 1)
+        
+        # Trier les quiz par nombre de participants (décroissant)
+        quiz_details.sort(key=lambda x: x["participant_count"], reverse=True)
+        
+        return jsonify({
+            "success": True,
+            "total_stats": total_stats,
+            "quiz_details": quiz_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Erreur lors du calcul des stats participants: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "total_stats": {
+                "total_quizzes": 0,
+                "total_participants": 0,
+                "total_attempts": 0,
+                "average_score": 0,
+                "best_score": 0,
+                "quizzes_with_participants": 0
+            },
+            "quiz_details": []
+        }), 500
+
+# Route pour obtenir les détails des participants d'un quiz spécifique
+@app.route('/api/quiz/<int:quiz_id>/participants_detailed')
+@login_required
+def get_quiz_participants_detailed(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Vérifier que l'utilisateur est le créateur du quiz
+    if quiz.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    
+    attempts = QuizAttempt.query.filter_by(quiz_id=quiz_id)\
+        .options(joinedload(QuizAttempt.user))\
+        .order_by(QuizAttempt.score.desc())\
+        .all()
+    
+    participants_data = []
+    
+    for attempt in attempts:
+        # Calculer le temps formaté
+        minutes = attempt.time_taken // 60
+        seconds = attempt.time_taken % 60
+        time_formatted = f"{minutes:02d}:{seconds:02d}"
+        
+        # Déterminer le classement
+        score_class = "score-excellent" if attempt.score >= 80 else \
+                    "score-good" if attempt.score >= 60 else \
+                    "score-average" if attempt.score >= 40 else "score-poor"
+        
+        participants_data.append({
+            "user_id": attempt.user.id,
+            "username": attempt.user.username,
+            "user_avatar": attempt.user.avatar_url,
+            "score": round(attempt.score, 1),
+            "time_taken": time_formatted,
+            "time_seconds": attempt.time_taken,
+            "completed_at": attempt.completed_at.strftime("%d/%m/%Y à %H:%M"),
+            "score_class": score_class,
+            "rank": len([a for a in attempts if a.score > attempt.score]) + 1
+        })
+    
+    return jsonify({
+        "quiz_title": quiz.title,
+        "total_questions": len(quiz.questions),
+        "participants": participants_data
+    })
+
 @app.route('/api/quiz', methods=['POST'])
 @login_required
 def create_quiz():
@@ -2054,4 +2174,4 @@ def share_youtube_video():
     return render_template('share_youtube.html')
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
