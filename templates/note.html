@@ -225,6 +225,133 @@
   .ressources-grid.loading {
     opacity: 0.6;
   }
+  /* Styles pour les notes */
+.notes-section {
+    margin-bottom: 30px;
+}
+
+.notes-section h3 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #333;
+}
+
+.notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.note-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #007bff;
+    transition: transform 0.2s ease;
+}
+
+.note-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.note-header {
+    margin-bottom: 10px;
+}
+
+.note-type-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.note-type-badge.shared {
+    background: #e8f5e8;
+    color: #28a745;
+}
+
+.note-type-badge.saved {
+    background: #e3f2fd;
+    color: #007bff;
+}
+
+.note-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+    line-height: 1.3;
+}
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.note-subject {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.note-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.note-actions button {
+    flex: 1;
+    min-width: 80px;
+    padding: 6px 10px;
+    font-size: 0.85em;
+}
+
+.empty-state, .error-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.empty-state h3, .error-state h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* Animation pour le compteur */
+.info {
+    font-weight: bold;
+    transition: all 0.5s ease;
+}
+
+.info.updated {
+    transform: scale(1.2);
+    color: #6c5ce7;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .note-actions {
+        flex-direction: column;
+    }
+    
+    .note-actions button {
+        min-width: 100%;
+    }
+}
 </style>  
 {% endblock %}
 
@@ -241,22 +368,22 @@
 
   <div class="info-matiere">
     <div>
-      <span class="info" id="total-notes">0</span>
-      <span>Notes Totales</span>
+        <span class="info" id="total-notes">0</span>
+        <span>Notes Totales</span>
     </div>
     <div>
-      <span class="info" id="total-saved">0</span>
-      <span>Sauvegardées</span>
+        <span class="info" id="total-saved">0</span>
+        <span>Sauvegardées</span>
     </div>
     <div>
-      <span class="info" id="total-shared">0</span>
-      <span>Partagées</span>
+        <span class="info" id="total-shared">0</span>
+        <span>Partagées</span>
     </div>
     <div>
-      <span class="info" id="total-subjects">0</span>
-      <span>Matieres</span>
+        <span class="info" id="total-subjects">0</span>
+        <span>Matieres</span>
     </div>
-  </div>
+</div>
 </header>
 
 <!-- Navigation -->
@@ -886,5 +1013,197 @@ function handleSwipe() {
         }
     }
 }
+</script>
+<script>
+  // Fonction pour charger les statistiques des notes
+async function loadNotesStats() {
+    try {
+        console.log('Chargement des statistiques des notes...');
+        
+        const response = await fetch('/api/notes/stats');
+        const result = await response.json();
+        
+        if (result.success) {
+            const stats = result.stats;
+            
+            // Mettre à jour les éléments HTML avec les vraies données
+            document.getElementById('total-notes').textContent = stats.total_notes;
+            document.getElementById('total-saved').textContent = stats.total_saved;
+            document.getElementById('total-shared').textContent = stats.total_shared;
+            document.getElementById('total-subjects').textContent = stats.total_subjects;
+            
+            console.log('Statistiques chargées:', stats);
+        } else {
+            console.error('Erreur dans les stats:', result.error);
+            // Garder les valeurs par défaut (0)
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des stats:', error);
+        // En cas d'erreur, les valeurs restent à 0
+    }
+}
+
+// Fonction pour charger les notes détaillées
+async function loadMyNotes() {
+    try {
+        const response = await fetch('/api/my_notes');
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log(`Chargement de ${result.notes.length} notes`);
+            renderNotesList(result.notes);
+        } else {
+            console.error('Erreur chargement notes:', result.error);
+            showNotesError();
+        }
+    } catch (error) {
+        console.error('Erreur chargement notes:', error);
+        showNotesError();
+    }
+}
+
+// Fonction pour afficher la liste des notes
+function renderNotesList(notes) {
+    const container = document.getElementById('notes-list-container'); // À créer dans votre HTML
+    if (!container) return;
+    
+    if (notes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox" style="font-size: 3em; color: #ccc; margin-bottom: 15px;"></i>
+                <h3>Aucune note disponible</h3>
+                <p>Commencez par partager ou sauvegarder des ressources !</p>
+                <button class="btn btn-primary" onclick="window.location.href='/communaute'">
+                    <i class="fas fa-share"></i> Partager une ressource
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Grouper par type (partagées vs sauvegardées)
+    const sharedNotes = notes.filter(note => note.type === 'shared');
+    const savedNotes = notes.filter(note => note.type === 'saved');
+    
+    let html = '';
+    
+    // Afficher les notes sauvegardées
+    if (savedNotes.length > 0) {
+        html += `
+            <div class="notes-section">
+                <h3><i class="fas fa-bookmark" style="color: #007bff;"></i> Notes Sauvegardées (${savedNotes.length})</h3>
+                <div class="notes-grid">
+                    ${savedNotes.map(note => createNoteCard(note)).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Afficher les notes partagées
+    if (sharedNotes.length > 0) {
+        html += `
+            <div class="notes-section">
+                <h3><i class="fas fa-share" style="color: #28a745;"></i> Notes Partagées (${sharedNotes.length})</h3>
+                <div class="notes-grid">
+                    ${sharedNotes.map(note => createNoteCard(note)).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+// Fonction pour créer une carte de note
+function createNoteCard(note) {
+    const date = new Date(note.created_at).toLocaleDateString('fr-FR');
+    const isVideo = note.file_type === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(note.file_type);
+    
+    return `
+        <div class="note-card" data-note-id="${note.id}">
+            <div class="note-header">
+                <div class="note-type-badge ${note.type}">
+                    ${note.type === 'shared' ? '<i class="fas fa-share"></i> Partagée' : '<i class="fas fa-bookmark"></i> Sauvegardée'}
+                </div>
+                <h4 class="note-title">${note.title}</h4>
+            </div>
+            <div class="note-meta">
+                <span class="note-subject">${note.subject}</span>
+                <span class="note-date">${date}</span>
+            </div>
+            <div class="note-actions">
+                ${isVideo ? `
+                    <button class="btn btn-primary" onclick="window.location.href='/videos#video-${note.id}'">
+                        <i class="fas fa-video"></i> Voir
+                    </button>
+                ` : `
+                    <button class="btn btn-primary" onclick="window.open('${note.file_url}', '_blank')">
+                        <i class="fas fa-eye"></i> Voir
+                    </button>
+                `}
+                <button class="btn btn-success" onclick="window.open('${note.download_url || note.file_url}', '_blank')">
+                    <i class="fas fa-download"></i> Télécharger
+                </button>
+                ${note.type === 'saved' ? `
+                    <button class="btn btn-danger" onclick="unsaveNote(${note.id})">
+                        <i class="fas fa-trash"></i> Retirer
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// Fonction pour retirer une note sauvegardée
+async function unsaveNote(noteId) {
+    if (!confirm('Êtes-vous sûr de vouloir retirer cette note de vos sauvegardes ?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/unsave_ressource/${noteId}`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            showNotification('✅ Note retirée des sauvegardes', 'success');
+            // Recharger les données
+            loadNotesStats();
+            loadMyNotes();
+        } else {
+            throw new Error('Erreur lors de la suppression');
+        }
+    } catch (error) {
+        console.error('Erreur retrait note:', error);
+        showNotification('❌ Erreur lors du retrait de la note', 'error');
+    }
+}
+
+// Fonction d'affichage d'erreur
+function showNotesError() {
+    const container = document.getElementById('notes-list-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3em; color: #dc3545; margin-bottom: 15px;"></i>
+                <h3>Erreur de chargement</h3>
+                <p>Impossible de charger vos notes. Veuillez réessayer.</p>
+                <button class="btn btn-primary" onclick="loadMyNotes()">
+                    <i class="fas fa-redo"></i> Réessayer
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Chargement initial
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Chargement des statistiques des notes...');
+    loadNotesStats();
+    loadMyNotes();
+    
+    // Recharger les stats toutes les 30 secondes (optionnel)
+    setInterval(loadNotesStats, 30000);
+});
 </script>
 {% endblock %}

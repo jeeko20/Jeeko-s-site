@@ -106,6 +106,28 @@
       opacity: 1;
       transform: translateX(0);
     }
+
+    .notification-type {
+      font-size: 0.8em;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: #e3f2fd;
+      color: #1976d2;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .notification-item[data-type="quiz"] {
+      border-left: 3px solid #ff9800;
+    }
+
+    .notification-item[data-type="flashcard"] {
+      border-left: 3px solid #4caf50;
+    }
+
+    .notification-item[data-type="ressource"] {
+      border-left: 3px solid #2196f3;
+    }
   </style>
 </head>
 <body>
@@ -136,7 +158,10 @@
       <div class="notification-dropdown" id="notificationDropdown">
         <div class="notification-header">
           <h4>Notifications</h4>
-          <button id="markAllRead">Tout marquer comme lu</button>
+          <div>
+            <button id="markAllRead">Marquer tout lu (Ressources)</button>
+            <button id="markAllQuizRead">Marquer tout lu (Quiz/Flashcards)</button>
+          </div>
         </div>
         <div class="notification-list" id="notificationList">
           <div class="notification-item">
@@ -144,7 +169,8 @@
           </div>
         </div>
         <div class="notification-footer">
-          <a href="{{url_for('profile')}}#overview">Voir tout dans le profil</a>
+          <a href="{{url_for('profile')}}#overview">Voir les activités</a>
+          <a href="{{url_for('quiz_flashcards')}}">Voir les quiz/flashcards</a>
         </div>
       </div>
     </div>
@@ -247,6 +273,7 @@
   <!-- Bouton hamburger -->
   <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
 </nav>
+
  <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -280,19 +307,18 @@
         </div>
         <button type="submit" class="btn-submit">Se connecter <i class="fa fa-arrow-right"></i></button>
         <div class="toggle-link" id="toRegister">Pas de compte ? Créez-en un</div>
-        <!-- Dans le formulaire login, après le bouton de connexion -->
-<div class="forgot-password-link" style="text-align: center; margin-top: 15px;">
-  <a href="{{ url_for('forgot_password') }}" style="color: #6c5ce7; text-decoration: none;">
-      🔐 Mot de passe oublié ?
-  </a>
-</div>
+        <div class="forgot-password-link" style="text-align: center; margin-top: 15px;">
+          <a href="{{ url_for('forgot_password') }}" style="color: #6c5ce7; text-decoration: none;">
+              🔐 Mot de passe oublié ?
+          </a>
+        </div>
       </form>
 
       <!-- REGISTER -->
       <form method="post" action="{{url_for('register')}}" class="form-wrapper" id="registerForm">
-        <h2>S’inscrire</h2>
+        <h2>S'inscrire</h2>
         <div class="form-group">
-          <input type="text" name="username" placeholder="Nom d’utilisateur" required>
+          <input type="text" name="username" placeholder="Nom d'utilisateur" required>
           <i class="fa fa-user"></i>
         </div>
         <div class="form-group">
@@ -303,24 +329,21 @@
           <input type="password" name="password" placeholder="Mot de passe" required>
           <i class="fa fa-lock"></i>
         </div>
-        <!-- Dans le formulaire register, ajoute ces champs -->
-<!-- Version avec questions plus courtes -->
-<div class="form-group">
-  <label>Question secrète :</label>
-  <select class="form-select" name="security_question" required>
-      <option value="">Choisis une question</option>
-      <option value="Nom de ton premier animal ?">Nom de ton premier animal ?</option>
-      <option value="Ville de naissance ?">Ville de naissance ?</option>
-      <option value="Meilleur ami d'enfance ?">Meilleur ami d'enfance ?</option>
-      <option value="Film préféré ?">Film préféré ?</option>
-      <option value="Professeur préféré ?">Professeur préféré ?</option>
-  </select>
-</div>
-
-<div class="form-group">
-  <label>Réponse :</label>
-  <input type="text" name="security_answer" placeholder="Ta réponse..." required>
-</div>
+        <div class="form-group">
+          <label style="color: white; display: block; margin-bottom: 5px;">Question secrète :</label>
+          <select class="form-select" name="security_question" required style="width: 100%; padding: 8px; border-radius: 5px;">
+              <option value="">Choisis une question</option>
+              <option value="Nom de ton premier animal ?">Nom de ton premier animal ?</option>
+              <option value="Ville de naissance ?">Ville de naissance ?</option>
+              <option value="Meilleur ami d'enfance ?">Meilleur ami d'enfance ?</option>
+              <option value="Film préféré ?">Film préféré ?</option>
+              <option value="Professeur préféré ?">Professeur préféré ?</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="color: white; display: block; margin-bottom: 5px;">Réponse :</label>
+          <input type="text" name="security_answer" placeholder="Ta réponse..." required style="width: 100%; padding: 8px; border: none; border-radius: 5px;">
+        </div>
         <button class="btn-submit" type="submit">Créer un compte <i class="fa fa-arrow-right"></i></button>
         <div class="toggle-link" id="toLogin">Déjà inscrit ? Connectez-vous</div>
       </form>
@@ -329,7 +352,6 @@
 
 {%block content%}
 {%endblock%}
-
 
   <!-- ================= FOOTER ================= -->
   <footer>
@@ -369,250 +391,333 @@
     </div>
   </footer>
 
-
   <!-- ================= SCRIPT ================= -->
-  
   <script>
     /*menu hamburger*/
     const hamburger = document.getElementById('hamburger');
     const menu_hamburger = document.getElementById('menu-hamburger');
-     const body=document.body;
+    const body = document.body;
+    
     hamburger.addEventListener('click', (e) => {
       menu_hamburger.classList.toggle('open');
-
-      // Change l'icône
       hamburger.classList.toggle('fa-bars');
       hamburger.classList.toggle('fa-xmark');
-	    e.stopPropagation();
-    });
-    
-	   body.addEventListener("click", () => {
-    if (menu_hamburger.classList.contains("open")) {
-      menu_hamburger.classList.remove("open");
-      hamburger.classList.add("fa-bars");
-      hamburger.classList.remove("fa-xmark");
-    }
-  });
-    /*..................................*/
-  // Sélection de tous les boutons Connexion
-const openLoginButtons = document.querySelectorAll(".btn-connexion");
-// Sélection de tous les boutons S'inscrire
-const openRegisterButtons = document.querySelectorAll(".btn-signup");
-
-const modal = document.getElementById("authModal");
-const loginForm = document.getElementById("loginForm");
-const registerForm = document.getElementById("registerForm");
-const closeModal = document.getElementById("closeModal");
-const toRegister = document.getElementById("toRegister");
-const toLogin = document.getElementById("toLogin");
-
-// Fonction pour ouvrir le modal et afficher login
-function showLogin() {
-  modal.classList.add("show");
-  loginForm.classList.add("active");
-  registerForm.classList.remove("active");
-}
-
-// Fonction pour ouvrir le modal et afficher register
-function showRegister() {
-  modal.classList.add("show");
-  registerForm.classList.add("active");
-  loginForm.classList.remove("active");
-}
-
-// Ajoute l'événement à tous les boutons Connexion
-openLoginButtons.forEach(btn => btn.addEventListener("click", showLogin));
-
-// Ajoute l'événement à tous les boutons S'inscrire
-openRegisterButtons.forEach(btn => btn.addEventListener("click", showRegister));
-
-// Fermer le modal
-closeModal.addEventListener("click", () => modal.classList.remove("show"));
-window.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("show"); });
-
-// Toggle Login <-> Register
-toRegister.addEventListener("click", () => {
-  loginForm.classList.remove("active");
-  registerForm.classList.add("active");
-});
-toLogin.addEventListener("click", () => {
-  registerForm.classList.remove("active");
-  loginForm.classList.add("active");
-});
-
- // Faire disparaître les messages flash après 3 secondes
-  setTimeout(function() {
-    const flash = document.getElementById('flash-messages');
-    if (flash) {
-      flash.style.transition = "opacity 0.5s ease";
-      flash.style.opacity = 0;
-      setTimeout(() => flash.remove(), 500); // supprime après fade out
-    }
-  }, 4000);
-
-  // ================= NOTIFICATIONS SYSTEM =================
-let notificationCheckInterval;
-
-function loadNotifications() {
-  if (!document.getElementById('notificationBell')) return;
-  
-  fetch('/api/notifications')
-    .then(res => {
-      if (!res.ok) throw new Error('Network response was not ok');
-      return res.json();
-    })
-    .then(notifications => {
-      console.log('Notifications chargées:', notifications); // Debug
-      updateNotificationUI(notifications);
-    })
-    .catch(err => {
-      console.error('Erreur chargement notifications:', err);
-      // Afficher un état d'erreur
-      updateNotificationUI([]);
-    });
-}
-
-function updateNotificationUI(notifications) {
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-  
-  console.log('Notifications non lues:', unreadCount); // Debug
-  
-  // Mettre à jour les compteurs
-  const notificationCount = document.getElementById('notificationCount');
-  const mobileCount = document.getElementById('mobileNotificationCount');
-  
-  if (notificationCount) {
-    notificationCount.textContent = unreadCount;
-    notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
-  }
-  
-  if (mobileCount) {
-    mobileCount.textContent = unreadCount;
-    mobileCount.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
-  }
-  
-  // Mettre à jour la liste
-  const list = document.getElementById('notificationList');
-  if (list) {
-    if (notifications.length === 0) {
-      list.innerHTML = '<div class="notification-item"><div class="notification-message">Aucune notification</div></div>';
-    } else {
-      list.innerHTML = notifications.map(notif => `
-        <div class="notification-item ${notif.is_read ? '' : 'unread'}" 
-             onclick="handleNotificationClick(${notif.id}, '${notif.ressource_type}', ${notif.ressource_id})">
-          <div class="notification-message">${notif.message}</div>
-          <div class="notification-time">${formatTimeAgo(notif.created_at)}</div>
-        </div>
-      `).join('');
-    }
-  }
-}
-
-function handleNotificationClick(notificationId, ressourceType, ressourceId) {
-  console.log('Clic sur notification:', notificationId, ressourceType, ressourceId); // Debug
-  
-  // Marquer comme lu
-  fetch(`/api/notifications/read/${notificationId}`, { method: 'POST' })
-    .then(() => {
-      // Recharger les notifications pour mettre à jour l'UI
-      loadNotifications();
-    })
-    .catch(err => console.error('Erreur marquage comme lu:', err));
-  
-  // Rediriger selon le type de ressource
-  if (ressourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(ressourceType)) {
-    window.location.href = `/videos#video-${ressourceId}`;
-  } else {
-    window.location.href = `/communaute#ressource-${ressourceId}`;
-  }
-}
-
-function formatTimeAgo(dateStr) {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffSec = Math.floor((now - date) / 1000);
-  
-  if (diffSec < 60) return "à l'instant";
-  if (diffSec < 3600) {
-    const m = Math.floor(diffSec / 60);
-    return `il y a ${m} minute${m > 1 ? 's' : ''}`;
-  }
-  if (diffSec < 86400) {
-    const h = Math.floor(diffSec / 3600);
-    return `il y a ${h} heure${h > 1 ? 's' : ''}`;
-  }
-  if (diffSec < 604800) {
-    const d = Math.floor(diffSec / 86400);
-    return `il y a ${d} jour${d > 1 ? 's' : ''}`;
-  }
-  return date.toLocaleDateString('fr-FR');
-}
-
-// Gestionnaire d'événements pour la cloche
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM chargé - Initialisation notifications'); // Debug
-  
-  const bell = document.getElementById('notificationBell');
-  const dropdown = document.getElementById('notificationDropdown');
-  const markAllRead = document.getElementById('markAllRead');
-  
-  // Charger les notifications immédiatement au chargement de la page
-  loadNotifications();
-  
-  if (bell && dropdown) {
-    bell.addEventListener('click', function(e) {
-      e.stopPropagation();
-      console.log('Clic sur cloche'); // Debug
-      dropdown.classList.toggle('show');
-      loadNotifications(); // Recharger à chaque ouverture
-    });
-    
-    // Fermer en cliquant ailleurs
-    document.addEventListener('click', function() {
-      dropdown.classList.remove('show');
-    });
-    
-    dropdown.addEventListener('click', function(e) {
       e.stopPropagation();
     });
-  }
-  
-  if (markAllRead) {
-    markAllRead.addEventListener('click', function() {
-      console.log('Marquer tout comme lu'); // Debug
-      fetch('/api/notifications/read_all', { method: 'POST' })
-        .then(() => {
-          loadNotifications();
-          dropdown.classList.remove('show');
+    
+    body.addEventListener("click", () => {
+      if (menu_hamburger.classList.contains("open")) {
+        menu_hamburger.classList.remove("open");
+        hamburger.classList.add("fa-bars");
+        hamburger.classList.remove("fa-xmark");
+      }
+    });
+
+    /* Authentication Modal */
+    const openLoginButtons = document.querySelectorAll(".btn-connexion");
+    const openRegisterButtons = document.querySelectorAll(".btn-signup");
+    const modal = document.getElementById("authModal");
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const closeModal = document.getElementById("closeModal");
+    const toRegister = document.getElementById("toRegister");
+    const toLogin = document.getElementById("toLogin");
+
+    function showLogin() {
+      modal.classList.add("show");
+      loginForm.classList.add("active");
+      registerForm.classList.remove("active");
+    }
+
+    function showRegister() {
+      modal.classList.add("show");
+      registerForm.classList.add("active");
+      loginForm.classList.remove("active");
+    }
+
+    openLoginButtons.forEach(btn => btn.addEventListener("click", showLogin));
+    openRegisterButtons.forEach(btn => btn.addEventListener("click", showRegister));
+
+    closeModal.addEventListener("click", () => modal.classList.remove("show"));
+    window.addEventListener("click", (e) => { 
+      if (e.target === modal) modal.classList.remove("show"); 
+    });
+
+    toRegister.addEventListener("click", () => {
+      loginForm.classList.remove("active");
+      registerForm.classList.add("active");
+    });
+    
+    toLogin.addEventListener("click", () => {
+      registerForm.classList.remove("active");
+      loginForm.classList.add("active");
+    });
+
+    // Flash messages
+    setTimeout(function() {
+      const flash = document.getElementById('flash-messages');
+      if (flash) {
+        flash.style.transition = "opacity 0.5s ease";
+        flash.style.opacity = 0;
+        setTimeout(() => flash.remove(), 500);
+      }
+    }, 4000);
+
+    // ================= NOTIFICATIONS SYSTEM =================
+    let notificationCheckInterval;
+
+    // Fonction pour charger TOUTES les notifications
+    function loadAllNotifications() {
+      loadNotifications(); // Notifications ressources
+      loadQuizNotifications(); // Notifications quiz/flashcards
+    }
+
+    function loadNotifications() {
+      if (!document.getElementById('notificationBell')) return;
+      
+      fetch('/api/notifications')
+        .then(res => {
+          if (!res.ok) throw new Error('Network response was not ok');
+          return res.json();
         })
-        .catch(err => console.error('Erreur marquage tout comme lu:', err));
+        .then(notifications => {
+          console.log('Notifications ressources chargées:', notifications);
+          updateNotificationUI(notifications);
+        })
+        .catch(err => {
+          console.error('Erreur chargement notifications:', err);
+          updateNotificationUI([]);
+        });
+    }
+
+    function loadQuizNotifications() {
+      if (!document.getElementById('notificationBell')) return;
+      
+      fetch('/api/quiz_notifications')
+        .then(res => {
+          if (!res.ok) throw new Error('Network response was not ok');
+          return res.json();
+        })
+        .then(notifications => {
+          console.log('Notifications quiz chargées:', notifications);
+          updateQuizNotificationUI(notifications);
+        })
+        .catch(err => {
+          console.error('Erreur chargement notifications quiz:', err);
+        });
+    }
+
+    function updateNotificationUI(notifications) {
+      // Stocker le HTML des notifications RESSOURCES
+      const list = document.getElementById('notificationList');
+      if (list) {
+        let ressourcesHtml = '';
+        
+        if (notifications.length === 0) {
+          ressourcesHtml = ''; // Pas de message si aucune ressource
+        } else {
+          ressourcesHtml = notifications.map(notif => `
+            <div class="notification-item ${notif.is_read ? '' : 'unread'}" data-type="ressource"
+                 onclick="handleNotificationClick(${notif.id}, '${notif.ressource_type}', ${notif.ressource_id})">
+              <div class="notification-message">${notif.message}</div>
+              <div class="notification-time">${formatTimeAgo(notif.created_at)}</div>
+              <div class="notification-type">📁 Ressource</div>
+            </div>
+          `).join('');
+        }
+        
+        // Stocker pour combiner plus tard
+        list.dataset.ressourcesHtml = ressourcesHtml;
+      }
+    }
+
+    function updateQuizNotificationUI(notifications) {
+      const unreadQuizCount = notifications.filter(n => !n.is_read).length;
+      
+      // Calculer le total des notifications non lues
+      let totalUnread = unreadQuizCount;
+      
+      console.log('Notifications quiz non lues:', unreadQuizCount, 'Total:', totalUnread);
+      
+      // Mettre à jour le compteur TOTAL
+      const notificationCount = document.getElementById('notificationCount');
+      const mobileCount = document.getElementById('mobileNotificationCount');
+      
+      if (notificationCount) {
+        notificationCount.textContent = totalUnread;
+        notificationCount.style.display = totalUnread > 0 ? 'flex' : 'none';
+      }
+      
+      if (mobileCount) {
+        mobileCount.textContent = totalUnread;
+        mobileCount.style.display = totalUnread > 0 ? 'inline-flex' : 'none';
+      }
+      
+      // Mettre à jour la liste
+      const list = document.getElementById('notificationList');
+      if (list) {
+        let quizHtml = '';
+        
+        if (notifications.length === 0) {
+          quizHtml = '';
+        } else {
+          quizHtml = notifications.map(notif => {
+            // Déterminer le type basé sur les données disponibles
+            const notificationType = notif.quiz_id ? 'quiz' : (notif.flashcard_id ? 'flashcard' : 'quiz');
+            const resourceId = notif.quiz_id || notif.flashcard_id;
+            
+            return `
+              <div class="notification-item ${notif.is_read ? '' : 'unread'}" data-type="${notificationType}"
+                   onclick="handleQuizNotificationClick(${notif.id}, '${notificationType}', ${resourceId})">
+                <div class="notification-message">${notif.message}</div>
+                <div class="notification-time">${formatTimeAgo(notif.created_at)}</div>
+                <div class="notification-type">${notificationType === 'quiz' ? '📝 Quiz' : '🎴 Flashcards'}</div>
+              </div>
+            `;
+          }).join('');
+        }
+        
+        // Combiner les deux types
+        const ressourcesHtml = list.dataset.ressourcesHtml || '';
+        const combinedHtml = ressourcesHtml + quizHtml;
+        
+        if (combinedHtml) {
+          list.innerHTML = combinedHtml;
+        } else {
+          list.innerHTML = '<div class="notification-item"><div class="notification-message">Aucune notification</div></div>';
+        }
+      }
+    }
+
+    function handleNotificationClick(notificationId, ressourceType, ressourceId) {
+      console.log('Clic sur notification ressource:', notificationId, ressourceType, ressourceId);
+      
+      // Marquer comme lu
+      fetch(`/api/notifications/read/${notificationId}`, { method: 'POST' })
+        .then(() => {
+          loadAllNotifications();
+        })
+        .catch(err => console.error('Erreur marquage comme lu:', err));
+      
+      // Rediriger selon le type de ressource
+      if (ressourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(ressourceType)) {
+        window.location.href = `/videos#video-${ressourceId}`;
+      } else {
+        window.location.href = `/communaute#ressource-${ressourceId}`;
+      }
+    }
+
+    function handleQuizNotificationClick(notificationId, notificationType, resourceId) {
+      console.log('Clic sur notification quiz:', notificationId, notificationType, resourceId);
+      
+      // Marquer comme lu
+      fetch(`/api/quiz_notifications/read/${notificationId}`, { method: 'POST' })
+        .then(() => {
+          loadAllNotifications();
+        })
+        .catch(err => console.error('Erreur marquage comme lu:', err));
+      
+      // Rediriger vers la page appropriée
+      window.location.href = `/quiz_flashcards`;
+    }
+
+    function formatTimeAgo(dateStr) {
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diffSec = Math.floor((now - date) / 1000);
+      
+      if (diffSec < 60) return "à l'instant";
+      if (diffSec < 3600) {
+        const m = Math.floor(diffSec / 60);
+        return `il y a ${m} minute${m > 1 ? 's' : ''}`;
+      }
+      if (diffSec < 86400) {
+        const h = Math.floor(diffSec / 3600);
+        return `il y a ${h} heure${h > 1 ? 's' : ''}`;
+      }
+      if (diffSec < 604800) {
+        const d = Math.floor(diffSec / 86400);
+        return `il y a ${d} jour${d > 1 ? 's' : ''}`;
+      }
+      return date.toLocaleDateString('fr-FR');
+    }
+
+    // Gestionnaire d'événements pour la cloche
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM chargé - Initialisation notifications complète');
+      
+      const bell = document.getElementById('notificationBell');
+      const dropdown = document.getElementById('notificationDropdown');
+      const markAllRead = document.getElementById('markAllRead');
+      const markAllQuizRead = document.getElementById('markAllQuizRead');
+      
+      // Charger TOUTES les notifications immédiatement
+      loadAllNotifications();
+      
+      if (bell && dropdown) {
+        bell.addEventListener('click', function(e) {
+          e.stopPropagation();
+          console.log('Clic sur cloche - rechargement notifications');
+          dropdown.classList.toggle('show');
+          loadAllNotifications(); // Recharger TOUTES les notifications à chaque ouverture
+        });
+        
+        // Fermer en cliquant ailleurs
+        document.addEventListener('click', function() {
+          dropdown.classList.remove('show');
+        });
+        
+        dropdown.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      }
+      
+      if (markAllRead) {
+        markAllRead.addEventListener('click', function() {
+          console.log('Marquer toutes les RESSOURCES comme lues');
+          fetch('/api/notifications/read_all', { method: 'POST' })
+            .then(() => {
+              loadAllNotifications();
+            })
+            .catch(err => console.error('Erreur marquage ressources comme lues:', err));
+        });
+      }
+      
+      if (markAllQuizRead) {
+        markAllQuizRead.addEventListener('click', function() {
+          console.log('Marquer tous les QUIZ/FLASHCARDS comme lus');
+          fetch('/api/quiz_notifications/read_all', { method: 'POST' })
+            .then(() => {
+              loadAllNotifications();
+            })
+            .catch(err => console.error('Erreur marquage quiz comme lus:', err));
+        });
+      }
+      
+      // Boutons mobile
+      const openLoginMobile = document.getElementById('openLoginMobile');
+      const openRegisterMobile = document.getElementById('openRegisterMobile');
+      
+      if (openLoginMobile) openLoginMobile.addEventListener('click', showLogin);
+      if (openRegisterMobile) openRegisterMobile.addEventListener('click', showRegister);
+      
+      // Vérifier les nouvelles notifications toutes les 30 secondes
+      if (document.getElementById('notificationBell')) {
+        notificationCheckInterval = setInterval(loadAllNotifications, 30000);
+      }
     });
-  }
-  
-  // Boutons mobile
-  const openLoginMobile = document.getElementById('openLoginMobile');
-  const openRegisterMobile = document.getElementById('openRegisterMobile');
-  
-  if (openLoginMobile) openLoginMobile.addEventListener('click', showLogin);
-  if (openRegisterMobile) openRegisterMobile.addEventListener('click', showRegister);
-  
-  // Vérifier les nouvelles notifications toutes les 30 secondes
-  if (document.getElementById('notificationBell')) {
-    notificationCheckInterval = setInterval(loadNotifications, 30000);
-  }
-});
 
-// Nettoyer l'intervalle quand la page est quittée
-window.addEventListener('beforeunload', function() {
-  if (notificationCheckInterval) {
-    clearInterval(notificationCheckInterval);
-  }
-});
-
+    // Nettoyer l'intervalle quand la page est quittée
+    window.addEventListener('beforeunload', function() {
+      if (notificationCheckInterval) {
+        clearInterval(notificationCheckInterval);
+      }
+    });
   </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   {%block script%}
-    {%endblock%}
+  {%endblock%}
 </body>
 </html>

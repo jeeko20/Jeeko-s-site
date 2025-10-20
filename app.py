@@ -128,17 +128,16 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     profile = db.relationship('Profile', backref='user', uselist=False)
-    youtube_credentials = db.Column(db.LargeBinary, nullable=True)  # <-- ajout
-    security_question = db.Column(db.String(200))  # Nouveau
-    security_answer = db.Column(db.String(200))    # Nouveau
-
+    youtube_credentials = db.Column(db.LargeBinary, nullable=True)
+    security_question = db.Column(db.String(200))
+    security_answer = db.Column(db.String(200))
 
     @property
     def avatar_url(self):
         if self.profile and self.profile.avatar_path:
             return fix_cloudinary_url(self.profile.avatar_path)
         return "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg"
-    
+
 class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -146,8 +145,8 @@ class Profile(db.Model):
     email = db.Column(db.String(150))
     bio = db.Column(db.Text)
     year_of_study = db.Column(db.String(50))
-    field_of_study = db.Column(db.String(100))  # Nouveau champ : filière
-    custom_field = db.Column(db.String(100))    # Pour "autre" filière
+    field_of_study = db.Column(db.String(100))
+    custom_field = db.Column(db.String(100))
     avatar_path = db.Column(db.String(200))
 
 class Ressource(db.Model):
@@ -203,7 +202,6 @@ class SavedRessource(db.Model):
     ressource = db.relationship('Ressource', backref=db.backref('saved_by', lazy=True))
     __table_args__ = (db.UniqueConstraint('user_id', 'ressource_id', name='unique_user_ressource'),)
 
-# -------------------- Modèles --------------------
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -215,18 +213,82 @@ class Notification(db.Model):
     user = db.relationship('User', backref=db.backref('notifications', lazy=True))
     ressource = db.relationship('Ressource', backref=db.backref('notifications', lazy=True))
 
+# -------------------- Modèles Quiz & Flashcards --------------------
+class Quiz(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    subject = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text)
+    time_limit = db.Column(db.Integer, default=0)
+    is_public = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('quizzes', lazy=True))
+    questions = db.relationship('Question', backref='quiz', cascade="all, delete-orphan")
+    attempts = db.relationship('QuizAttempt', backref='quiz', cascade="all, delete-orphan")
+
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    question_text = db.Column(db.Text, nullable=False)
+    question_type = db.Column(db.String(20), default='multiple_choice')
+    options = db.Column(db.JSON)
+    correct_answer = db.Column(db.String(10), nullable=False)
+    explanation = db.Column(db.Text)
+    order = db.Column(db.Integer, default=0)
+ 
+class Flashcard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    subject = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text)
+    is_public = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('flashcards', lazy=True))
+
+class FlashcardItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    flashcard_id = db.Column(db.Integer, db.ForeignKey('flashcard.id'), nullable=False)
+    front_content = db.Column(db.Text, nullable=False)
+    back_content = db.Column(db.Text, nullable=False)
+    order = db.Column(db.Integer, default=0)
+    flashcard = db.relationship('Flashcard', backref=db.backref('cards', lazy=True, cascade="all, delete-orphan"))
+
+class QuizAttempt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    score = db.Column(db.Float, default=0)
+    total_questions = db.Column(db.Integer, default=0)
+    time_taken = db.Column(db.Integer, default=0)
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('quiz_attempts', lazy=True))
+ 
+# Dans vos modèles, assurez-vous que QuizNotification peut gérer les deux types
+class QuizNotification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=True)
+    flashcard_id = db.Column(db.Integer, db.ForeignKey('flashcard.id'), nullable=True)
+    message = db.Column(db.String(500), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    notification_type = db.Column(db.String(20), default='quiz')  # 'quiz' ou 'flashcard'
+    
+    user = db.relationship('User', backref=db.backref('quiz_notifications', lazy=True))
+    quiz = db.relationship('Quiz', backref=db.backref('notifications', lazy=True))
+    flashcard = db.relationship('Flashcard', backref=db.backref('notifications', lazy=True))
+
 def fix_cloudinary_url(url):
     """Corrige les URLs Cloudinary si nécessaire"""
     if not url:
         return "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg"
     
-    # Si c'est déjà une URL complète, la retourner telle quelle
     if url.startswith('http'):
         return url
     
-    # Si c'est un public_id Cloudinary, construire l'URL complète
     if '/' in url and '.' in url:
-        # Nettoyer le public_id
         clean_public_id = url.replace('edushare/avatars/', '').replace('edushare/ressources/', '')
         return f"https://res.cloudinary.com/ddzx1fktv/image/upload/{clean_public_id}"
     
@@ -297,8 +359,8 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        security_question = request.form['security_question']  # Nouveau
-        security_answer = request.form['security_answer']      # Nouveau
+        security_question = request.form['security_question']
+        security_answer = request.form['security_answer']
         
         if not all([username, email, password, security_question, security_answer]):
             flash('Tous les champs sont obligatoires.', 'danger')
@@ -315,7 +377,7 @@ def register():
                 email=email, 
                 password=hash_password,
                 security_question=security_question,
-                security_answer=security_answer.lower()  # Stocke en minuscule
+                security_answer=security_answer.lower()
             )
             db.session.add(new_user)
             try:
@@ -337,7 +399,6 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         
         if user:
-            # Redirige vers la page de question secrète
             return redirect(url_for('security_question', user_id=user.id))
         else:
             flash('Aucun compte trouvé avec cet email.', 'danger')
@@ -351,9 +412,7 @@ def security_question(user_id):
     if request.method == 'POST':
         answer = request.form.get('security_answer')
         
-        # Vérifie la réponse (case insensitive)
         if answer and answer.lower() == user.security_answer.lower():
-            # Génère un token simple pour réinitialisation
             token = secrets.token_urlsafe(16)
             session['reset_token'] = token
             session['reset_user_id'] = user.id
@@ -367,7 +426,6 @@ def security_question(user_id):
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
-    # Vérifie le token de session
     token = session.get('reset_token')
     user_id = session.get('reset_user_id')
     expires = session.get('reset_expires')
@@ -387,11 +445,9 @@ def reset_password():
         elif len(password) < 6:
             flash('Le mot de passe doit contenir au moins 6 caractères.', 'danger')
         else:
-            # Met à jour le mot de passe
             user.password = generate_password_hash(password)
             db.session.commit()
             
-            # Nettoie la session
             session.pop('reset_token', None)
             session.pop('reset_user_id', None)
             session.pop('reset_expires', None)
@@ -423,7 +479,6 @@ def get_field_display_name(field_value, custom_value=None):
     }
     return fields.get(field_value, 'Non spécifiée')
 
-# Passe la fonction aux templates
 @app.context_processor
 def utility_processor():
     return dict(get_field_display_name=get_field_display_name)
@@ -436,12 +491,11 @@ def profile():
         email = request.form['email']
         bio = request.form['bio']
         year_of_study = request.form.get('year_of_study')
-        field_of_study = request.form.get('field_of_study')  # Nouveau
-        custom_field = request.form.get('custom_field')      # Nouveau
+        field_of_study = request.form.get('field_of_study')
+        custom_field = request.form.get('custom_field')
         avatar_file = request.files.get('avatar')
         avatar_path = current_user.profile.avatar_path if current_user.profile else None
         
-        # Vérification email unique
         email_exist = Profile.query.filter(
             Profile.email == email, 
             Profile.user_id != current_user.id
@@ -450,7 +504,6 @@ def profile():
             flash('Cet email est déjà pris', 'danger')
             return redirect(url_for('profile'))
 
-        # Gestion avatar
         if avatar_file and avatar_file.filename != '':
             if allow_avatar_file(avatar_file.filename):
                 upload_result = upload_avatar_to_cloudinary(avatar_file)
@@ -462,7 +515,6 @@ def profile():
                 flash('Seules les images (png, jpg, jpeg, gif) sont autorisées.', 'danger')
                 return redirect(url_for('profile'))
 
-        # Mise à jour ou création du profil
         if current_user.profile:
             current_user.profile.complete_name = complete_name
             current_user.profile.email = email
@@ -496,8 +548,6 @@ def profile():
     
     return render_template('profile.html', user=current_user, profile=current_user.profile)
 
-
-# -------------------- Accès à la communauté : vérifie profil --------------------
 @app.route('/communaute')
 @login_required
 def communaute():
@@ -514,7 +564,7 @@ def videos():
         return redirect(url_for('profile'))
     return render_template('videos.html')
 
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 100 Mo
+MAX_FILE_SIZE = 50 * 1024 * 1024
 
 @app.route('/share_ressource', methods=['POST'])
 @login_required
@@ -631,10 +681,8 @@ def share_ressource():
             db.session.add(new_ressource)
             uploaded_count += 1
 
-        # Sauvegarder d'abord les ressources
         db.session.commit()
         
-        # Créer les notifications
         if uploaded_count > 0 and current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study:
             new_ressources = Ressource.query.filter_by(
                 user_id=current_user.id, 
@@ -642,7 +690,6 @@ def share_ressource():
                 subject=subject
             ).order_by(Ressource.created_at.desc()).limit(uploaded_count).all()
             
-            # 🔥 CORRECTION FINALE
             users_same_year_and_field = User.query.join(Profile).filter(
                 Profile.year_of_study == current_user.profile.year_of_study,
                 Profile.field_of_study == current_user.profile.field_of_study,
@@ -685,12 +732,9 @@ def share_ressource():
         
     return redirect(url_for('communaute'))
 
-
-# ------------------- DEBUG -------------------
 @app.route('/debug/user_notifications')
 @login_required
 def debug_user_notifications():
-    """Debug des notifications de l'utilisateur actuel"""
     notifications = Notification.query.filter_by(user_id=current_user.id)\
         .options(joinedload(Notification.ressource))\
         .order_by(Notification.created_at.desc())\
@@ -714,9 +758,7 @@ def debug_user_notifications():
 
 @app.route('/debug/cloudinary_config')
 def debug_cloudinary_config():
-    """Teste la configuration Cloudinary"""
     try:
-        # Tester un upload simple
         test_result = cloudinary.uploader.upload(
             "https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg",
             public_id="test_config",
@@ -741,93 +783,138 @@ def debug_cloudinary_config():
             "api_secret_set": bool(os.environ.get("CLOUDINARY_API_SECRET"))
         })
 
-@app.route('/debug/avatars')
+# Route pour les statistiques des notes
+@app.route('/api/notes/stats')
 @login_required
-def debug_avatars():
-    """Debug des avatars des utilisateurs"""
-    users = User.query.options(joinedload(User.profile)).all()
-    
-    avatars_info = []
-    for user in users:
-        avatar_path = user.profile.avatar_path if user.profile else None
-        avatars_info.append({
-            'user_id': user.id,
-            'username': user.username,
-            'avatar_path': avatar_path,
-            'avatar_url': user.avatar_url,
-            'is_full_url': avatar_path.startswith('http') if avatar_path else False
+def api_notes_stats():
+    try:
+        # Nombre total de ressources partagées par l'utilisateur
+        total_shared = Ressource.query.filter_by(user_id=current_user.id).count()
+        
+        # Nombre de ressources sauvegardées par l'utilisateur
+        total_saved = SavedRessource.query.filter_by(user_id=current_user.id).count()
+        
+        # Nombre total de ressources (partagées + sauvegardées)
+        total_notes = total_shared + total_saved
+        
+        # Nombre de matières distinctes dans les ressources partagées
+        shared_subjects = db.session.query(Ressource.subject)\
+            .filter_by(user_id=current_user.id)\
+            .distinct()\
+            .count()
+        
+        # Nombre de matières distinctes dans les ressources sauvegardées
+        saved_subjects = db.session.query(Ressource.subject)\
+            .join(SavedRessource)\
+            .filter(SavedRessource.user_id == current_user.id)\
+            .distinct()\
+            .count()
+        
+        # Total des matières uniques (en combinant partagées et sauvegardées)
+        all_subjects_shared = db.session.query(Ressource.subject)\
+            .filter_by(user_id=current_user.id)\
+            .distinct()\
+            .all()
+        
+        all_subjects_saved = db.session.query(Ressource.subject)\
+            .join(SavedRessource)\
+            .filter(SavedRessource.user_id == current_user.id)\
+            .distinct()\
+            .all()
+        
+        # Combiner et compter les matières uniques
+        all_subjects = set([subject[0] for subject in all_subjects_shared] + 
+                          [subject[0] for subject in all_subjects_saved])
+        total_subjects = len(all_subjects)
+        
+        return jsonify({
+            "success": True,
+            "stats": {
+                "total_notes": total_notes,
+                "total_shared": total_shared,
+                "total_saved": total_saved,
+                "total_subjects": total_subjects
+            }
         })
-    
-    return jsonify(avatars_info)
+        
+    except Exception as e:
+        logger.error(f"Erreur lors du calcul des stats notes: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "stats": {
+                "total_notes": 0,
+                "total_shared": 0,
+                "total_saved": 0,
+                "total_subjects": 0
+            }
+        }), 500
 
-@app.route('/fix/cloudinary_permissions')
+# Route pour obtenir les ressources de l'utilisateur (pour le détail)
+@app.route('/api/my_notes')
 @login_required
-def fix_cloudinary_permissions():
-    """Ré-uploader tous les avatars avec les bonnes permissions"""
-    if current_user.id != 1:  # Seul l'admin
-        return "Accès non autorisé", 403
-    
-    users = User.query.options(joinedload(User.profile)).filter(
-        User.profile.has(Profile.avatar_path.isnot(None))
-    ).all()
-    
-    fixed_count = 0
-    for user in users:
-        if user.profile.avatar_path and 'cloudinary.com' in user.profile.avatar_path:
-            try:
-                # Télécharger et ré-uploader avec les bonnes permissions
-                response = requests.get(user.profile.avatar_path, timeout=10)
-                if response.status_code == 200:
-                    # Ré-uploader avec permissions publiques
-                    new_upload = cloudinary.uploader.upload(
-                        response.content,
-                        folder="edushare/avatars_fixed",
-                        public_id=f"avatar_fixed_{user.id}",
-                        overwrite=True,
-                        invalidate=True,
-                        access_mode="public",
-                        type="upload"
-                    )
-                    
-                    user.profile.avatar_path = new_upload.get("secure_url")
-                    fixed_count += 1
-                    logger.info(f"✅ Avatar réparé pour {user.username}")
-                else:
-                    logger.warning(f"❌ Impossible de télécharger l'avatar de {user.username}")
-                    
-            except Exception as e:
-                logger.error(f"❌ Erreur réparation avatar {user.username}: {e}")
-                continue
-    
-    db.session.commit()
-    
-    return jsonify({
-        "message": f"{fixed_count} avatars réparés avec les bonnes permissions",
-        "fixed_count": fixed_count
-    })
-
-@app.route('/debug/notifications')
-@login_required
-def debug_notifications():
-    """Route pour debugger les notifications"""
-    notifications = Notification.query.all()
-    users_count = User.query.count()
-    current_year = current_user.profile.year_of_study if current_user.profile else None
-    
-    debug_info = {
-        "total_notifications": len(notifications),
-        "total_users": users_count,
-        "current_user_year": current_year,
-        "notifications": [{
-            "id": n.id,
-            "user_id": n.user_id,
-            "message": n.message,
-            "is_read": n.is_read,
-            "created_at": n.created_at.isoformat()
-        } for n in notifications]
-    }
-    
-    return jsonify(debug_info)
+def api_my_notes():
+    try:
+        # Récupérer les ressources partagées par l'utilisateur
+        shared_ressources = Ressource.query.filter_by(user_id=current_user.id)\
+            .options(joinedload(Ressource.user))\
+            .order_by(Ressource.created_at.desc())\
+            .all()
+        
+        # Récupérer les ressources sauvegardées par l'utilisateur
+        saved_ressources = SavedRessource.query.filter_by(user_id=current_user.id)\
+            .options(joinedload(SavedRessource.ressource).joinedload(Ressource.user))\
+            .order_by(SavedRessource.saved_at.desc())\
+            .all()
+        
+        # Transformer les données
+        shared_data = [{
+            "id": r.id,
+            "title": r.title,
+            "subject": r.subject,
+            "file_type": r.file_type,
+            "file_url": r.file_url,
+            "download_url": r.download_url,
+            "created_at": r.created_at.isoformat(),
+            "page_count": r.page_count,
+            "is_saved": True,  # C'est une ressource partagée par l'utilisateur
+            "is_shared": True,
+            "type": "shared"
+        } for r in shared_ressources]
+        
+        saved_data = [{
+            "id": s.ressource.id,
+            "title": s.ressource.title,
+            "subject": s.ressource.subject,
+            "file_type": s.ressource.file_type,
+            "file_url": s.ressource.file_url,
+            "download_url": s.ressource.download_url,
+            "created_at": s.ressource.created_at.isoformat(),
+            "page_count": s.ressource.page_count,
+            "is_saved": True,
+            "is_shared": False,
+            "saved_at": s.saved_at.isoformat(),
+            "type": "saved"
+        } for s in saved_ressources]
+        
+        # Combiner et trier par date
+        all_notes = shared_data + saved_data
+        all_notes.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify({
+            "success": True,
+            "notes": all_notes,
+            "count": len(all_notes)
+        })
+        
+    except Exception as e:
+        logger.error(f"Erreur lors du chargement des notes: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "notes": [],
+            "count": 0
+        }), 500
 
 @app.route('/api/ressources')
 @login_required
@@ -836,7 +923,6 @@ def api_ressources():
         return jsonify([])
     current_year = current_user.profile.year_of_study
     current_field = current_user.profile.field_of_study
-
 
     ressources = Ressource.query.join(User).join(Profile).filter(
         Profile.year_of_study == current_year,
@@ -868,12 +954,12 @@ def api_videos():
         return jsonify([])
     
     current_year = current_user.profile.year_of_study
-    current_field = current_user.profile.field_of_study  # Nouveau filtre
+    current_field = current_user.profile.field_of_study
 
     video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm','youtube']
     videos = Ressource.query.join(User).join(Profile).filter(
         Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field,  # Filtre par filière
+        Profile.field_of_study == current_field,
         Ressource.file_type.in_(video_types)
     ).options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
 
@@ -899,11 +985,11 @@ def api_discussions():
         return jsonify([])
     
     current_year = current_user.profile.year_of_study
-    current_field = current_user.profile.field_of_study  # Nouveau filtre
+    current_field = current_user.profile.field_of_study
 
     query = Discussion.query.join(User).join(Profile).filter(
         Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field  # Filtre par filière
+        Profile.field_of_study == current_field
     ).options(
         joinedload(Discussion.user),
         joinedload(Discussion.comments)
@@ -963,7 +1049,6 @@ def create_discussion():
         "comment_count": 0
     }), 201
 
-# -------------------- Autres routes inchangées --------------------
 @app.route('/api/save_ressource/<int:ressource_id>', methods=['POST'])
 @login_required
 def save_ressource(ressource_id):
@@ -1117,8 +1202,6 @@ def unread_notifications_count():
     count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
     return jsonify({"count": count})
 
-
-# -------------------- Pages --------------------
 @app.route('/notes')
 @login_required
 def notes():
@@ -1136,17 +1219,14 @@ def contact():
         subject = request.form.get('subject')
         message = request.form.get('message')
         
-        # Créer le message pour WhatsApp
         whatsapp_message = f"*Nouveau message de contact:*%0A%0A" \
                           f"*Nom:* {name}%0A" \
                           f"*Email:* {email}%0A" \
                           f"*Sujet:* {subject}%0A" \
                           f"*Message:*%0A{message}"
         
-        # Numéro WhatsApp (le tien)
-        whatsapp_number = "50933970083"  # Sans le +
+        whatsapp_number = "50933970083"
         
-        # URL WhatsApp
         whatsapp_url = f"https://wa.me/{whatsapp_number}?text={whatsapp_message}"
         
         return redirect(whatsapp_url)
@@ -1169,8 +1249,6 @@ def systeme():
 def robots():
     return app.send_static_file('robots.txt')
 
-
-# Liste des routes publiques à indexer
 public_routes = [
     "home",
     "about",
@@ -1186,7 +1264,6 @@ public_routes = [
 
 @app.route("/sitemap.xml", methods=['GET'])
 def sitemap():
-    """Génère le sitemap XML dynamique"""
     sitemap_xml = ['<?xml version="1.0" encoding="UTF-8"?>']
     sitemap_xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
 
@@ -1205,17 +1282,652 @@ def sitemap():
     sitemap_content = "\n".join(sitemap_xml)
     return Response(sitemap_content, mimetype='application/xml')
 
+# -------------------- Routes Quiz & Flashcards --------------------
+
+@app.route('/quiz_flashcards')
+@login_required
+def quiz_flashcards():
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
+        flash("Veuillez compléter votre profil pour accéder aux quiz et flashcards.", "info")
+        return redirect(url_for('profile'))
+    return render_template('quiz_flashcards.html')
+
+# API pour les quiz
+@app.route('/api/quizzes')
+@login_required
+def api_quizzes():
+    if not current_user.profile:
+        return jsonify([])
+    
+    current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study
+
+    quizzes = Quiz.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field,
+        Quiz.is_public == True
+    ).options(joinedload(Quiz.user)).order_by(Quiz.created_at.desc()).all()
+
+    return jsonify([{
+        "id": q.id,
+        "title": q.title,
+        "subject": q.subject,
+        "description": q.description,
+        "time_limit": q.time_limit,
+        "question_count": len(q.questions),
+        "created_at": q.created_at.isoformat(),
+        "user_avatar": q.user.avatar_url,
+        "username": q.user.username,
+        "attempt_count": len(q.attempts)
+    } for q in quizzes])
+
+@app.route('/api/my_quizzes')
+@login_required
+def api_my_quizzes():
+    quizzes = Quiz.query.filter_by(user_id=current_user.id)\
+        .options(joinedload(Quiz.user))\
+        .order_by(Quiz.created_at.desc()).all()
+
+    return jsonify([{
+        "id": q.id,
+        "title": q.title,
+        "subject": q.subject,
+        "description": q.description,
+        "time_limit": q.time_limit,
+        "question_count": len(q.questions),
+        "created_at": q.created_at.isoformat(),
+        "user_avatar": q.user.avatar_url,
+        "username": q.user.username,
+        "attempt_count": len(q.attempts)
+    } for q in quizzes])
+
+@app.route('/api/my_flashcards')
+@login_required
+def api_my_flashcards():
+    flashcards = Flashcard.query.filter_by(user_id=current_user.id)\
+        .options(joinedload(Flashcard.user))\
+        .order_by(Flashcard.created_at.desc()).all()
+
+    return jsonify([{
+        "id": f.id,
+        "title": f.title,
+        "subject": f.subject,
+        "description": f.description,
+        "card_count": len(f.cards),
+        "created_at": f.created_at.isoformat(),
+        "user_avatar": f.user.avatar_url,
+        "username": f.user.username
+    } for f in flashcards])
+
+# API pour les flashcards
+@app.route('/api/flashcards')
+@login_required
+def api_flashcards():
+    if not current_user.profile:
+        return jsonify([])
+    
+    current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study
+
+    flashcards = Flashcard.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field,
+        Flashcard.is_public == True
+    ).options(joinedload(Flashcard.user)).order_by(Flashcard.created_at.desc()).all()
+
+    return jsonify([{
+        "id": f.id,
+        "title": f.title,
+        "subject": f.subject,
+        "description": f.description,
+        "card_count": len(f.cards),
+        "created_at": f.created_at.isoformat(),
+        "user_avatar": f.user.avatar_url,
+        "username": f.user.username
+    } for f in flashcards])
+
+# Ajoutez ces routes dans votre fichier Python existant
+
+# Route pour obtenir les participants d'un quiz
+@app.route('/api/quiz/<int:quiz_id>/participants')
+@login_required
+def get_quiz_participants(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Vérifier que l'utilisateur est le créateur du quiz
+    if quiz.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    
+    attempts = QuizAttempt.query.filter_by(quiz_id=quiz_id)\
+        .options(joinedload(QuizAttempt.user))\
+        .order_by(QuizAttempt.score.desc())\
+        .all()
+    
+    return jsonify([{
+        "user_id": attempt.user.id,
+        "username": attempt.user.username,
+        "user_avatar": attempt.user.avatar_url,
+        "score": attempt.score,
+        "time_taken": attempt.time_taken,
+        "completed_at": attempt.completed_at.isoformat()
+    } for attempt in attempts])
+# Route avec recherche et tri
 
 
+@app.route('/api/quizzes/search')
+@login_required
+def api_quizzes_search():
+    if not current_user.profile:
+        return jsonify([])
+    
+    current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study
+    
+    search = request.args.get('search', '')
+    sort = request.args.get('sort', 'recent')
+    subject = request.args.get('subject', '')
+    
+    query = Quiz.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field,
+        Quiz.is_public == True
+    ).options(joinedload(Quiz.user))
+    
+    if search:
+        query = query.filter(
+            db.or_(
+                Quiz.title.ilike(f'%{search}%'),
+                Quiz.description.ilike(f'%{search}%'),
+                Quiz.subject.ilike(f'%{search}%')
+            )
+        )
+    
+    if subject:
+        query = query.filter(Quiz.subject == subject)
+    
+    if sort == 'recent':
+        query = query.order_by(Quiz.created_at.desc())
+    elif sort == 'oldest':
+        query = query.order_by(Quiz.created_at.asc())
+    elif sort == 'title_asc':
+        query = query.order_by(Quiz.title.asc())
+    elif sort == 'title_desc':
+        query = query.order_by(Quiz.title.desc())
+    
+    quizzes = query.all()
+    
+    return jsonify([{
+        "id": q.id,
+        "title": q.title,
+        "subject": q.subject,
+        "description": q.description,
+        "time_limit": q.time_limit,
+        "question_count": len(q.questions),
+        "created_at": q.created_at.isoformat(),
+        "user_avatar": q.user.avatar_url,
+        "username": q.user.username,
+        "attempt_count": len(q.attempts)
+    } for q in quizzes])
+
+@app.route('/api/flashcards/search')
+@login_required
+def api_flashcards_search():
+    if not current_user.profile:
+        return jsonify([])
+    
+    current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study
+    
+    search = request.args.get('search', '')
+    sort = request.args.get('sort', 'recent')
+    subject = request.args.get('subject', '')
+    
+    query = Flashcard.query.join(User).join(Profile).filter(
+        Profile.year_of_study == current_year,
+        Profile.field_of_study == current_field,
+        Flashcard.is_public == True
+    ).options(joinedload(Flashcard.user))
+    
+    if search:
+        query = query.filter(
+            db.or_(
+                Flashcard.title.ilike(f'%{search}%'),
+                Flashcard.description.ilike(f'%{search}%'),
+                Flashcard.subject.ilike(f'%{search}%')
+            )
+        )
+    
+    if subject:
+        query = query.filter(Flashcard.subject == subject)
+    
+    if sort == 'recent':
+        query = query.order_by(Flashcard.created_at.desc())
+    elif sort == 'oldest':
+        query = query.order_by(Flashcard.created_at.asc())
+    elif sort == 'title_asc':
+        query = query.order_by(Flashcard.title.asc())
+    elif sort == 'title_desc':
+        query = query.order_by(Flashcard.title.desc())
+    
+    flashcards = query.all()
+    
+    return jsonify([{
+        "id": f.id,
+        "title": f.title,
+        "subject": f.subject,
+        "description": f.description,
+        "card_count": len(f.cards),
+        "created_at": f.created_at.isoformat(),
+        "user_avatar": f.user.avatar_url,
+        "username": f.user.username
+    } for f in flashcards])
+
+@app.route('/api/quiz', methods=['POST'])
+@login_required
+def create_quiz():
+    try:
+        data = request.get_json()
+        logger.info(f"📝 Création quiz: {data['title']}")
+        
+        new_quiz = Quiz(
+            user_id=current_user.id,
+            title=data['title'],
+            subject=data['subject'],
+            description=data.get('description', ''),
+            time_limit=data.get('time_limit', 0),
+            is_public=data.get('is_public', True)
+        )
+        
+        db.session.add(new_quiz)
+        db.session.flush()
+        
+        for i, q_data in enumerate(data['questions']):
+            question = Question(
+                quiz_id=new_quiz.id,
+                question_text=q_data['question_text'],
+                question_type=q_data['question_type'],
+                options=q_data['options'],
+                correct_answer=q_data['correct_answer'],
+                explanation=q_data.get('explanation', ''),
+                order=i
+            )
+            db.session.add(question)
+        
+        db.session.commit()
+        
+        # 🔥 NOTIFICATION : Créer des notifications pour les utilisateurs de la même filière
+        if new_quiz.is_public and current_user.profile:
+            users_same_year_and_field = User.query.join(Profile).filter(
+                Profile.year_of_study == current_user.profile.year_of_study,
+                Profile.field_of_study == current_user.profile.field_of_study,
+                User.is_active == True,
+                User.id != current_user.id  # Exclure l'utilisateur actuel
+            ).all()
+            
+            for user in users_same_year_and_field:
+                notification = QuizNotification(
+                    user_id=user.id,
+                    quiz_id=new_quiz.id,
+                    message=f"{current_user.username} a créé un nouveau quiz : {new_quiz.title}",
+                    notification_type='quiz'
+                )
+                db.session.add(notification)
+            
+            db.session.commit()
+            logger.info(f"✅ {len(users_same_year_and_field)} notifications quiz créées")
+        
+        return jsonify({"success": True, "quiz_id": new_quiz.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur création quiz: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/flashcard', methods=['POST'])
+@login_required
+def create_flashcard():
+    try:
+        data = request.get_json()
+        logger.info(f"📝 Création flashcards: {data['title']}")
+        
+        new_flashcard = Flashcard(
+            user_id=current_user.id,
+            title=data['title'],
+            subject=data['subject'],
+            description=data.get('description', ''),
+            is_public=data.get('is_public', True)
+        )
+        
+        db.session.add(new_flashcard)
+        db.session.flush()
+        
+        for card_data in data['cards']:
+            card = FlashcardItem(
+                flashcard_id=new_flashcard.id,
+                front_content=card_data['front_content'],
+                back_content=card_data['back_content'],
+                order=card_data.get('order', 0)
+            )
+            db.session.add(card)
+        
+        db.session.commit()
+        
+        # 🔥 NOTIFICATION : Créer des notifications pour les flashcards
+        if new_flashcard.is_public and current_user.profile:
+            users_same_year_and_field = User.query.join(Profile).filter(
+                Profile.year_of_study == current_user.profile.year_of_study,
+                Profile.field_of_study == current_user.profile.field_of_study,
+                User.is_active == True,
+                User.id != current_user.id
+            ).all()
+            
+            for user in users_same_year_and_field:
+                notification = QuizNotification(
+                    user_id=user.id,
+                    flashcard_id=new_flashcard.id,
+                    message=f"{current_user.username} a créé de nouvelles flashcards : {new_flashcard.title}",
+                    notification_type='flashcard'
+                )
+                db.session.add(notification)
+            
+            db.session.commit()
+            logger.info(f"✅ {len(users_same_year_and_field)} notifications flashcards créées")
+        
+        return jsonify({"success": True, "flashcard_id": new_flashcard.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur création flashcards: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
+# Obtenir les questions d'un quiz
+@app.route('/api/quiz/<int:quiz_id>/questions')
+@login_required
+def get_quiz_questions(quiz_id):
+    questions = Question.query.filter_by(quiz_id=quiz_id).order_by(Question.order).all()
+    
+    return jsonify([{
+        "id": q.id,
+        "question_text": q.question_text,
+        "question_type": q.question_type,
+        "options": q.options,
+        "explanation": q.explanation,
+        "order": q.order
+    } for q in questions])
 
+# Obtenir les cartes d'une flashcard
+@app.route('/api/flashcard/<int:flashcard_id>/cards')
+@login_required
+def get_flashcard_cards(flashcard_id):
+    cards = FlashcardItem.query.filter_by(flashcard_id=flashcard_id).order_by(FlashcardItem.order).all()
+    
+    return jsonify([{
+        "id": c.id,
+        "front_content": c.front_content,
+        "back_content": c.back_content,
+        "order": c.order
+    } for c in cards])
+
+# Soumettre un quiz
+@app.route('/api/quiz/<int:quiz_id>/submit', methods=['POST'])
+@login_required
+def submit_quiz(quiz_id):
+    data = request.get_json()
+    answers = data.get('answers', {})
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    correct_count = 0
+    results = {}
+    
+    for question in questions:
+        user_answer = answers.get(str(question.id))
+        is_correct = user_answer == question.correct_answer
+        results[str(question.id)] = {
+            "correct": is_correct,
+            "correct_answer": question.correct_answer,
+            "explanation": question.explanation
+        }
+        if is_correct:
+            correct_count += 1
+    
+    score = (correct_count / len(questions)) * 100 if questions else 0
+    
+    attempt = QuizAttempt(
+        user_id=current_user.id,
+        quiz_id=quiz_id,
+        score=score,
+        total_questions=len(questions),
+        time_taken=data.get('time_taken', 0)
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    
+    return jsonify({
+        "score": score,
+        "correct_count": correct_count,
+        "total_questions": len(questions),
+        "results": results
+    })
+
+# Supprimer un quiz
+@app.route('/api/quiz/<int:quiz_id>', methods=['DELETE'])
+@login_required
+def delete_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    if quiz.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    
+    db.session.delete(quiz)
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+# Supprimer des flashcards
+@app.route('/api/flashcard/<int:flashcard_id>', methods=['DELETE'])
+@login_required
+def delete_flashcard(flashcard_id):
+    flashcard = Flashcard.query.get_or_404(flashcard_id)
+    
+    if flashcard.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    
+    db.session.delete(flashcard)
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+# Notifications pour quiz/flashcards
+@app.route('/api/quiz_notifications')
+@login_required
+def api_quiz_notifications():
+    notifications = QuizNotification.query.filter_by(user_id=current_user.id)\
+        .options(joinedload(QuizNotification.quiz), joinedload(QuizNotification.flashcard))\
+        .order_by(QuizNotification.created_at.desc())\
+        .limit(20)\
+        .all()
+    
+    return jsonify([{
+        "id": n.id,
+        "message": n.message,
+        "is_read": n.is_read,
+        "created_at": n.created_at.isoformat(),
+        "quiz_id": n.quiz_id,
+        "flashcard_id": n.flashcard_id,
+        "notification_type": n.notification_type,
+        "quiz_title": n.quiz.title if n.quiz else None,
+        "flashcard_title": n.flashcard.title if n.flashcard else None
+    } for n in notifications])
+
+@app.route('/api/quiz_notifications/read/<int:notification_id>', methods=['POST'])
+@login_required
+def mark_quiz_notification_read(notification_id):
+    notification = QuizNotification.query.filter_by(id=notification_id, user_id=current_user.id).first()
+    if notification:
+        notification.is_read = True
+        db.session.commit()
+        return jsonify({"success": True})
+    return jsonify({"error": "Notification non trouvée"}), 404
+
+@app.route('/api/quiz_notifications/read_all', methods=['POST'])
+@login_required
+def mark_all_quiz_notifications_read():
+    QuizNotification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/quiz_notifications/count')
+@login_required
+def unread_quiz_notifications_count():
+    count = QuizNotification.query.filter_by(user_id=current_user.id, is_read=False).count()
+    return jsonify({"count": count})
+
+
+# Route pour obtenir les détails d'un quiz (modification)
+@app.route('/api/quiz/<int:quiz_id>/edit')
+@login_required
+def get_quiz_for_edit(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Vérifier que l'utilisateur est le créateur
+    if quiz.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    
+    return jsonify({
+        "id": quiz.id,
+        "title": quiz.title,
+        "subject": quiz.subject,
+        "description": quiz.description,
+        "time_limit": quiz.time_limit,
+        "is_public": quiz.is_public,
+        "questions": [{
+            "id": q.id,
+            "question_text": q.question_text,
+            "question_type": q.question_type,
+            "options": q.options,
+            "correct_answer": q.correct_answer,
+            "explanation": q.explanation,
+            "order": q.order
+        } for q in quiz.questions]
+    })
+
+# Route pour modifier un quiz
+@app.route('/api/quiz/<int:quiz_id>', methods=['PUT'])
+@login_required
+def update_quiz(quiz_id):
+    try:
+        quiz = Quiz.query.get_or_404(quiz_id)
+        
+        # Vérifier que l'utilisateur est le créateur
+        if quiz.user_id != current_user.id:
+            return jsonify({"error": "Non autorisé"}), 403
+        
+        data = request.get_json()
+        
+        # Mettre à jour le quiz
+        quiz.title = data['title']
+        quiz.subject = data['subject']
+        quiz.description = data.get('description', '')
+        quiz.time_limit = data.get('time_limit', 0)
+        quiz.is_public = data.get('is_public', True)
+        
+        # Supprimer les anciennes questions
+        Question.query.filter_by(quiz_id=quiz_id).delete()
+        
+        # Ajouter les nouvelles questions
+        for i, q_data in enumerate(data['questions']):
+            question = Question(
+                quiz_id=quiz.id,
+                question_text=q_data['question_text'],
+                question_type=q_data['question_type'],
+                options=q_data['options'],
+                correct_answer=q_data['correct_answer'],
+                explanation=q_data.get('explanation', ''),
+                order=i
+            )
+            db.session.add(question)
+        
+        db.session.commit()
+        
+        return jsonify({"success": True, "quiz_id": quiz.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur modification quiz: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Route pour obtenir les détails d'une flashcard (modification)
+@app.route('/api/flashcard/<int:flashcard_id>/edit')
+@login_required
+def get_flashcard_for_edit(flashcard_id):
+    flashcard = Flashcard.query.get_or_404(flashcard_id)
+    
+    # Vérifier que l'utilisateur est le créateur
+    if flashcard.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    
+    return jsonify({
+        "id": flashcard.id,
+        "title": flashcard.title,
+        "subject": flashcard.subject,
+        "description": flashcard.description,
+        "is_public": flashcard.is_public,
+        "cards": [{
+            "id": c.id,
+            "front_content": c.front_content,
+            "back_content": c.back_content,
+            "order": c.order
+        } for c in flashcard.cards]
+    })
+
+# Route pour modifier des flashcards
+@app.route('/api/flashcard/<int:flashcard_id>', methods=['PUT'])
+@login_required
+def update_flashcard(flashcard_id):
+    try:
+        flashcard = Flashcard.query.get_or_404(flashcard_id)
+        
+        # Vérifier que l'utilisateur est le créateur
+        if flashcard.user_id != current_user.id:
+            return jsonify({"error": "Non autorisé"}), 403
+        
+        data = request.get_json()
+        
+        # Mettre à jour la flashcard
+        flashcard.title = data['title']
+        flashcard.subject = data['subject']
+        flashcard.description = data.get('description', '')
+        flashcard.is_public = data.get('is_public', True)
+        
+        # Supprimer les anciennes cartes
+        FlashcardItem.query.filter_by(flashcard_id=flashcard_id).delete()
+        
+        # Ajouter les nouvelles cartes
+        for card_data in data['cards']:
+            card = FlashcardItem(
+                flashcard_id=flashcard.id,
+                front_content=card_data['front_content'],
+                back_content=card_data['back_content'],
+                order=card_data.get('order', 0)
+            )
+            db.session.add(card)
+        
+        db.session.commit()
+        
+        return jsonify({"success": True, "flashcard_id": flashcard.id})
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur modification flashcards: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # -------------------- Routes OAuth --------------------
 @app.route('/youtube_auth')
 @login_required
 def youtube_auth():
-    """Déclenche l'authentification OAuth YouTube."""
     if current_user.youtube_credentials:
         return redirect(url_for('share_youtube_video'))
 
@@ -1227,11 +1939,9 @@ def youtube_auth():
     auth_url, _ = flow.authorization_url(prompt="consent")
     return redirect(auth_url)
 
-
 @app.route('/youtube_oauth2callback')
 @login_required
 def youtube_oauth2callback():
-    """Callback OAuth, stocke les credentials dans la DB."""
     flow = Flow.from_client_config(
         get_client_config(),
         scopes=YOUTUBE_SCOPES,
@@ -1239,17 +1949,15 @@ def youtube_oauth2callback():
     )
     flow.fetch_token(authorization_response=request.url)
 
-    # Stockage sécurisé dans la DB
     current_user.youtube_credentials = pickle.dumps(flow.credentials)
     db.session.commit()
 
     flash("✅ Auth YouTube réussie !", "success")
     return redirect(url_for('share_youtube_video'))
 
-@app.route('/share_youtube_video', methods=['GET', 'POST'])  # 🔥 AJOUT DE 'GET' ICI
+@app.route('/share_youtube_video', methods=['GET', 'POST'])
 @login_required
 def share_youtube_video():
-    """Upload de vidéos sur YouTube et sauvegarde dans la DB."""
     if not current_user.youtube_credentials:
         return redirect(url_for('youtube_auth'))
 
@@ -1262,7 +1970,6 @@ def share_youtube_video():
             flash("Tous les champs sont requis.", "danger")
             return render_template('share_youtube.html')
 
-        # Fichier temporaire
         fd, temp_path = tempfile.mkstemp(suffix=".mp4")
         with os.fdopen(fd, 'wb') as tmp:
             video_file.save(tmp)
@@ -1292,7 +1999,6 @@ def share_youtube_video():
             embed_url = f"https://www.youtube.com/embed/{video_id}"
             watch_url = f"https://www.youtube.com/watch?v={video_id}"
 
-            # Sauvegarde dans la base de données
             new_ressource = Ressource(
                 user_id=current_user.id,
                 title=title,
@@ -1303,9 +2009,8 @@ def share_youtube_video():
                 page_count=0
             )
             db.session.add(new_ressource)
-            db.session.commit()  # Sauvegarder d'abord la ressource
+            db.session.commit()
 
-            # 🔔 CORRECTION : utiliser le bon nom de variable
             if current_user.profile and current_user.profile.year_of_study and current_user.profile.field_of_study:
                 users_same_year_and_field = User.query.join(Profile).filter(
                     Profile.year_of_study == current_user.profile.year_of_study,
@@ -1316,7 +2021,6 @@ def share_youtube_video():
                 logger.info(f"📢 Création de notifications YouTube pour {len(users_same_year_and_field)} utilisateurs")
                 
                 for user in users_same_year_and_field:
-                    # Message différent si c'est l'utilisateur actuel
                     if user.id == current_user.id:
                         message = f"Vous avez partagé une nouvelle vidéo YouTube : {title}"
                     else:
@@ -1329,7 +2033,7 @@ def share_youtube_video():
                     )
                     db.session.add(notification)
                 
-                db.session.commit()  # Sauvegarder les notifications
+                db.session.commit()
                 logger.info(f"✅ {len(users_same_year_and_field)} notifications YouTube créées avec succès")
 
             flash("✅ Vidéo uploadée sur YouTube et partagée !", "success")
@@ -1347,8 +2051,7 @@ def share_youtube_video():
             except Exception as e:
                 logger.warning(f"Impossible de supprimer le fichier temporaire: {e}")
 
-    # 🔥 AJOUT : Gestion de la méthode GET
     return render_template('share_youtube.html')
-# --------------------------------------------------
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

@@ -8,6 +8,65 @@
   rel="stylesheet"
   href="{{url_for('static',filename='css/profile.css')}}"
 />
+<style>
+  /* Styles pour les activités quiz et flashcards */
+.activity-quiz {
+  border-left: 4px solid #ff9800;
+  background: #fff3e0;
+}
+
+.activity-flashcard {
+  border-left: 4px solid #4caf50;
+  background: #e8f5e8;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+  font-size: 1.5em;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-message {
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.activity-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.activity-type {
+  background: #e3f2fd;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+</style>
 {%endblock%}
  {%block content%}
 
@@ -226,36 +285,52 @@
   });
 
   /*=====================script ACTIVITIES=======================*/
-  // ================= ACTIVITIES SYSTEM =================
+// ================= ACTIVITIES SYSTEM =================
 let currentActivitiesPage = 1;
 const ACTIVITIES_PER_PAGE = 10;
 let allActivities = [];
 
+// Fonction pour charger TOUTES les activités (ressources + quiz)
 function loadActivities(filter = 'all', customDate = null) {
   console.log('Chargement des activités...');
   
-  fetch('/api/notifications')
-    .then(res => {
-      if (!res.ok) throw new Error('Network response was not ok');
-      return res.json();
-    })
-    .then(notifications => {
-      console.log('Activités reçues:', notifications);
-      allActivities = notifications;
-      let filtered = filterActivities(notifications, filter, customDate);
-      renderActivities(filtered, currentActivitiesPage);
-    })
-    .catch(err => {
-      console.error('Erreur chargement activités:', err);
-      document.getElementById('activities-list').innerHTML = `
-        <div style="text-align: center; padding: 40px; color: #e74c3c;">
-          <p>Erreur lors du chargement des activités</p>
-          <button onclick="loadActivities()" style="padding: 10px 20px; background: #6c5ce7; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">
-            Réessayer
-          </button>
-        </div>
-      `;
-    });
+  // Charger les notifications de ressources
+  Promise.all([
+    fetch('/api/notifications').then(res => res.json()),
+    fetch('/api/quiz_notifications').then(res => res.json())
+  ])
+  .then(([ressourceNotifications, quizNotifications]) => {
+    console.log('Notifications ressources:', ressourceNotifications);
+    console.log('Notifications quiz:', quizNotifications);
+    
+    // Transformer les notifications quiz pour qu'elles aient le même format
+    const transformedQuizNotifications = quizNotifications.map(notif => ({
+      id: notif.id,
+      message: notif.message,
+      is_read: notif.is_read,
+      created_at: notif.created_at,
+      ressource_id: notif.quiz_id || notif.flashcard_id,
+      ressource_type: notif.quiz_id ? 'quiz' : 'flashcard',
+      notification_type: 'quiz' // Nouveau champ pour identifier le type
+    }));
+    
+    // Combiner les deux types de notifications
+    allActivities = [...ressourceNotifications, ...transformedQuizNotifications];
+    
+    let filtered = filterActivities(allActivities, filter, customDate);
+    renderActivities(filtered, currentActivitiesPage);
+  })
+  .catch(err => {
+    console.error('Erreur chargement activités:', err);
+    document.getElementById('activities-list').innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #e74c3c;">
+        <p>Erreur lors du chargement des activités</p>
+        <button onclick="loadActivities()" style="padding: 10px 20px; background: #6c5ce7; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+          Réessayer
+        </button>
+      </div>
+    `;
+  });
 }
 
 function filterActivities(activities, filter, customDate) {
@@ -299,7 +374,7 @@ function renderActivities(activities, page) {
       <div style="text-align: center; padding: 40px; color: #666;">
         <i class="fas fa-inbox" style="font-size: 3em; margin-bottom: 15px; opacity: 0.5;"></i>
         <h4>Aucune activité récente</h4>
-        <p>Les nouvelles ressources partagées apparaîtront ici</p>
+        <p>Les nouvelles ressources et quiz partagés apparaîtront ici</p>
       </div>
     `;
     document.getElementById('activities-pagination').innerHTML = '';
@@ -307,16 +382,20 @@ function renderActivities(activities, page) {
   }
   
   container.innerHTML = paginated.map(activity => {
-    const typeClass = getActivityTypeClass(activity.ressource_type);
-    const typeLabel = getResourceTypeLabel(activity.ressource_type);
+    const typeClass = getActivityTypeClass(activity.ressource_type, activity.notification_type);
+    const typeLabel = getResourceTypeLabel(activity.ressource_type, activity.notification_type);
+    const icon = getActivityIcon(activity.ressource_type, activity.notification_type);
     
     return `
       <div class="activity-item ${typeClass}" 
-           onclick="navigateToResource('${activity.ressource_type}', ${activity.ressource_id})">
-        <div class="activity-message">${activity.message}</div>
-        <div class="activity-meta">
-          <span>${formatTimeAgo(activity.created_at)}</span>
-          <span class="activity-type">${typeLabel}</span>
+           onclick="navigateToResource('${activity.ressource_type}', ${activity.ressource_id}, '${activity.notification_type}')">
+        <div class="activity-icon">${icon}</div>
+        <div class="activity-content">
+          <div class="activity-message">${activity.message}</div>
+          <div class="activity-meta">
+            <span>${formatTimeAgo(activity.created_at)}</span>
+            <span class="activity-type">${typeLabel}</span>
+          </div>
         </div>
       </div>
     `;
@@ -325,7 +404,12 @@ function renderActivities(activities, page) {
   renderActivitiesPagination(totalPages, page);
 }
 
-function getActivityTypeClass(resourceType) {
+function getActivityTypeClass(resourceType, notificationType) {
+  if (notificationType === 'quiz') {
+    if (resourceType === 'quiz') return 'activity-quiz';
+    if (resourceType === 'flashcard') return 'activity-flashcard';
+  }
+  
   if (resourceType === 'youtube') return 'activity-youtube';
   if (['mp4','mov','avi','mkv','webm'].includes(resourceType)) return 'activity-video';
   if (resourceType === 'pdf') return 'activity-pdf';
@@ -334,7 +418,12 @@ function getActivityTypeClass(resourceType) {
   return 'activity-document';
 }
 
-function getResourceTypeLabel(resourceType) {
+function getResourceTypeLabel(resourceType, notificationType) {
+  if (notificationType === 'quiz') {
+    if (resourceType === 'quiz') return 'Quiz';
+    if (resourceType === 'flashcard') return 'Flashcards';
+  }
+  
   const types = {
     'youtube': 'YouTube',
     'mp4': 'Vidéo', 'mov': 'Vidéo', 'avi': 'Vidéo', 'mkv': 'Vidéo', 'webm': 'Vidéo',
@@ -345,21 +434,53 @@ function getResourceTypeLabel(resourceType) {
   return types[resourceType] || 'Fichier';
 }
 
-function navigateToResource(resourceType, resourceId) {
-  console.log('Navigation vers ressource:', resourceType, resourceId);
+function getActivityIcon(resourceType, notificationType) {
+  if (notificationType === 'quiz') {
+    if (resourceType === 'quiz') return '📝';
+    if (resourceType === 'flashcard') return '🎴';
+  }
   
-  // Marquer comme lu si ce n'est pas déjà fait
-  const activity = allActivities.find(a => a.ressource_id === resourceId);
-  if (activity && !activity.is_read) {
-    fetch(`/api/notifications/read/${activity.id}`, { method: 'POST' })
+  if (resourceType === 'youtube') return '📹';
+  if (['mp4','mov','avi','mkv','webm'].includes(resourceType)) return '🎥';
+  if (resourceType === 'pdf') return '📄';
+  if (['png','jpg','jpeg','gif'].includes(resourceType)) return '🖼️';
+  if (['doc','docx'].includes(resourceType)) return '📝';
+  return '📁';
+}
+
+function navigateToResource(resourceType, resourceId, notificationType = '') {
+  console.log('Navigation vers ressource:', resourceType, resourceId, notificationType);
+  
+  // Marquer comme lu selon le type
+  if (notificationType === 'quiz') {
+    fetch(`/api/quiz_notifications/read/${resourceId}`, { method: 'POST' })
       .then(() => {
-        console.log('Notification marquée comme lue');
+        console.log('Notification quiz marquée comme lue');
+        loadActivities(); // Recharger les activités
       })
-      .catch(err => console.error('Erreur marquage comme lu:', err));
+      .catch(err => console.error('Erreur marquage quiz comme lu:', err));
+  } else {
+    const activity = allActivities.find(a => a.ressource_id === resourceId && !a.notification_type);
+    if (activity && !activity.is_read) {
+      fetch(`/api/notifications/read/${activity.id}`, { method: 'POST' })
+        .then(() => {
+          console.log('Notification marquée comme lue');
+        })
+        .catch(err => console.error('Erreur marquage comme lu:', err));
+    }
   }
   
   // Rediriger selon le type de ressource
-  if (resourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(resourceType)) {
+  if (notificationType === 'quiz') {
+    // Rediriger vers la page quiz/flashcards avec l'ID spécifique
+    if (resourceType === 'quiz') {
+      window.location.href = `/quiz_flashcards#quiz-${resourceId}`;
+    } else if (resourceType === 'flashcard') {
+      window.location.href = `/quiz_flashcards#flashcard-${resourceId}`;
+    } else {
+      window.location.href = `/quiz_flashcards`;
+    }
+  } else if (resourceType === 'youtube' || ['mp4','mov','avi','mkv','webm'].includes(resourceType)) {
     window.location.href = `/videos#video-${resourceId}`;
   } else {
     window.location.href = `/communaute#ressource-${resourceId}`;
@@ -526,6 +647,6 @@ function shareRessourceFromProfile() {
     // Rediriger
     window.location.href = "{{ url_for('communaute') }}";
 }
-</script>
+  </script>
 
 {%endblock%}

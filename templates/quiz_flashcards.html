@@ -1,0 +1,2764 @@
+{% extends 'base.html' %} {% block title %}Quiz & Flashcards | Eudushare{%
+endblock %} {% block description %}Testez vos connaissances avec des quiz et
+flashcards.{% endblock %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/quiz_flashcards.css') }}"
+/>
+<style>
+  /* ✅ Styles corrigés pour les flashcards - Pas de scroll horizontal */
+  .flashcard-container {
+    perspective: 1000px;
+    width: 100%;
+    max-width: 500px;
+    min-height: 300px;
+    height: 400px;
+    margin: 0 auto;
+    overflow: hidden; /* ✅ Empêche tout débordement */
+  }
+
+  .flashcard {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+    cursor: pointer;
+  }
+
+  .flashcard.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .flashcard-front,
+  .flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto; /* ✅ Scroll vertical seulement */
+    overflow-x: hidden; /* ✅ Pas de scroll horizontal */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
+    box-sizing: border-box;
+    /* ✅ Assure que le contenu ne dépasse pas */
+    max-width: 100%;
+  }
+
+  .flashcard-front {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 1.3em;
+    font-weight: 500;
+  }
+
+  .flashcard-back {
+    background: white;
+    color: #333;
+    transform: rotateY(180deg);
+    border: 2px solid #667eea;
+    font-size: 1.2em;
+    line-height: 1.6;
+  }
+
+  /* ✅ Contenu des flashcards avec gestion du overflow */
+  .flashcard-content {
+    width: 100%;
+    max-width: 100%; /* ✅ Empêche le débordement horizontal */
+    max-height: 100%;
+    overflow-y: auto; /* ✅ Scroll vertical si nécessaire */
+    overflow-x: hidden; /* ✅ Pas de scroll horizontal */
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    word-break: break-word; /* ✅ Casse les mots longs */
+  }
+
+  /* ✅ Assure que les images/liens ne créent pas de scroll horizontal */
+  .flashcard-content img,
+  .flashcard-content video,
+  .flashcard-content iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ✅ Scrollbar stylisée pour les flashcards */
+  .flashcard-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .flashcard-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .flashcard-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  .flashcard-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .flashcard-back .flashcard-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .flashcard-back .flashcard-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .flashcard-back .flashcard-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  /* ✅ Container principal pour éviter tout scroll horizontal */
+  #flashcard-viewing-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden; /* ✅ Pas de scroll horizontal */
+  }
+
+  /* ✅ Responsive pour les flashcards */
+  @media (max-width: 768px) {
+    .flashcard-container {
+      height: 350px;
+      min-height: 280px;
+      max-width: 90%; /* ✅ S'adapte à l'écran */
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+      padding: 25px;
+      font-size: 1.2em;
+    }
+
+    .flashcard-back {
+      font-size: 1.1em;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .flashcard-container {
+      height: 300px;
+      min-height: 250px;
+      max-width: 95%; /* ✅ Encore plus adaptatif */
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+      padding: 20px;
+      font-size: 1.1em;
+    }
+
+    .flashcard-back {
+      font-size: 1em;
+    }
+  }
+
+  /* ============================= */
+  /* STYLES POUR LA SURBRILLANCE DES ÉLÉMENTS */
+  /* ============================= */
+  .quiz-card,
+  .flashcard-card {
+    transition: all 0.5s ease;
+    border: 2px solid transparent;
+  }
+
+  .quiz-card.highlighted,
+  .flashcard-card.highlighted {
+    border-color: #6c5ce7 !important;
+    background: linear-gradient(135deg, #fff3e0, #ffffff) !important;
+    box-shadow: 0 0 20px rgba(108, 92, 231, 0.3) !important;
+    transform: scale(1.02);
+  }
+
+  /* Animation de pulsation */
+  @keyframes pulse-highlight {
+    0% {
+      box-shadow: 0 0 0 0 rgba(108, 92, 231, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(108, 92, 231, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(108, 92, 231, 0);
+    }
+  }
+
+  .pulse-effect {
+    animation: pulse-highlight 2s infinite;
+  }
+
+  /* ============================= */
+  /* CORRECTION DES BOUTONS QUI DÉBORDENT */
+  /* ============================= */
+
+  /* Styles pour les actions des quiz et flashcards */
+  .quiz-actions, .flashcard-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 18px 18px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+    flex-wrap: wrap; /* ✅ Permet le retour à la ligne */
+    justify-content: center; /* ✅ Centre les boutons */
+    align-items: center;
+  }
+
+  .quiz-actions button, .flashcard-actions button {
+    flex: 1; /* ✅ Prend l'espace disponible */
+    min-width: 120px; /* ✅ Largeur minimale */
+    max-width: 180px; /* ✅ Largeur maximale pour éviter le débordement */
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9em;
+    text-align: center;
+    white-space: nowrap; /* ✅ Empêche le texte de se casser */
+  }
+
+  /* Styles spécifiques pour chaque type de bouton */
+  .btn-primary {
+    background: #007bff;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #0069d9;
+    transform: translateY(-1px);
+  }
+
+  .btn-warning {
+    background: #ffc107;
+    color: #212529;
+  }
+
+  .btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-1px);
+  }
+
+  .btn-info {
+    background: #17a2b8;
+    color: white;
+  }
+
+  .btn-info:hover {
+    background: #138496;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger {
+    background: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+  }
+
+  .btn-success {
+    background: #28a745;
+    color: white;
+  }
+
+  .btn-success:hover {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-right: 10px;
+  }
+
+  .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+  }
+
+  /* ============================= */
+  /* RESPONSIVE DESIGN POUR BOUTONS */
+  /* ============================= */
+
+  /* Pour les écrans moyens (768px - 1024px) */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .quiz-actions, .flashcard-actions {
+        gap: 6px;
+    }
+    
+    .quiz-actions button, .flashcard-actions button {
+        min-width: 110px;
+        max-width: 160px;
+        padding: 7px 10px;
+        font-size: 0.85em;
+    }
+  }
+
+  /* Pour les grands écrans (1025px - 1440px) */
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    .quiz-actions, .flashcard-actions {
+        justify-content: flex-start; /* ✅ Aligne à gauche */
+        gap: 8px;
+    }
+    
+    .quiz-actions button, .flashcard-actions button {
+        min-width: 130px;
+        max-width: 170px;
+    }
+  }
+
+  /* Pour les très grands écrans (au-dessus de 1440px) */
+  @media (min-width: 1441px) {
+    .quiz-actions, .flashcard-actions {
+        justify-content: flex-start;
+        gap: 10px;
+    }
+    
+    .quiz-actions button, .flashcard-actions button {
+        min-width: 140px;
+        max-width: 180px;
+        padding: 9px 14px;
+    }
+  }
+
+  /* Pour les écrans très étroits (mobile) */
+  @media (max-width: 767px) {
+    .quiz-actions, .flashcard-actions {
+        flex-direction: column; /* ✅ Empile verticalement sur mobile */
+        gap: 8px;
+    }
+    
+    .quiz-actions button, .flashcard-actions button {
+        min-width: 100%;
+        max-width: 100%;
+        padding: 10px;
+    }
+  }
+
+  /* Pour les très petits mobiles */
+  @media (max-width: 480px) {
+    .quiz-actions, .flashcard-actions {
+        gap: 6px;
+        padding: 10px 15px 15px;
+    }
+    
+    .quiz-actions button, .flashcard-actions button {
+        padding: 8px 10px;
+        font-size: 0.85em;
+    }
+  }
+
+  /* ============================= */
+  /* STYLES GÉNÉRAUX POUR LA PAGE */
+  /* ============================= */
+  
+  /* Container principal */
+  .quiz-flashcards-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* En-tête */
+  .header-section {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .header-section h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .header-section p {
+    font-size: 1.2em;
+    color: #666;
+  }
+
+  /* Navigation par onglets */
+  .navigation-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tab-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background: #f8f9fa;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .tab-btn.active {
+    background: #6c5ce7;
+    color: white;
+  }
+
+  .tab-btn:hover:not(.active) {
+    background: #e9ecef;
+  }
+
+  /* Sections de contenu */
+  .content-section {
+    display: none;
+  }
+
+  .content-section.active {
+    display: block;
+  }
+
+  /* Sous-navigation */
+  .tab-subnav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .subtab-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .subtab-btn.active {
+    background: #6c5ce7;
+    color: white;
+  }
+
+  .subtab-content {
+    display: none;
+  }
+
+  .subtab-content.active {
+    display: block;
+  }
+
+  /* Barre de recherche et filtres */
+  .search-filters {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+  }
+
+  .search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+  }
+
+  /* Listes de quiz et flashcards */
+  .quiz-list, .flashcard-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .quiz-card, .flashcard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .quiz-card:hover, .flashcard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .quiz-header, .flashcard-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 20px 0;
+  }
+
+  .quiz-avatar, .flashcard-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .quiz-title, .flashcard-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+  }
+
+  .quiz-meta, .flashcard-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 0.85em;
+    color: #666;
+    flex-wrap: wrap;
+  }
+
+  .quiz-description, .flashcard-description {
+    padding: 15px 20px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .quiz-stats, .flashcard-stats {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  /* Formulaires */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+    box-sizing: border-box;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .add-btn {
+    background: #6c5ce7;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-bottom: 20px;
+    transition: background 0.3s ease;
+  }
+
+  .add-btn:hover {
+    background: #5b4bc4;
+  }
+
+  .remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-top: 10px;
+  }
+
+  .remove-btn:hover {
+    background: #c82333;
+  }
+
+  .form-actions {
+    text-align: center;
+    margin-top: 30px;
+  }
+
+  /* Modals */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+  }
+
+  .close:hover {
+    color: #000;
+  }
+
+  /* Notification */
+  .notification-alert {
+    display: none;
+    background: #28a745;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+
+  .loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #6c5ce7;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Responsive général */
+  @media (max-width: 768px) {
+    .quiz-flashcards-container {
+      padding: 15px;
+    }
+    
+    .header-section h1 {
+      font-size: 2em;
+    }
+    
+    .navigation-tabs {
+      flex-direction: column;
+    }
+    
+    .quiz-list, .flashcard-list {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-box {
+      flex-direction: column;
+    }
+    
+    .modal-content {
+      width: 95%;
+      margin: 10% auto;
+      padding: 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header-section h1 {
+      font-size: 1.8em;
+    }
+    
+    .quiz-header, .flashcard-header {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .quiz-meta, .flashcard-meta {
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="quiz-flashcards-container mt-3">
+  <div class="header-section">
+    <h1>Quiz & Flashcards</h1>
+    <p>Testez vos connaissances et mémorisez efficacement</p>
+  </div>
+
+  <!-- Alertes de notification -->
+  <div id="notification-alert" class="notification-alert">
+    <i class="fas fa-bell"></i> <span id="notification-message"></span>
+  </div>
+
+  <div class="navigation-tabs">
+    <button class="tab-btn active" data-tab="browse">Parcourir</button>
+    <button class="tab-btn" data-tab="my-content">Mes créations</button>
+    <button class="tab-btn" data-tab="create-quiz">Créer un Quiz</button>
+    <button class="tab-btn" data-tab="create-flashcard">
+      Créer Flashcards
+    </button>
+  </div>
+
+  <!-- Section Parcourir -->
+  <div id="browse" class="content-section active">
+    <div class="tab-subnav">
+      <button class="subtab-btn active" data-subtab="quizzes">Quiz</button>
+      <button class="subtab-btn" data-subtab="flashcards">Flashcards</button>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="search-filters">
+      <div class="search-box">
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Rechercher un quiz, une matière..."
+        />
+        <button class="btn btn-primary" onclick="performSearch()">
+          <i class="fas fa-search"></i> Rechercher
+        </button>
+        <button class="btn" onclick="clearSearch()">
+          <i class="fas fa-times"></i> Effacer
+        </button>
+      </div>
+      <div class="filter-row">
+        <select
+          id="sort-select"
+          class="filter-select"
+          onchange="performSearch()"
+        >
+          <option value="recent">Plus récent</option>
+          <option value="oldest">Plus ancien</option>
+          <option value="title_asc">Titre A-Z</option>
+          <option value="title_desc">Titre Z-A</option>
+        </select>
+        <select
+          id="subject-select"
+          class="filter-select"
+          onchange="performSearch()"
+        >
+          <option value="">Toutes les matières</option>
+          <option value="C++">C++</option>
+          <option value="HTML">HTML</option>
+          <option value="CSS">CSS</option>
+          <option value="JavaScript">JavaScript</option>
+          <option value="Algorithme">Algorithme</option>
+          <option value="Système">Système</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="quizzes" class="subtab-content active">
+      <h2>Quiz disponibles</h2>
+      <div class="quiz-list" id="quiz-list">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Chargement des quiz...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="flashcards" class="subtab-content">
+      <h2>Flashcards disponibles</h2>
+      <div class="flashcard-list" id="flashcard-list">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Chargement des flashcards...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Mes créations -->
+  <div id="my-content" class="content-section">
+    <div class="content-type-selector">
+      <button class="content-type-btn active" data-type="all">Tout voir</button>
+      <button class="content-type-btn" data-type="quizzes">Mes Quiz</button>
+      <button class="content-type-btn" data-type="flashcards">
+        Mes Flashcards
+      </button>
+    </div>
+
+    <div id="my-quizzes-section">
+      <h2>Mes Quiz</h2>
+      <div class="quiz-list" id="my-quiz-list">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Chargement de vos quiz...</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="my-flashcards-section">
+      <h2 style="margin-top: 40px">Mes Flashcards</h2>
+      <div class="flashcard-list" id="my-flashcard-list">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Chargement de vos flashcards...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Créer Quiz -->
+  <div id="create-quiz" class="content-section">
+    <h2>Créer un nouveau quiz</h2>
+    <form id="create-quiz-form">
+      <div class="form-group">
+        <label for="quiz-title">Titre du quiz *</label>
+        <input
+          type="text"
+          id="quiz-title"
+          name="title"
+          required
+          placeholder="Ex: Quiz sur les bases de C++"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="quiz-subject">Matière *</label>
+        <input
+          type="text"
+          id="quiz-subject"
+          name="subject"
+          required
+          placeholder="Ex: C++, HTML, Algorithmes..."
+          list="subject-suggestions"
+          class="subject-input"
+        />
+        <datalist id="subject-suggestions">
+          <option value="C++"></option>
+          <option value="HTML"></option>
+          <option value="CSS"></option>
+          <option value="JavaScript"></option>
+          <option value="Algorithme"></option>
+          <option value="Système"></option>
+          <option value="Base de données"></option>
+          <option value="Réseaux"></option>
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label for="quiz-description">Description</label>
+        <textarea
+          id="quiz-description"
+          name="description"
+          rows="3"
+          placeholder="Description du quiz..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="quiz-time-limit"
+          >Temps limite (minutes, 0 = illimité)</label
+        >
+        <input
+          type="number"
+          id="quiz-time-limit"
+          name="time_limit"
+          min="0"
+          value="0"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="is_public" checked /> Rendre public
+        </label>
+      </div>
+
+      <h3>Questions</h3>
+      <div id="questions-container">
+        <!-- Questions ajoutées dynamiquement -->
+      </div>
+
+      <button type="button" class="add-btn" id="add-question">
+        <i class="fas fa-plus"></i> Ajouter une question
+      </button>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="cancelEdit()"
+          style="display: none"
+          id="cancel-quiz-btn"
+        >
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary">Créer le quiz</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Section Créer Flashcards -->
+  <div id="create-flashcard" class="content-section">
+    <h2>Créer de nouvelles flashcards</h2>
+    <form id="create-flashcard-form">
+      <div class="form-group">
+        <label for="flashcard-title">Titre *</label>
+        <input
+          type="text"
+          id="flashcard-title"
+          name="title"
+          required
+          placeholder="Ex: Vocabulaire HTML"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="flashcard-subject">Matière *</label>
+        <input
+          type="text"
+          id="flashcard-subject"
+          name="subject"
+          required
+          placeholder="Ex: HTML, CSS, JavaScript..."
+          list="subject-suggestions"
+          class="subject-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="flashcard-description">Description</label>
+        <textarea
+          id="flashcard-description"
+          name="description"
+          rows="3"
+          placeholder="Description des flashcards..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" name="is_public" checked /> Rendre public
+        </label>
+      </div>
+
+      <h3>Cartes</h3>
+      <div id="cards-container">
+        <!-- Cartes ajoutées dynamiquement -->
+      </div>
+
+      <button type="button" class="add-btn" id="add-card">
+        <i class="fas fa-plus"></i> Ajouter une carte
+      </button>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="cancelEdit()"
+          style="display: none"
+          id="cancel-flashcard-btn"
+        >
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary">
+          Créer les flashcards
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal pour prendre un quiz -->
+<div id="quiz-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="quiz-taking-container">
+      <!-- Contenu du quiz chargé dynamiquement -->
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour voir les flashcards -->
+<div id="flashcard-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="flashcard-viewing-container">
+      <!-- Contenu des flashcards chargé dynamiquement -->
+    </div>
+  </div>
+</div>
+
+<!-- Modal des résultats -->
+<div id="results-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="results-container">
+      <!-- Résultats chargés dynamiquement -->
+    </div>
+  </div>
+</div>
+
+<!-- Modal des participants -->
+<div id="participants-modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="participants-container">
+      <!-- Participants chargés dynamiquement -->
+    </div>
+  </div>
+</div>
+{% endblock %} {% block script %}
+<script>
+  // Variables globales
+  let currentQuiz = null;
+  let currentQuestions = [];
+  let currentQuestionIndex = 0;
+  let userAnswers = {};
+  let quizTimer = null;
+  let timeRemaining = 0;
+
+  let currentFlashcard = null;
+  let currentCards = [];
+  let currentCardIndex = 0;
+
+  // Fonction pour vérifier si un élément est visible
+  function isElementVisible(element) {
+    if (!element) return false;
+
+    // Vérifier si l'élément ou ses parents sont cachés
+    let currentElement = element;
+    while (currentElement) {
+      const style = window.getComputedStyle(currentElement);
+      if (
+        style.display === "none" ||
+        style.visibility === "hidden" ||
+        style.opacity === "0"
+      ) {
+        return false;
+      }
+      currentElement = currentElement.parentElement;
+    }
+
+    // Vérifier si l'élément est dans le viewport
+    const rect = element.getBoundingClientRect();
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <=
+        (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+  }
+
+  // Fallback si le scroll automatique échoue
+  function handleScrollFallback(hash) {
+    if (hash.startsWith("#quiz-")) {
+      // Activer l'onglet quiz
+      switchTab("browse");
+      setTimeout(() => {
+        switchSubTab("quizzes");
+        showNotification("📝 Navigation vers les quiz", "info");
+      }, 300);
+    } else if (hash.startsWith("#flashcard-")) {
+      // Activer l'onglet flashcards
+      switchTab("browse");
+      setTimeout(() => {
+        switchSubTab("flashcards");
+        showNotification("🎴 Navigation vers les flashcards", "info");
+      }, 300);
+    }
+  }
+
+  // Initialisation
+  // Initialisation
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM chargé - Initialisation quiz/flashcards");
+    setupEventListeners();
+    loadInitialContent();
+    loadQuizNotifications();
+
+    // Gestion du scroll après chargement initial
+    setTimeout(() => {
+      console.log("Vérification du hash après chargement initial...");
+      scrollToQuizOrFlashcard();
+    }, 1500); // Augmentez le délai pour laisser plus de temps
+  });
+
+  function loadInitialContent() {
+    // Charger le contenu selon l'onglet actif
+    const activeTab = document.querySelector(".tab-btn.active");
+    if (activeTab && activeTab.dataset.tab === "browse") {
+      loadQuizzes();
+      loadFlashcards();
+    } else if (activeTab && activeTab.dataset.tab === "my-content") {
+      loadMyContent();
+    } else {
+      // Par défaut, charger le contenu de parcourir
+      loadQuizzes();
+      loadFlashcards();
+    }
+  }
+
+  // Configuration des événements
+  function setupEventListeners() {
+    console.log("Configuration des événements...");
+
+    // Navigation par onglets
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        switchTab(tab);
+      });
+    });
+
+    // Sous-navigation
+    document.querySelectorAll(".subtab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const subtab = btn.dataset.subtab;
+        switchSubTab(subtab);
+      });
+    });
+
+    // Sélecteur de type de contenu
+    document.querySelectorAll(".content-type-btn").forEach((btn) => {
+      if (btn) {
+        btn.addEventListener("click", function () {
+          document
+            .querySelectorAll(".content-type-btn")
+            .forEach((b) => b.classList.remove("active"));
+          this.classList.add("active");
+
+          const type = this.dataset.type;
+          filterMyContent(type);
+        });
+      }
+    });
+
+    // Recherche en temps réel
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", debounce(performSearch, 300));
+    }
+
+    // Formulaires
+    const quizForm = document.getElementById("create-quiz-form");
+    const flashcardForm = document.getElementById("create-flashcard-form");
+
+    if (quizForm) {
+      quizForm.addEventListener("submit", createQuiz);
+    }
+    if (flashcardForm) {
+      flashcardForm.addEventListener("submit", createFlashcard);
+    }
+
+    // Boutons d'ajout
+    const addQuestionBtn = document.getElementById("add-question");
+    const addCardBtn = document.getElementById("add-card");
+
+    if (addQuestionBtn) {
+      addQuestionBtn.addEventListener("click", addQuestionForm);
+    }
+    if (addCardBtn) {
+      addCardBtn.addEventListener("click", addCardForm);
+    }
+
+    // Modals
+    setupModals();
+
+    console.log("Événements configurés avec succès");
+  }
+
+  // Debounce pour la recherche
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Navigation
+  // Modifiez la fonction switchTab pour gérer le scroll
+  function switchTab(tabName) {
+    document
+      .querySelectorAll(".tab-btn")
+      .forEach((btn) => btn.classList.remove("active"));
+    document
+      .querySelectorAll(".content-section")
+      .forEach((section) => section.classList.remove("active"));
+
+    const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeTab) {
+      activeTab.classList.add("active");
+    }
+
+    const activeSection = document.getElementById(tabName);
+    if (activeSection) {
+      activeSection.classList.add("active");
+    }
+
+    if (tabName === "my-content") {
+      loadMyContent();
+    } else if (tabName === "browse") {
+      loadQuizzes();
+      loadFlashcards();
+    }
+
+    // Re-vérifier le hash après changement d'onglet
+    setTimeout(() => {
+      console.log("Re-vérification du hash après changement d'onglet...");
+      scrollToQuizOrFlashcard();
+    }, 800);
+  }
+
+  function switchSubTab(subtabName) {
+    return new Promise((resolve) => {
+      document
+        .querySelectorAll(".subtab-btn")
+        .forEach((btn) => btn.classList.remove("active"));
+      document
+        .querySelectorAll(".subtab-content")
+        .forEach((content) => content.classList.remove("active"));
+
+      const activeSubTab = document.querySelector(
+        `[data-subtab="${subtabName}"]`
+      );
+      if (activeSubTab) {
+        activeSubTab.classList.add("active");
+      }
+
+      const activeContent = document.getElementById(subtabName);
+      if (activeContent) {
+        activeContent.classList.add("active");
+      }
+
+      // Attendre que le contenu soit rendu
+      setTimeout(resolve, 200);
+    });
+  }
+
+  // Chargement des données avec recherche
+  async function loadQuizzes() {
+    try {
+      showLoading("quiz-list");
+      const search = document.getElementById("search-input")?.value || "";
+      const sort = document.getElementById("sort-select")?.value || "recent";
+      const subject = document.getElementById("subject-select")?.value || "";
+
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (sort) params.append("sort", sort);
+      if (subject) params.append("subject", subject);
+
+      const response = await fetch(`/api/quizzes/search?${params}`);
+      if (!response.ok) throw new Error("Erreur réseau");
+
+      const quizzes = await response.json();
+      renderQuizzes(quizzes, "quiz-list");
+
+      return quizzes;
+    } catch (error) {
+      console.error("Erreur chargement quizzes:", error);
+      const container = document.getElementById("quiz-list");
+      if (container) {
+        container.innerHTML =
+          '<p style="color: red; text-align: center; padding: 40px;">Erreur de chargement des quiz</p>';
+      }
+      throw error;
+    }
+  }
+
+  async function loadFlashcards() {
+    try {
+      showLoading("flashcard-list");
+      const search = document.getElementById("search-input")?.value || "";
+      const sort = document.getElementById("sort-select")?.value || "recent";
+      const subject = document.getElementById("subject-select")?.value || "";
+
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (sort) params.append("sort", sort);
+      if (subject) params.append("subject", subject);
+
+      const response = await fetch(`/api/flashcards/search?${params}`);
+      if (!response.ok) throw new Error("Erreur réseau");
+
+      const flashcards = await response.json();
+      renderFlashcards(flashcards, "flashcard-list");
+
+      return flashcards;
+    } catch (error) {
+      console.error("Erreur chargement flashcards:", error);
+      const container = document.getElementById("flashcard-list");
+      if (container) {
+        container.innerHTML =
+          '<p style="color: red; text-align: center; padding: 40px;">Erreur de chargement des flashcards</p>';
+      }
+      throw error;
+    }
+  }
+
+  async function loadMyContent() {
+    try {
+      showLoading("my-quiz-list");
+      showLoading("my-flashcard-list");
+
+      // Charger mes quiz
+      const quizResponse = await fetch("/api/my_quizzes");
+      if (quizResponse.ok) {
+        const myQuizzes = await quizResponse.json();
+        renderQuizzes(myQuizzes, "my-quiz-list", true);
+      }
+
+      // Charger mes flashcards
+      const flashcardResponse = await fetch("/api/my_flashcards");
+      if (flashcardResponse.ok) {
+        const myFlashcards = await flashcardResponse.json();
+        renderFlashcards(myFlashcards, "my-flashcard-list", true);
+      }
+    } catch (error) {
+      console.error("Erreur chargement contenu personnel:", error);
+    }
+  }
+
+  function showLoading(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.innerHTML = `
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Chargement...</p>
+            </div>
+        `;
+    }
+  }
+
+  function filterMyContent(type) {
+    const quizzesSection = document.getElementById("my-quizzes-section");
+    const flashcardsSection = document.getElementById("my-flashcards-section");
+
+    if (quizzesSection) {
+      quizzesSection.style.display = type === "flashcards" ? "none" : "block";
+    }
+    if (flashcardsSection) {
+      flashcardsSection.style.display = type === "quizzes" ? "none" : "block";
+    }
+  }
+
+  // Recherche
+  function performSearch() {
+    const activeSubTab = document.querySelector(".subtab-btn.active");
+    if (activeSubTab) {
+      const subtab = activeSubTab.dataset.subtab;
+      if (subtab === "quizzes") {
+        loadQuizzes();
+      } else {
+        loadFlashcards();
+      }
+    }
+  }
+
+  function clearSearch() {
+    const searchInput = document.getElementById("search-input");
+    const sortSelect = document.getElementById("sort-select");
+    const subjectSelect = document.getElementById("subject-select");
+
+    if (searchInput) searchInput.value = "";
+    if (sortSelect) sortSelect.value = "recent";
+    if (subjectSelect) subjectSelect.value = "";
+
+    performSearch();
+  }
+
+  // Rendu
+  function renderQuizzes(quizzes, containerId, showDelete = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (quizzes.length === 0) {
+      container.innerHTML =
+        '<p style="text-align: center; color: #666; padding: 40px;">Aucun quiz disponible.</p>';
+      return;
+    }
+
+    container.innerHTML = quizzes
+      .map(
+        (quiz) => `
+        <div class="quiz-card" data-quiz-id="${
+          quiz.id
+        }"> <!-- ✅ AJOUT DATA ATTRIBUTE -->
+            <div class="quiz-header">
+                <img src="${quiz.user_avatar}" alt="${
+          quiz.username
+        }" class="quiz-avatar" 
+                     onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
+                <div class="quiz-info">
+                    <h3 class="quiz-title">${quiz.title}</h3>
+                    <div class="quiz-meta">
+                        <span>Par ${quiz.username}</span>
+                        <span>${quiz.subject}</span>
+                        <span>${new Date(quiz.created_at).toLocaleDateString(
+                          "fr-FR"
+                        )}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="quiz-description">${
+              quiz.description || "Aucune description"
+            }</p>
+            <div class="quiz-stats">
+                <span>${quiz.question_count} questions</span>
+                <span>${
+                  quiz.time_limit > 0 ? quiz.time_limit + " min" : "Illimité"
+                }</span>
+                <span>${quiz.attempt_count} tentatives</span>
+            </div>
+            <div class="quiz-actions">
+                <button class="btn btn-primary" onclick="startQuiz(${quiz.id})">
+                    Commencer le quiz
+                </button>
+                ${
+                  showDelete
+                    ? `
+                <button class="btn btn-warning" onclick="editQuiz(${quiz.id})">
+                    <i class="fas fa-edit"></i> Modifier
+                 </button>
+
+                <button class="btn btn-info" onclick="viewParticipants(${quiz.id})">
+                    <i class="fas fa-users"></i> Participants
+                </button>
+                <button class="btn btn-danger" onclick="deleteQuiz(${quiz.id})">
+                    Supprimer
+                </button>
+                `
+                    : ""
+                }
+            </div>
+        </div>
+    `
+      )
+      .join("");
+  }
+
+  function renderFlashcards(flashcards, containerId, showDelete = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (flashcards.length === 0) {
+      container.innerHTML =
+        '<p style="text-align: center; color: #666; padding: 40px;">Aucune flashcard disponible.</p>';
+      return;
+    }
+
+    container.innerHTML = flashcards
+      .map(
+        (flashcard) => `
+        <div class="flashcard-card" data-flashcard-id="${
+          flashcard.id
+        }"> <!-- ✅ AJOUT DATA ATTRIBUTE -->
+            <div class="flashcard-header">
+                <img src="${flashcard.user_avatar}" alt="${
+          flashcard.username
+        }" class="flashcard-avatar"
+                     onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
+                <div class="flashcard-info">
+                    <h3 class="flashcard-title">${flashcard.title}</h3>
+                    <div class="flashcard-meta">
+                        <span>Par ${flashcard.username}</span>
+                        <span>${flashcard.subject}</span>
+                        <span>${new Date(
+                          flashcard.created_at
+                        ).toLocaleDateString("fr-FR")}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="flashcard-description">${
+              flashcard.description || "Aucune description"
+            }</p>
+            <div class="flashcard-stats">
+                <span>${flashcard.card_count} cartes</span>
+            </div>
+            <div class="flashcard-actions">
+                <button class="btn btn-success" onclick="viewFlashcards(${
+                  flashcard.id
+                })">
+                    Voir les flashcards
+                </button>
+                ${
+                  showDelete
+                    ? `  <button class="btn btn-warning" onclick="editFlashcard(${flashcard.id})">
+                         <i class="fas fa-edit"></i> Modifier
+                </button>
+                <button class="btn btn-danger" onclick="deleteFlashcard(${flashcard.id})">
+                    Supprimer
+                </button>`
+                    : ""
+                }
+            </div>
+        </div>
+    `
+      )
+      .join("");
+  }
+  // Création de contenu
+  function addQuestionForm() {
+    const container = document.getElementById("questions-container");
+    if (!container) return;
+
+    const questionCount = container.children.length;
+
+    const questionHtml = `
+        <div class="question-item" data-index="${questionCount}">
+            <h4>Question ${questionCount + 1}</h4>
+            <div class="form-group">
+                <label>Question *</label>
+                <textarea name="question_text" required placeholder="Entrez votre question..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Option A *</label>
+                <input type="text" name="option_a" required placeholder="Réponse A">
+            </div>
+            <div class="form-group">
+                <label>Option B *</label>
+                <input type="text" name="option_b" required placeholder="Réponse B">
+            </div>
+            <div class="form-group">
+                <label>Option C</label>
+                <input type="text" name="option_c" placeholder="Réponse C (optionnel)">
+            </div>
+            <div class="form-group">
+                <label>Option D</label>
+                <input type="text" name="option_d" placeholder="Réponse D (optionnel)">
+            </div>
+            <div class="form-group">
+                <label>Réponse correcte *</label>
+                <select name="correct_answer" required>
+                    <option value="">Choisissez la réponse correcte</option>
+                    <option value="a">A</option>
+                    <option value="b">B</option>
+                    <option value="c">C</option>
+                    <option value="d">D</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Explication (optionnel)</label>
+                <textarea name="explanation" placeholder="Explication de la réponse..."></textarea>
+            </div>
+            <button type="button" class="remove-btn" onclick="removeQuestion(${questionCount})">
+                <i class="fas fa-trash"></i> Supprimer cette question
+            </button>
+        </div>
+    `;
+
+    container.insertAdjacentHTML("beforeend", questionHtml);
+  }
+
+  function addCardForm() {
+    const container = document.getElementById("cards-container");
+    if (!container) return;
+
+    const cardCount = container.children.length;
+
+    const cardHtml = `
+        <div class="card-item" data-index="${cardCount}">
+            <h4>Carte ${cardCount + 1}</h4>
+            <div class="form-group">
+                <label>Recto (Question) *</label>
+                <textarea name="front_content" required placeholder="Question ou terme à apprendre..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Verso (Réponse) *</label>
+                <textarea name="back_content" required placeholder="Réponse ou définition..."></textarea>
+            </div>
+            <button type="button" class="remove-btn" onclick="removeCard(${cardCount})">
+                <i class="fas fa-trash"></i> Supprimer cette carte
+            </button>
+        </div>
+    `;
+
+    container.insertAdjacentHTML("beforeend", cardHtml);
+  }
+
+  function removeQuestion(index) {
+    const element = document.querySelector(
+      `.question-item[data-index="${index}"]`
+    );
+    if (element) {
+      element.remove();
+      updateQuestionIndexes();
+    }
+  }
+
+  function removeCard(index) {
+    const element = document.querySelector(`.card-item[data-index="${index}"]`);
+    if (element) {
+      element.remove();
+      updateCardIndexes();
+    }
+  }
+
+  function updateQuestionIndexes() {
+    const questions = document.querySelectorAll(".question-item");
+    questions.forEach((question, index) => {
+      question.setAttribute("data-index", index);
+      question.querySelector("h4").textContent = `Question ${index + 1}`;
+    });
+  }
+
+  function updateCardIndexes() {
+    const cards = document.querySelectorAll(".card-item");
+    cards.forEach((card, index) => {
+      card.setAttribute("data-index", index);
+      card.querySelector("h4").textContent = `Carte ${index + 1}`;
+    });
+  }
+// Fonction pour afficher/masquer le bouton Annuler
+  function toggleCancelButton(show) {
+    const quizCancelBtn = document.getElementById('cancel-quiz-btn');
+    const flashcardCancelBtn = document.getElementById('cancel-flashcard-btn');
+    
+    if (quizCancelBtn) quizCancelBtn.style.display = show ? 'inline-block' : 'none';
+    if (flashcardCancelBtn) flashcardCancelBtn.style.display = show ? 'inline-block' : 'none';
+}
+  // Fonction pour modifier un quiz
+  async function editQuiz(quizId) {
+    try {
+      const response = await fetch(`/api/quiz/${quizId}/edit`);
+      if (!response.ok) throw new Error("Erreur chargement quiz");
+
+      const quiz = await response.json();
+
+      // Remplir le formulaire de création avec les données existantes
+      document.getElementById("quiz-title").value = quiz.title;
+      document.getElementById("quiz-subject").value = quiz.subject;
+      document.getElementById("quiz-description").value =
+        quiz.description || "";
+      document.getElementById("quiz-time-limit").value = quiz.time_limit;
+      document.querySelector('[name="is_public"]').checked = quiz.is_public;
+
+      // Vider le conteneur de questions
+      document.getElementById("questions-container").innerHTML = "";
+
+      // Ajouter les questions existantes
+      quiz.questions.forEach((question, index) => {
+        addQuestionForm(); // Ajoute un nouveau formulaire de question
+
+        const lastQuestion = document.querySelector(
+          ".question-item:last-child"
+        );
+        if (lastQuestion) {
+          lastQuestion.querySelector('[name="question_text"]').value =
+            question.question_text;
+          lastQuestion.querySelector('[name="option_a"]').value =
+            question.options.a;
+          lastQuestion.querySelector('[name="option_b"]').value =
+            question.options.b;
+          lastQuestion.querySelector('[name="option_c"]').value =
+            question.options.c || "";
+          lastQuestion.querySelector('[name="option_d"]').value =
+            question.options.d || "";
+          lastQuestion.querySelector('[name="correct_answer"]').value =
+            question.correct_answer;
+          lastQuestion.querySelector('[name="explanation"]').value =
+            question.explanation || "";
+        }
+      });
+
+      // Changer le formulaire pour la modification
+      const form = document.getElementById("create-quiz-form");
+      form.dataset.editMode = "true";
+      form.dataset.editId = quizId;
+
+      // Changer le texte du bouton
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = "Modifier le quiz";
+
+      // Basculer vers l'onglet de création
+      switchTab("create-quiz");
+
+      showNotification(
+        "📝 Mode modification activé - Modifiez votre quiz",
+        "info"
+      );
+    } catch (error) {
+      console.error("Erreur chargement quiz pour modification:", error);
+      showNotification("❌ Erreur lors du chargement du quiz", "error");
+    }
+    toggleCancelButton(true);
+  }
+
+  // Fonction pour modifier des flashcards
+  async function editFlashcard(flashcardId) {
+    try {
+      const response = await fetch(`/api/flashcard/${flashcardId}/edit`);
+      if (!response.ok) throw new Error("Erreur chargement flashcards");
+
+      const flashcard = await response.json();
+
+      // Remplir le formulaire de création avec les données existantes
+      document.getElementById("flashcard-title").value = flashcard.title;
+      document.getElementById("flashcard-subject").value = flashcard.subject;
+      document.getElementById("flashcard-description").value =
+        flashcard.description || "";
+      document.querySelector(
+        '#create-flashcard-form [name="is_public"]'
+      ).checked = flashcard.is_public;
+
+      // Vider le conteneur de cartes
+      document.getElementById("cards-container").innerHTML = "";
+
+      // Ajouter les cartes existantes
+      flashcard.cards.forEach((card, index) => {
+        addCardForm(); // Ajoute un nouveau formulaire de carte
+
+        const lastCard = document.querySelector(".card-item:last-child");
+        if (lastCard) {
+          lastCard.querySelector('[name="front_content"]').value =
+            card.front_content;
+          lastCard.querySelector('[name="back_content"]').value =
+            card.back_content;
+        }
+      });
+
+      // Changer le formulaire pour la modification
+      const form = document.getElementById("create-flashcard-form");
+      form.dataset.editMode = "true";
+      form.dataset.editId = flashcardId;
+
+      // Changer le texte du bouton
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = "Modifier les flashcards";
+
+      // Basculer vers l'onglet de création
+      switchTab("create-flashcard");
+
+      showNotification(
+        "📝 Mode modification activé - Modifiez vos flashcards",
+        "info"
+      );
+    } catch (error) {
+      console.error("Erreur chargement flashcards pour modification:", error);
+      showNotification("❌ Erreur lors du chargement des flashcards", "error");
+    }
+    toggleCancelButton(true);
+  }
+
+
+  // Modifier la fonction createQuiz pour gérer la modification
+  async function createQuiz(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const questions = [];
+
+    // Récupérer les questions (code existant)
+    const questionElements = document.querySelectorAll(".question-item");
+    questionElements.forEach((element, index) => {
+      const questionData = {
+        question_text: element.querySelector('[name="question_text"]').value,
+        question_type: "multiple_choice",
+        options: {
+          a: element.querySelector('[name="option_a"]').value,
+          b: element.querySelector('[name="option_b"]').value,
+          c: element.querySelector('[name="option_c"]').value || "",
+          d: element.querySelector('[name="option_d"]').value || "",
+        },
+        correct_answer: element.querySelector('[name="correct_answer"]').value,
+        explanation: element.querySelector('[name="explanation"]').value || "",
+        order: index,
+      };
+      questions.push(questionData);
+    });
+
+    const data = {
+      title: formData.get("title"),
+      subject: formData.get("subject"),
+      description: formData.get("description"),
+      time_limit: parseInt(formData.get("time_limit")) || 0,
+      is_public: formData.get("is_public") === "on",
+      questions: questions,
+    };
+
+    // Déterminer si c'est une création ou modification
+    const isEdit = e.target.dataset.editMode === "true";
+    const editId = e.target.dataset.editId;
+
+    const url = isEdit ? `/api/quiz/${editId}` : "/api/quiz";
+    const method = isEdit ? "PUT" : "POST";
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const message = isEdit
+          ? "✅ Quiz modifié avec succès!"
+          : "✅ Quiz créé avec succès!";
+        showNotification(message);
+
+        // Réinitialiser le formulaire
+        e.target.reset();
+        document.getElementById("questions-container").innerHTML = "";
+        toggleCancelButton(false);
+        // Réinitialiser le mode édition
+        delete e.target.dataset.editMode;
+        delete e.target.dataset.editId;
+
+        // Remettre le texte du bouton
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.textContent = "Créer le quiz";
+
+        // Recharger le contenu
+        switchTab("my-content");
+        loadMyContent();
+      } else {
+        showNotification("❌ Erreur: " + result.error, "error");
+      }
+    } catch (error) {
+      console.error("Erreur:", error);
+      showNotification("❌ Erreur lors de l'opération", "error");
+    }
+  }
+
+  // Modifier la fonction createFlashcard pour gérer la modification
+  async function createFlashcard(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const cards = [];
+
+    // Récupérer les cartes (code existant)
+    const cardElements = document.querySelectorAll(".card-item");
+    cardElements.forEach((element, index) => {
+      const cardData = {
+        front_content: element.querySelector('[name="front_content"]').value,
+        back_content: element.querySelector('[name="back_content"]').value,
+        order: index,
+      };
+      cards.push(cardData);
+    });
+
+    const data = {
+      title: formData.get("title"),
+      subject: formData.get("subject"),
+      description: formData.get("description"),
+      is_public: formData.get("is_public") === "on",
+      cards: cards,
+    };
+
+    // Déterminer si c'est une création ou modification
+    const isEdit = e.target.dataset.editMode === "true";
+    const editId = e.target.dataset.editId;
+
+    const url = isEdit ? `/api/flashcard/${editId}` : "/api/flashcard";
+    const method = isEdit ? "PUT" : "POST";
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const message = isEdit
+          ? "✅ Flashcards modifiées avec succès!"
+          : "✅ Flashcards créées avec succès!";
+        showNotification(message);
+
+        // Réinitialiser le formulaire
+        e.target.reset();
+        document.getElementById("cards-container").innerHTML = "";
+        toggleCancelButton(false);
+        // Réinitialiser le mode édition
+        delete e.target.dataset.editMode;
+        delete e.target.dataset.editId;
+
+        // Remettre le texte du bouton
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.textContent = "Créer les flashcards";
+
+        // Recharger le contenu
+        switchTab("my-content");
+        loadMyContent();
+      } else {
+        showNotification("❌ Erreur: " + result.error, "error");
+      }
+    } catch (error) {
+      console.error("Erreur:", error);
+      showNotification("❌ Erreur lors de l'opération", "error");
+    }
+  }
+
+  // Fonction pour annuler la modification
+  function cancelEdit() {
+    const quizForm = document.getElementById("create-quiz-form");
+    const flashcardForm = document.getElementById("create-flashcard-form");
+
+    if (quizForm.dataset.editMode === "true") {
+      quizForm.reset();
+      document.getElementById("questions-container").innerHTML = "";
+      delete quizForm.dataset.editMode;
+      delete quizForm.dataset.editId;
+      const submitBtn = quizForm.querySelector('button[type="submit"]');
+      submitBtn.textContent = "Créer le quiz";
+      showNotification("✖️ Modification annulée", "info");
+    }
+
+    if (flashcardForm.dataset.editMode === "true") {
+      flashcardForm.reset();
+      document.getElementById("cards-container").innerHTML = "";
+      delete flashcardForm.dataset.editMode;
+      delete flashcardForm.dataset.editId;
+      const submitBtn = flashcardForm.querySelector('button[type="submit"]');
+      submitBtn.textContent = "Créer les flashcards";
+      showNotification("✖️ Modification annulée", "info");
+    }
+    toggleCancelButton(false);
+  }
+
+  // Quiz functions
+  async function startQuiz(quizId) {
+    try {
+      const response = await fetch(`/api/quiz/${quizId}/questions`);
+      if (!response.ok) throw new Error("Erreur chargement questions");
+
+      const questions = await response.json();
+
+      currentQuiz = quizId;
+      currentQuestions = questions;
+      currentQuestionIndex = 0;
+      userAnswers = {};
+
+      openQuizModal();
+      showQuestion(0);
+      startTimer();
+    } catch (error) {
+      console.error("Erreur démarrage quiz:", error);
+      showNotification("❌ Erreur lors du chargement du quiz", "error");
+    }
+  }
+
+  function openQuizModal() {
+    const modal = document.getElementById("quiz-modal");
+    if (modal) {
+      modal.style.display = "block";
+    }
+  }
+
+  function showQuestion(index) {
+    const question = currentQuestions[index];
+    const container = document.getElementById("quiz-taking-container");
+    if (!container) return;
+
+    // Gestion du contenu long avec troncature
+    const questionText = question.question_text;
+    const shouldTruncate = questionText.length > 500;
+    const displayText = shouldTruncate
+      ? questionText.substring(0, 500) + "..."
+      : questionText;
+
+    container.innerHTML = `
+        <div class="quiz-header">
+            <h2>Question ${index + 1}/${currentQuestions.length}</h2>
+            <div class="timer" id="quiz-timer"></div>
+        </div>
+        <div class="question-container">
+            <div class="question-text">
+                ${displayText}
+                ${
+                  shouldTruncate
+                    ? `<br><button class="btn btn-sm" onclick="showFullQuestion(${index})" style="margin-top: 10px; font-size: 0.9em;">
+                        Voir plus
+                    </button>`
+                    : ""
+                }
+            </div>
+            <div class="options-container">
+                ${Object.entries(question.options)
+                  .filter(([key, value]) => value)
+                  .map(([key, value]) => {
+                    const optionText =
+                      value.length > 200
+                        ? value.substring(0, 200) + "..."
+                        : value;
+                    return `
+                        <div class="option ${
+                          userAnswers[question.id] === key ? "selected" : ""
+                        }" 
+                             onclick="selectOption(${question.id}, '${key}')">
+                            <strong>${key.toUpperCase()}.</strong> 
+                            <span class="option-text">${optionText}</span>
+                            ${
+                              value.length > 200
+                                ? `<button class="btn-expand" onclick="event.stopPropagation(); expandOption('${key}', '${value.replace(
+                                    /'/g,
+                                    "\\'"
+                                  )}')" style="background: none; border: none; color: #007bff; cursor: pointer; margin-left: 5px;">⋯</button>`
+                                : ""
+                            }
+                        </div>
+                    `;
+                  })
+                  .join("")}
+            </div>
+        </div>
+        <div class="quiz-navigation">
+            <button class="btn" onclick="previousQuestion()" ${
+              index === 0 ? "disabled" : ""
+            }>
+                Précédent
+            </button>
+            <button class="btn btn-primary" onclick="nextQuestion()">
+                ${
+                  index === currentQuestions.length - 1 ? "Terminer" : "Suivant"
+                }
+            </button>
+        </div>
+    `;
+  }
+
+  function selectOption(questionId, option) {
+    userAnswers[questionId] = option;
+    showQuestion(currentQuestionIndex);
+  }
+
+  function nextQuestion() {
+    if (currentQuestionIndex < currentQuestions.length - 1) {
+      currentQuestionIndex++;
+      showQuestion(currentQuestionIndex);
+    } else {
+      submitQuiz();
+    }
+  }
+
+  function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      showQuestion(currentQuestionIndex);
+    }
+  }
+
+  function startTimer() {
+    timeRemaining = 30 * 60;
+
+    quizTimer = setInterval(() => {
+      timeRemaining--;
+
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+      const timerElement = document.getElementById("quiz-timer");
+      if (timerElement) {
+        timerElement.textContent = `Temps restant: ${minutes}:${seconds
+          .toString()
+          .padStart(2, "0")}`;
+      }
+
+      if (timeRemaining <= 0) {
+        clearInterval(quizTimer);
+        submitQuiz();
+      }
+    }, 1000);
+  }
+
+  async function submitQuiz() {
+    try {
+      const timeTaken = 30 * 60 - timeRemaining;
+
+      const response = await fetch(`/api/quiz/${currentQuiz}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answers: userAnswers,
+          time_taken: timeTaken,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Erreur soumission");
+
+      const results = await response.json();
+      showResults(results);
+
+      if (quizTimer) {
+        clearInterval(quizTimer);
+      }
+    } catch (error) {
+      console.error("Erreur soumission quiz:", error);
+      showNotification("❌ Erreur lors de la soumission du quiz", "error");
+    }
+  }
+
+  // Flashcard functions
+  async function viewFlashcards(flashcardId) {
+    try {
+      const response = await fetch(`/api/flashcard/${flashcardId}/cards`);
+      if (!response.ok) throw new Error("Erreur chargement cartes");
+
+      const cards = await response.json();
+
+      currentFlashcard = flashcardId;
+      currentCards = cards;
+      currentCardIndex = 0;
+
+      openFlashcardModal();
+      showCard(0);
+    } catch (error) {
+      console.error("Erreur chargement flashcards:", error);
+      showNotification("❌ Erreur lors du chargement des flashcards", "error");
+    }
+  }
+
+  function openFlashcardModal() {
+    const modal = document.getElementById("flashcard-modal");
+    if (modal) {
+      modal.style.display = "block";
+    }
+  }
+
+  function showCard(index) {
+    const card = currentCards[index];
+    const container = document.getElementById("flashcard-viewing-container");
+    if (!container) return;
+
+    // Fonction pour détecter si le contenu nécessite un scroll
+    const needsScroll = (content) => {
+      const tempDiv = document.createElement("div");
+      tempDiv.style.cssText =
+        "position: absolute; visibility: hidden; font-size: 1.3em; padding: 30px; width: 400px;";
+      tempDiv.textContent = content;
+      document.body.appendChild(tempDiv);
+      const needsScroll = tempDiv.scrollHeight > 300; // Hauteur approximative
+      document.body.removeChild(tempDiv);
+      return needsScroll;
+    };
+
+    const frontNeedsScroll = needsScroll(card.front_content);
+    const backNeedsScroll = needsScroll(card.back_content);
+
+    container.innerHTML = `
+        <div class="flashcard-progress">
+            Carte ${index + 1}/${currentCards.length}
+        </div>
+        <div class="flashcard-container">
+            <div class="flashcard" onclick="flipCard()">
+                <div class="flashcard-front">
+                    <div class="flashcard-content ${
+                      frontNeedsScroll ? "has-scroll" : ""
+                    }">
+                        ${card.front_content}
+                    </div>
+                </div>
+                <div class="flashcard-back">
+                    <div class="flashcard-content ${
+                      backNeedsScroll ? "has-scroll" : ""
+                    }">
+                        ${card.back_content}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flashcard-navigation">
+            <button class="btn" onclick="previousCard()" ${
+              index === 0 ? "disabled" : ""
+            }>
+                <i class="fas fa-arrow-left"></i> Précédent
+            </button>
+            <span class="flashcard-hint" style="color: #666; font-size: 0.9em;">
+                <i class="fas fa-mouse-pointer"></i> Cliquez pour retourner
+            </span>
+            <button class="btn btn-primary" onclick="nextCard()">
+                ${
+                  index === currentCards.length - 1
+                    ? 'Terminer <i class="fas fa-flag-checkered"></i>'
+                    : 'Suivant <i class="fas fa-arrow-right"></i>'
+                }
+            </button>
+        </div>
+    `;
+  }
+
+  function flipCard() {
+    const flashcard = document.querySelector(".flashcard");
+    if (flashcard) {
+      flashcard.classList.toggle("flipped");
+
+      // Animation visuelle pour indiquer le flip
+      const content = flashcard.querySelector(".flashcard-content");
+      if (content) {
+        content.style.transform = "scale(0.95)";
+        setTimeout(() => {
+          content.style.transform = "scale(1)";
+        }, 150);
+      }
+    }
+  }
+
+  function nextCard() {
+    if (currentCardIndex < currentCards.length - 1) {
+      currentCardIndex++;
+      showCard(currentCardIndex);
+    } else {
+      closeFlashcardModal();
+      showNotification(
+        "🎉 Félicitations ! Vous avez terminé toutes les flashcards.",
+        "success"
+      );
+    }
+  }
+
+  function previousCard() {
+    if (currentCardIndex > 0) {
+      currentCardIndex--;
+      showCard(currentCardIndex);
+    }
+  }
+
+  // Participants tracking
+  async function viewParticipants(quizId) {
+    try {
+      const response = await fetch(`/api/quiz/${quizId}/participants`);
+      if (!response.ok) throw new Error("Erreur chargement participants");
+
+      const participants = await response.json();
+      showParticipantsModal(participants, quizId);
+    } catch (error) {
+      console.error("Erreur chargement participants:", error);
+      showNotification(
+        "❌ Erreur lors du chargement des participants",
+        "error"
+      );
+    }
+  }
+
+  function showParticipantsModal(participants, quizId) {
+    const container = document.getElementById("participants-container");
+    if (!container) return;
+
+    const getScoreClass = (score) => {
+      if (score >= 80) return "score-excellent";
+      if (score >= 60) return "score-good";
+      if (score >= 40) return "score-average";
+      return "score-poor";
+    };
+
+    container.innerHTML = `
+        <h2>Participants du Quiz</h2>
+        <p>${participants.length} participant(s) au total</p>
+        
+        <div class="participants-list">
+            ${
+              participants.length > 0
+                ? participants
+                    .map(
+                      (participant) => `
+                <div class="participant-item">
+                    <div class="participant-info">
+                        <img src="${participant.user_avatar}" alt="${
+                        participant.username
+                      }" 
+                             class="participant-avatar"
+                             onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
+                        <div>
+                            <strong style="color:#007bff !important;">${
+                              participant.username
+                            }</strong>
+                            <div style="font-size: 0.9em; color: #666;">
+                                ${new Date(
+                                  participant.completed_at
+                                ).toLocaleDateString("fr-FR")}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="participant-score ${getScoreClass(
+                      participant.score
+                    )}">
+                        ${Math.round(participant.score)}%
+                    </div>
+                </div>
+            `
+                    )
+                    .join("")
+                : `
+                <p style="text-align: center; color: #666; padding: 40px;">
+                    Aucun participant pour le moment.
+                </p>
+            `
+            }
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="closeParticipantsModal()">
+                Fermer
+            </button>
+        </div>
+    `;
+
+    document.getElementById("participants-modal").style.display = "block";
+  }
+
+  // Résultats
+  function showResults(results) {
+    closeQuizModal();
+
+    const container = document.getElementById("results-container");
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="results-container">
+            <div class="score-circle">
+                ${Math.round(results.score)}%
+            </div>
+            <h2>Résultats du quiz</h2>
+            <p>Vous avez répondu correctement à ${results.correct_count} sur ${
+      results.total_questions
+    } questions</p>
+            
+            <div class="results-details">
+                <h3>Détails des réponses:</h3>
+                ${Object.entries(results.results)
+                  .map(([questionId, result]) => {
+                    const question = currentQuestions.find(
+                      (q) => q.id == questionId
+                    );
+                    if (!question) return "";
+                    return `
+                        <div class="result-item ${
+                          result.correct ? "correct" : "incorrect"
+                        }">
+                            <strong style="color:#007bff !important;">${
+                              question.question_text
+                            }</strong><br>
+                            <span>Votre réponse: ${
+                              userAnswers[questionId]?.toUpperCase() || "Aucune"
+                            }</span><br>
+                            <span>Réponse correcte: ${result.correct_answer.toUpperCase()}</span>
+                            ${
+                              result.explanation
+                                ? `<br><span>Explication: ${result.explanation}</span>`
+                                : ""
+                            }
+                        </div>
+                    `;
+                  })
+                  .join("")}
+            </div>
+            
+            <button class="btn btn-primary" onclick="closeResultsModal()" style="margin-top: 20px;">
+                Fermer
+            </button>
+        </div>
+    `;
+
+    document.getElementById("results-modal").style.display = "block";
+  }
+
+  // Suppression
+  async function deleteQuiz(quizId) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce quiz?")) return;
+
+    try {
+      const response = await fetch(`/api/quiz/${quizId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        showNotification("✅ Quiz supprimé avec succès!");
+        loadMyContent();
+      } else {
+        showNotification("❌ Erreur lors de la suppression du quiz", "error");
+      }
+    } catch (error) {
+      console.error("Erreur suppression quiz:", error);
+      showNotification("❌ Erreur lors de la suppression du quiz", "error");
+    }
+  }
+
+  async function deleteFlashcard(flashcardId) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ces flashcards?")) return;
+
+    try {
+      const response = await fetch(`/api/flashcard/${flashcardId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        showNotification("✅ Flashcards supprimées avec succès!");
+        loadMyContent();
+      } else {
+        showNotification(
+          "❌ Erreur lors de la suppression des flashcards",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Erreur suppression flashcards:", error);
+      showNotification(
+        "❌ Erreur lors de la suppression des flashcards",
+        "error"
+      );
+    }
+  }
+
+  // Fonctions utilitaires pour le contenu long
+  function showFullQuestion(index) {
+    const question = currentQuestions[index];
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
+            <div style="padding: 20px;">
+                <h3>Question complète</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; line-height: 1.6;">
+                    ${question.question_text}
+                </div>
+                <button class="btn btn-primary" onclick="this.closest('.modal').style.display='none'">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.style.display = "block";
+  }
+
+  function expandOption(optionKey, fullText) {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
+            <div style="padding: 20px;">
+                <h3>Option ${optionKey.toUpperCase()}</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; line-height: 1.6;">
+                    ${fullText}
+                </div>
+                <button class="btn btn-primary" onclick="this.closest('.modal').style.display='none'">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.style.display = "block";
+  }
+
+  // Notifications
+  function showNotification(message, type = "success") {
+    const alert = document.getElementById("notification-alert");
+    const messageEl = document.getElementById("notification-message");
+
+    if (!alert || !messageEl) return;
+
+    messageEl.textContent = message;
+    alert.style.background = type === "success" ? "#28a745" : "#dc3545";
+    alert.style.display = "block";
+
+    setTimeout(() => {
+      alert.style.display = "none";
+    }, 5000);
+  }
+
+  async function loadQuizNotifications() {
+    try {
+      const response = await fetch("/api/quiz_notifications");
+      if (response.ok) {
+        const notifications = await response.json();
+
+        const unreadNotifications = notifications.filter((n) => !n.is_read);
+        if (unreadNotifications.length > 0) {
+          showNotification(
+            `📚 ${unreadNotifications.length} nouveau(x) quiz/flashcard(s) disponible(s)!`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Erreur chargement notifications:", error);
+    }
+  }
+
+  // Gestion des modals
+  function setupModals() {
+    document.querySelectorAll(".modal .close").forEach((closeBtn) => {
+      closeBtn.addEventListener("click", function () {
+        this.closest(".modal").style.display = "none";
+      });
+    });
+
+    window.addEventListener("click", function (e) {
+      if (e.target.classList.contains("modal")) {
+        e.target.style.display = "none";
+      }
+    });
+  }
+
+  function closeQuizModal() {
+    const modal = document.getElementById("quiz-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  function closeFlashcardModal() {
+    const modal = document.getElementById("flashcard-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  function closeResultsModal() {
+    const modal = document.getElementById("results-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  function closeParticipantsModal() {
+    const modal = document.getElementById("participants-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  //===========================
+  async function scrollToQuizOrFlashcard() {
+    const hash = window.location.hash;
+    console.log("Hash détecté dans quiz_flashcards:", hash);
+
+    if (!hash) return;
+
+    let targetElement = null;
+    let highlightColor = "";
+    let targetTab = "browse";
+    let targetSubTab = "";
+
+    // Déterminer la cible
+    if (hash.startsWith("#quiz-")) {
+      const quizId = hash.replace("#quiz-", "");
+      targetElement = await findAndActivateElement(
+        `[data-quiz-id="${quizId}"]`,
+        "quizzes"
+      );
+      highlightColor = "#fff3e0";
+      targetSubTab = "quizzes";
+    } else if (hash.startsWith("#flashcard-")) {
+      const flashcardId = hash.replace("#flashcard-", "");
+      targetElement = await findAndActivateElement(
+        `[data-flashcard-id="${flashcardId}"]`,
+        "flashcards"
+      );
+      highlightColor = "#e8f5e8";
+      targetSubTab = "flashcards";
+    }
+
+    if (targetElement) {
+      console.log("✅ Élément trouvé et activé, scroll en cours...");
+      highlightElement(targetElement, highlightColor);
+    } else {
+      console.log("❌ Élément non trouvé, fallback...");
+      handleScrollFallback(hash);
+    }
+  }
+
+  async function findAndActivateElement(selector, subtabName) {
+    // Essayer de trouver l'élément directement
+    let element = document.querySelector(selector);
+
+    // Si trouvé et visible, retourner immédiatement
+    if (element && isElementVisible(element)) {
+      return element;
+    }
+
+    // Sinon, activer le bon onglet
+    console.log(`Activation de l'onglet ${subtabName}...`);
+    await switchTab("browse");
+    await switchSubTab(subtabName);
+
+    // Recharger le contenu si nécessaire
+    if (subtabName === "quizzes") {
+      await loadQuizzes();
+    } else if (subtabName === "flashcards") {
+      await loadFlashcards();
+    }
+
+    // Réessayer de trouver l'élément
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    element = document.querySelector(selector);
+
+    return element;
+  }
+
+  function highlightElement(element, color) {
+    if (!element) return;
+
+    // Scroll vers l'élément
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+
+    // Attendre un peu que le scroll soit terminé
+    setTimeout(() => {
+      // Sauvegarder les styles originaux
+      const originalStyles = {
+        transition: element.style.transition,
+        backgroundColor: element.style.backgroundColor,
+        border: element.style.border,
+        borderRadius: element.style.borderRadius,
+        padding: element.style.padding,
+        boxShadow: element.style.boxShadow,
+        transform: element.style.transform,
+      };
+
+      // Appliquer les styles de surbrillance
+      element.style.transition = "all 0.5s ease";
+      element.style.backgroundColor = color;
+      element.style.border = "3px solid #6c5ce7";
+      element.style.borderRadius = "12px";
+      element.style.padding = "15px";
+      element.style.boxShadow = "0 0 25px rgba(108, 92, 231, 0.4)";
+      element.style.transform = "scale(1.02)";
+
+      // Animation pulsante
+      let pulseCount = 0;
+      const pulseInterval = setInterval(() => {
+        element.style.boxShadow =
+          pulseCount % 2 === 0
+            ? "0 0 25px rgba(108, 92, 231, 0.6)"
+            : "0 0 15px rgba(108, 92, 231, 0.3)";
+        pulseCount++;
+
+        if (pulseCount >= 6) {
+          // 3 pulsations complètes
+          clearInterval(pulseInterval);
+
+          // Restaurer les styles après 3 secondes
+          setTimeout(() => {
+            element.style.transition = "all 0.8s ease";
+            element.style.backgroundColor = originalStyles.backgroundColor;
+            element.style.border = originalStyles.border;
+            element.style.borderRadius = originalStyles.borderRadius;
+            element.style.padding = originalStyles.padding;
+            element.style.boxShadow = originalStyles.boxShadow;
+            element.style.transform = originalStyles.transform;
+          }, 2000);
+        }
+      }, 400);
+    }, 300);
+  }
+
+  function debugTabs() {
+    console.log("=== DEBUG ONGLETS ===");
+    console.log(
+      "Onglet actif:",
+      document.querySelector(".tab-btn.active")?.dataset.tab
+    );
+    console.log(
+      "Sous-onglet actif:",
+      document.querySelector(".subtab-btn.active")?.dataset.subtab
+    );
+
+    const quizSection = document.getElementById("quizzes");
+    const flashcardSection = document.getElementById("flashcards");
+    console.log("Section quiz visible:", quizSection?.style.display !== "none");
+    console.log(
+      "Section flashcards visible:",
+      flashcardSection?.style.display !== "none"
+    );
+
+    console.log(
+      "Éléments quiz trouvés:",
+      document.querySelectorAll("[data-quiz-id]").length
+    );
+    console.log(
+      "Éléments flashcards trouvés:",
+      document.querySelectorAll("[data-flashcard-id]").length
+    );
+    console.log("=====================");
+  }
+
+  // Appelez debugTabs() dans la console pour voir l'état
+</script>
+{% endblock %}

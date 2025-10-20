@@ -12,12 +12,13 @@
     <h1>Partagez vos connaissances</h1>
     <p>La plateforme collaborative pour les étudiants</p>
 
-    <!-- Barre de recherche -->
-    <input type="search" class="input-search" placeholder="Rechercher des notes, des tutoriels...">
-
+   
     <!-- Boutons d'action -->
     <div class="search">
-      <a href="{{url_for('videos')}}" class="learn-more">voir nos videos</a>
+      <!-- creer des quiz et flashcard -->
+  
+      <a href="{{url_for('quiz_flashcards')}}" class="btn btn-success">Créer un quiz / flashcard</a>
+       <a href="{{url_for('videos')}}" class="learn-more">voir nos videos</a>
       <a href="{{url_for('communaute')}}" class="join-button">Rejoindre la communauté</a>
     </div>
   </div>

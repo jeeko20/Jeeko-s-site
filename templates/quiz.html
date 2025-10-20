@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% block title %}Quiz & Flashcards | Edushare{% endblock %}
+{% block description %}Créez, révisez et testez vos connaissances avec des quiz et flashcards.{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ressources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    padding: 20px 0;
+  }
+  .ressources-list {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    height: 480px;
+    overflow: hidden;
+  }
+  .ressource-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 18px 12px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .ressource-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f0f0f0;
+  }
+  .ressource-title {
+    font-size: 1.1em; font-weight: 600;
+    margin: 0;
+    color: #212529;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    flex: 1;
+  }
+  .delete-btn {
+    background: #dc3545; color: white;
+    border: none; border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  .delete-btn:hover { background: #c82333; }
+  .ressource-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #6c757d;
+    padding: 0 18px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ressource-subject {
+    background: #e9ecef;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .ressource-actions {
+    display: flex;
+    gap: 10px;
+    padding: 12px 18px 18px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+  .ressource-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-quiz { background: #007bff; color: white; }
+  .btn-quiz:hover { background: #0069d9; }
+  .btn-flash { background: #28a745; color: white; }
+  .btn-flash:hover { background: #218838; }
+  .btn-revise { background: #6f42c1; color: white; }
+  .btn-revise:hover { background: #5a32a3; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;
+  }
+  .modal-content {
+    background: white; width: 90%; max-width: 600px; border-radius: 10px; padding: 20px;
+    max-height: 80vh; overflow-y: auto;
+  }
+  .close-modal { float: right; cursor: pointer; font-size: 24px; }
+
+  /* Quiz interface */
+  #quiz-container { display: none; }
+  #quiz-header { text-align: center; margin-bottom: 20px; }
+  #timer {
+    font-size: 1.2em; font-weight: bold; color: #e74c3c; margin: 10px 0;
+  }
+  .quiz-question { font-size: 1.2em; margin-bottom: 20px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-option {
+    padding: 12px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;
+  }
+  .quiz-option:hover { background: #e9ecef; }
+  .quiz-option.selected { background: #007bff; color: white; }
+  .quiz-nav { display: flex; justify-content: space-between; margin-top: 20px; }
+
+  @media (max-width: 768px) {
+    .ressources-grid { grid-template-columns: 1fr; }
+    .ressources-list { height: 440px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="header">
+  <div class="header-content">
+    <h1>Quiz & Flashcards</h1>
+    <p>Testez vos connaissances ou révisez avec des flashcards</p>
+    <div class="header-buttons">
+      <button class="btn btn-primary" onclick="openCreateModal('quiz')">Créer un quiz</button>
+      <button class="btn btn-success" onclick="openCreateModal('flashcard')">Créer une flashcard</button>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active" data-page="quiz-list">Quiz</button>
+  <button class="tab" data-page="flashcard-list">Flashcards</button>
+</nav>
+
+<main>
+  <section id="quiz-list" class="page active">
+    <div id="quiz-grid" class="ressources-grid"></div>
+  </section>
+  <section id="flashcard-list" class="page">
+    <div id="flashcard-grid" class="ressources-grid"></div>
+  </section>
+
+  <section id="quiz-container">
+    <div id="quiz-header">
+      <h2 id="quiz-title"></h2>
+      <div id="timer">Temps restant : 60s</div>
+    </div>
+    <div id="quiz-question" class="quiz-question"></div>
+    <div id="quiz-options" class="quiz-options"></div>
+    <div class="quiz-nav">
+      <button id="btn-prev" disabled>Précédent</button>
+      <button id="btn-next">Suivant</button>
+    </div>
+  </section>
+</main>
+
+<!-- Modal création -->
+<div id="create-modal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeCreateModal()">&times;</span>
+    <h3 id="modal-title">Créer un quiz</h3>
+    <form id="create-form">
+      <label>Titre :</label>
+      <input type="text" id="form-title" required>
+      <label>Matière :</label>
+      <select id="form-subject" required>
+        <option value="">-- Sélectionnez --</option>
+        <option value="HTML">HTML</option>
+        <option value="CSS">CSS</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="C++">C++</option>
+        <option value="Algorithme">Algorithme</option>
+        <option value="Système">Système</option>
+        <option value="autre">Autre</option>
+      </select>
+      <div id="questions-container"></div>
+      <button type="button" id="add-question">+ Ajouter une question</button>
+      <div style="margin-top: 15px;">
+        <button type="submit">Publier</button>
+        <button type="button" onclick="closeCreateModal()">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+let currentType = 'quiz';
+let currentQuiz = null;
+let currentQuestionIndex = 0;
+let timer = null;
+let timeLeft = 60;
+let userAnswers = [];
+
+// Navigation onglets
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const page = tab.dataset.page;
+    document.getElementById(page).classList.add('active');
+    if (page === 'quiz-list') loadQuizzes();
+    else if (page === 'flashcard-list') loadFlashcards();
+  });
+});
+
+// Chargement
+function loadQuizzes() {
+  fetch('/api/quizzes')
+    .then(res => res.json())
+    .then(quizzes => {
+      const grid = document.getElementById('quiz-grid');
+      grid.innerHTML = quizzes.map(q => `
+        <div class="ressources-list">
+          <div class="ressource-header">
+            <img src="${q.user_avatar}" class="ressource-avatar">
+            <h3 class="ressource-title">${q.title}</h3>
+            ${q.user_id == {{ current_user.id }} ? `<button class="delete-btn" onclick="deleteQuiz(${q.id})">🗑️</button>` : ''}
+          </div>
+          <div class="ressource-meta">
+            <span class="ressource-subject">${q.subject}</span>
+            <span>par ${q.username}</span>
+          </div>
+          <div class="ressource-actions">
+            <button class="btn-quiz" onclick="startQuiz(${q.id})">Démarrer</button>
+          </div>
+        </div>
+      `).join('');
+    });
+}
+
+function loadFlashcards() {
+  fetch('/api/flashcards')
+    .then(res => res.json())
+    .then(cards => {
+      const grid = document.getElementById('flashcard-grid');
+      grid.innerHTML = cards.map(c => `
+        <div class="ressources-list">
+          <div class="ressource-header">
+            <img src="${c.user_avatar}" class="ressource-avatar">
+            <h3 class="ressource-title">${c.subject}</h3>
+            ${c.user_id == {{ current_user.id }} ? `<button class="delete-btn" onclick="deleteFlashcard(${c.id})">🗑️</button>` : ''}
+          </div>
+          <div class="ressource-meta">
+            <span>par ${c.username}</span>
+            <span>${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <div class="ressource-actions">
+            <button class="btn-flash" onclick="showFlashcard('${c.question}', '${c.answer}')">Voir</button>
+            <button class="btn-revise" onclick="startFlashcardRevision(${c.id})">Réviser</button>
+          </div>
+        </div>
+      `).join('');
+    });
+}
+
+// Modal
+function openCreateModal(type) {
+  currentType = type;
+  document.getElementById('modal-title').textContent = type === 'quiz' ? 'Créer un quiz' : 'Créer une flashcard';
+  document.getElementById('questions-container').innerHTML = '';
+  if (type === 'quiz') {
+    document.getElementById('add-question').style.display = 'block';
+    addQuestionField();
+  } else {
+    document.getElementById('add-question').style.display = 'none';
+    document.getElementById('questions-container').innerHTML = `
+      <label>Question :</label>
+      <textarea id="flash-question" style="width:100%; height:80px;" required></textarea>
+      <label>Réponse :</label>
+      <textarea id="flash-answer" style="width:100%; height:80px;" required></textarea>
+    `;
+  }
+  document.getElementById('create-modal').style.display = 'flex';
+}
+
+function closeCreateModal() {
+  document.getElementById('create-modal').style.display = 'none';
+}
+
+function addQuestionField() {
+  const container = document.getElementById('questions-container');
+  const idx = container.children.length;
+  container.innerHTML += `
+    <div class="question-block" style="border:1px solid #eee; padding:15px; margin:10px 0; border-radius:6px;">
+      <label>Question ${idx + 1} :</label>
+      <input type="text" class="q-text" placeholder="Énoncé" required>
+      <label>Réponse correcte :</label>
+      <input type="text" class="q-correct" placeholder="Réponse exacte" required>
+      <label>Option A :</label>
+      <input type="text" class="q-a" placeholder="Option A">
+      <label>Option B :</label>
+      <input type="text" class="q-b" placeholder="Option B">
+      <label>Option C :</label>
+      <input type="text" class="q-c" placeholder="Option C">
+      <label>Option D :</label>
+      <input type="text" class="q-d" placeholder="Option D">
+    </div>
+  `;
+}
+
+document.getElementById('add-question')?.addEventListener('click', addQuestionField);
+
+document.getElementById('create-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (currentType === 'quiz') {
+    const title = document.getElementById('form-title').value;
+    const subject = document.getElementById('form-subject').value;
+    const questions = [];
+    document.querySelectorAll('.question-block').forEach(block => {
+      const q = {
+        text: block.querySelector('.q-text').value,
+        correct: block.querySelector('.q-correct').value,
+        a: block.querySelector('.q-a').value,
+        b: block.querySelector('.q-b').value,
+        c: block.querySelector('.q-c').value,
+        d: block.querySelector('.q-d').value
+      };
+      if (q.text && q.correct) questions.push(q);
+    });
+    if (!title || !subject || questions.length === 0) {
+      alert('Veuillez remplir tous les champs.');
+      return;
+    }
+    fetch('/api/quiz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, subject, questions })
+    }).then(() => {
+      closeCreateModal();
+      loadQuizzes();
+    });
+  } else {
+    const title = document.getElementById('form-title').value;
+    const subject = document.getElementById('form-subject').value;
+    const question = document.getElementById('flash-question').value;
+    const answer = document.getElementById('flash-answer').value;
+    if (!title || !subject || !question || !answer) {
+      alert('Tous les champs sont requis.');
+      return;
+    }
+    fetch('/api/flashcard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, answer, subject })
+    }).then(() => {
+      closeCreateModal();
+      loadFlashcards();
+    });
+  }
+});
+
+// Suppression
+function deleteQuiz(id) {
+  if (!confirm('Supprimer ce quiz ?')) return;
+  fetch(`/api/quiz/${id}`, { method: 'DELETE' }).then(() => loadQuizzes());
+}
+function deleteFlashcard(id) {
+  if (!confirm('Supprimer cette flashcard ?')) return;
+  fetch(`/api/flashcard/${id}`, { method: 'DELETE' }).then(() => loadFlashcards());
+}
+
+// Quiz
+function startQuiz(quizId) {
+  fetch(`/api/quiz/${quizId}`)
+    .then(res => res.json())
+    .then(quiz => {
+      currentQuiz = quiz;
+      currentQuestionIndex = 0;
+      userAnswers = new Array(quiz.questions.length).fill(null);
+      document.getElementById('quiz-title').textContent = quiz.title;
+      showQuestion();
+      document.querySelector('#quiz-list').classList.remove('active');
+      document.getElementById('quiz-container').style.display = 'block';
+    });
+}
+
+function showQuestion() {
+  const q = currentQuiz.questions[currentQuestionIndex];
+  document.getElementById('quiz-question').textContent = q.question_text;
+  const options = [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x);
+  const html = options.map((opt, i) => `
+    <div class="quiz-option" onclick="selectOption(${i})">${opt}</div>
+  `).join('');
+  document.getElementById('quiz-options').innerHTML = html;
+  document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
+  resetTimer();
+}
+
+function selectOption(index) {
+  userAnswers[currentQuestionIndex] = index;
+  document.querySelectorAll('.quiz-option').forEach((el, i) => {
+    el.classList.toggle('selected', i === index);
+  });
+}
+
+function resetTimer() {
+  clearInterval(timer);
+  timeLeft = 60;
+  document.getElementById('timer').textContent = `Temps restant : ${timeLeft}s`;
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = `Temps restant : ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      nextQuestion();
+    }
+  }, 1000);
+}
+
+function nextQuestion() {
+  if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+    currentQuestionIndex++;
+    showQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    showQuestion();
+  }
+}
+
+document.getElementById('btn-next')?.addEventListener('click', nextQuestion);
+document.getElementById('btn-prev')?.addEventListener('click', prevQuestion);
+
+function showResults() {
+  clearInterval(timer);
+  let correct = 0;
+  currentQuiz.questions.forEach((q, i) => {
+    const userIndex = userAnswers[i];
+    const options = [q.option_a, q.option_b, q.option_c, q.option_d].filter(x => x);
+    if (userIndex !== null && options[userIndex] === q.correct_answer) correct++;
+  });
+  const score = Math.round((correct / currentQuiz.questions.length) * 100);
+  alert(`Quiz terminé !\nScore : ${correct}/${currentQuiz.questions.length} (${score}%)`);
+  document.getElementById('quiz-container').style.display = 'none';
+  document.querySelector('#quiz-list').classList.add('active');
+  loadQuizzes();
+}
+
+// Flashcards
+function showFlashcard(question, answer) {
+  if (confirm(`❓ ${question}\n\n(Cliquez OK pour voir la réponse)`)) {
+    alert(`✅ Réponse : ${answer}`);
+  }
+}
+
+function startFlashcardRevision(cardId) {
+  fetch(`/api/flashcard/${cardId}`)
+    .then(res => res.json())
+    .then(card => {
+      if (confirm(`❓ ${card.question}\n\n(Cliquez OK pour voir la réponse)`)) {
+        alert(`✅ ${card.answer}`);
+      }
+    });
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  loadQuizzes();
+});
+</script>
+{% endblock %}
