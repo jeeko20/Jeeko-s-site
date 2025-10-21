@@ -24,7 +24,7 @@
   </div>
 
   <!-- Statistiques info-matière -->
-  <div class="info-matiere">
+  <div data-aos="zoom-in" class="info-matiere">
     <div>
       <span class="info">150+</span>
       <span>Notes partagées</span>
@@ -45,19 +45,19 @@
 </header>
 
 <!-- ================= MAIN ================= -->
-<main>
+<main data-aos="fade-right">
 
   <!-- Séparateur et titre matières -->
-  <div class="separator">
-    <h2 class="titre-matiere">Explorez les matières</h2>
-    <p>Découvrez toutes les ressources disponibles organisées par matière pour votre formation en informatique</p>
+  <div data-aos="zoom-in" class="separator">
+    <h2 data-aos="zoom-in" class="titre-matiere">Explorez les matières</h2>
+    <p data-aos="zoom-in" style="color: #666;">Découvrez toutes les ressources disponibles organisées par matière pour votre formation en informatique</p>
   </div>
 
   <!-- Liste des matières -->
-  <div class="matiere">
+  <div data-aos="fade-left" class="matiere">
 
     <!-- Carte HTML -->
-    <div class="card" onclick="window.location.href='{{ url_for('learn_html') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('learn_html') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="{{ url_for('static', filename='img/html-5.png') }}" alt="HTML & CSS">
         <div>
@@ -73,7 +73,7 @@
     </div>
 
     <!-- Carte CSS -->
-    <div class="card" onclick="window.location.href='{{ url_for('learn_css') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('learn_css') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="https://th.bing.com/th/id/R.c9421be52fe48fdf04839b53f8e9f1d4?rik=mXxNLfvtnGtNEA&pid=ImgRaw&r=0" alt="logo css">
         <div>
@@ -89,7 +89,7 @@
     </div>
 
     <!-- Carte C++ -->
-    <div class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="{{ url_for('static', filename='img/c-.png') }}" alt="C++">
         <div>
@@ -105,7 +105,7 @@
     </div>
 
     <!-- Carte JS -->
-    <div class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="{{ url_for('static', filename='img/js.png') }}" alt="JavaScript">
         <div>
@@ -121,7 +121,7 @@
     </div>
 
     <!-- Carte Systèmes d'exploitation -->
-    <div class="card" onclick="window.location.href='{{ url_for('systeme') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('systeme') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="{{ url_for('static', filename='img/system-vulnerability.png') }}" alt="Systèmes d'exploitation">
         <div>
@@ -137,7 +137,7 @@
     </div>
 
     <!-- Carte Base de données -->
-    <div class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="{{ url_for('static', filename='img/sql-server.png') }}" alt="SQL">
         <div>
@@ -153,7 +153,7 @@
     </div>
 
     <!-- Carte Algorithmes -->
-    <div class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
+    <div  data-aos="zoom-in" class="card" onclick="window.location.href='{{ url_for('page_not_found') }}'" style="cursor: pointer;">
       <div class="logo-image">
         <img src="{{ url_for('static', filename='img/algorithms.png') }}" alt="Algorithmes">
         <div>
@@ -171,36 +171,36 @@
   </div>
 
   <!-- ================= FONCTIONNALITÉS ================= -->
-  <div class="fonctionalite">
-    <h2 class="titre-matiere">Fonctionnalités principales</h2>
-    <p>Des outils concrets pour faciliter votre apprentissage et le partage de connaissances</p>
+  <div data-aos="fade-left" class="fonctionalite">
+    <h2 data-aos="zoom-in" class="titre-matiere">Fonctionnalités principales</h2>
+    <p data-aos="zoom-in" style="color: #666;">Des outils concrets pour faciliter votre apprentissage et le partage de connaissances</p>
 
-    <div class="fonctionalite-content">
-      <div class="fonctionalite-card">
+    <div data-aos="fade-left" class="fonctionalite-content">
+      <div data-aos="fade-left" class="fonctionalite-card">
         <i class="fa-solid fa-book"></i>
-        <h3>Bibliothèque de ressources</h3>
-        <p>Accédez à une vaste collection de notes, tutoriels et projets partagés par la communauté.</p>
+        <h3 data-aos="zoom-in">Bibliothèque de ressources</h3>
+        <p data-aos="zoom-in">Accédez à une vaste collection de notes, tutoriels et projets partagés par la communauté.</p>
       </div>
 
-      <div class="fonctionalite-card">
+      <div data-aos="fade-left" class="fonctionalite-card">
         <i class="fa-solid fa-users"></i>
-        <h3>Communauté active</h3>
-        <p>Rejoignez des forums de discussion, collaborez sur des projets et échangez avec d'autres étudiants.</p>
+        <h3 data-aos="zoom-in">Communauté active</h3>
+        <p data-aos="zoom-in">Rejoignez des forums de discussion, collaborez sur des projets et échangez avec d'autres étudiants.</p>
       </div>
 
-      <div class="fonctionalite-card">
+      <div data-aos="fade-left" class="fonctionalite-card">
         <i class="fa-solid fa-upload"></i>
-        <h3>Partage facile</h3>
-        <p>Téléchargez et partagez vos propres notes et ressources en quelques clics.</p>
+        <h3 data-aos="zoom-in">Partage facile</h3>
+        <p data-aos="zoom-in">Téléchargez et partagez vos propres notes et ressources en quelques clics.</p>
       </div>
     </div>
   </div>
 
   <!-- ================= REJOINDRE LA COMMUNAUTÉ ================= -->
-  <h2>Rejoignez la communauté</h2>
-  <p>Échangez avec d'autres étudiants et enrichissez vos connaissances</p>
+  <h2 data-aos="zoom-in" class="titre-matiere">Rejoignez la communauté</h2>
+  <p data-aos="zoom-in" style="color: #666;">Échangez avec d'autres étudiants et enrichissez vos connaissances</p>
 
-  <div class="join-communaute">
+  <div data-aos="zoom-in-down" class="join-communaute">
     <div class="discussion">
       <i class="fa-solid fa-comments"></i>
       <h3>Discussions actives</h3>
@@ -208,7 +208,7 @@
       <a href="{{url_for('communaute')}}" class="join-button">Voir les discussions</a>
     </div>
 
-    <div class="partage">
+    <div data-aos="zoom-in-down" class="partage">
       <i class="fa-solid fa-share-nodes"></i>
       <h3>Partagez vos ressources</h3>
       <p>Découvrez les dernières ressources partagées par la communauté.</p>
@@ -217,7 +217,7 @@
   </div>
 
   <!-- ================= CALL TO ACTION ================= -->
-  <div class="call-to-action">
+  <div data-aos="fade-right" class="call-to-action">
     <h2>Prêt à commencer ?</h2>
     <p>Rejoignez Edushare aujourd'hui et boostez votre apprentissage en informatique !</p>
     <br>

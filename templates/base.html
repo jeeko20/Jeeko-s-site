@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="{{url_for('static',filename='css/base.css')}}">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
    <meta name="description" content="{% block description %}Partage et découvre des ressources éducatives{% endblock %}">
 
    {%block extra_css%}
@@ -136,7 +137,7 @@
 <!-- ================= NAVBAR ================= -->
 <nav class="custom-navbar">
   <!-- Logo -->
-  <h3>Edushare</h3> 
+  <h3>Eudushare</h3> 
 
   <!-- Menu Desktop -->
   <div class="menu">
@@ -357,37 +358,37 @@
   <footer>
     <div class="footer-content">
       <div class="footer-col">
-        <h3>Edushare</h3>
-        <p>La plateforme de partage de connaissances pour les étudiants en informatique</p>
+        <h3 data-aos="zoom-in">Eudushare</h3>
+        <p data-aos="zoom-in">La plateforme de partage de connaissances pour les étudiants en informatique</p>
       </div>
 
       <div class="footer-col">
-        <h3>Matières</h3>
-        <p>C++</p>
-        <p>HTML / CSS</p>
-        <p>JavaScript</p>
-        <p>Systèmes</p>
+        <h3 data-aos="zoom-in">Matières</h3>
+        <p data-aos="zoom-in">C++</p>
+        <p data-aos="zoom-in">HTML / CSS</p>
+        <p data-aos="zoom-in">JavaScript</p>
+        <p data-aos="zoom-in">Systèmes</p>
       </div>
 
       <div class="footer-col">
-        <h3>Ressources</h3>
-        <p>Notes et cours</p>
-        <p>Devoirs</p>
-        <p>Projets</p>
-        <p>Astuces</p>
+        <h3 data-aos="zoom-in">Ressources</h3>
+        <p data-aos="zoom-in">Notes et cours</p>
+        <p data-aos="zoom-in">Devoirs</p>
+        <p data-aos="zoom-in">Projets</p>
+        <p data-aos="zoom-in">Astuces</p>
       </div>
 
       <div class="footer-col">
-        <h3>Support</h3>
-        <p>Aide</p>
-        <p>Contact</p>
-        <p>FAQ</p>
-        <p>Made by David</p>
+        <h3 data-aos="zoom-in">Support</h3>
+        <p data-aos="zoom-in" onclick="window.location.href='{{url_for('about')}}#help'">Aide</p>
+        <p data-aos="zoom-in" onclick="window.location.href='{{url_for('contact')}}'">Contact</p>
+        <p data-aos="zoom-in" onclick="window.location.href='{{url_for('contact')}}#FAQ'">FAQ</p>
+        <p data-aos="zoom-in">Made by David</p>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <p>© 2025 Edushare. Tous droits réservés.</p>
+      <p>© 2025 Eudushare. Tous droits réservés.</p>
     </div>
   </footer>
 
@@ -719,5 +720,9 @@
 
   {%block script%}
   {%endblock%}
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+ <script>
+  AOS.init();
+</script>
 </body>
 </html>

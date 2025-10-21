@@ -101,7 +101,7 @@
 
 
   <!-- Statistiques info-matière -->
-  <div class="info-matiere">
+  <div data-aos="zoom-in" class="info-matiere">
     <div>
       <span class="info">150+</span>
       <span>Notes partagees</span>
@@ -138,7 +138,7 @@
   <div class="section1">
     <!-- Colonne gauche : activités récentes AVEC NOTIFICATIONS -->
     <div class="recent-activities">
-      <h3>Activités récentes</h3>
+      <h3 data-aos="zoom-in">Activités récentes</h3>
       
       <!-- Filtres par date -->
       <div class="activity-filters">
@@ -153,33 +153,33 @@
       
       <!-- Liste des activités -->
       <div id="activities-list" class="activities-list">
-        <div class="loading-activities">
-          <div class="spinner"></div>
-          <p>Chargement des activités...</p>
+        <div data-aos="zoom-in" class="loading-activities">
+          <div data-aos="zoom-in" class="spinner"></div>
+          <p data-aos="zoom-in">Chargement des activités...</p>
         </div>
       </div>
       
       <!-- Pagination -->
-      <div id="activities-pagination" class="pagination"></div>
+      <div id="activities-pagination" data-aos="zoom-in" class="pagination"></div>
     </div>
 
     <!-- Colonne droite : actions rapides -->
-    <div class="action-rapides">
-      <h2>Actions rapides</h2>
-      <div class="cards">
-        <div class="action-card" onclick="window.location.href='{{ url_for('communaute') }}'">
-          <i class="fas fa-upload"></i>
-          <span>Partager une nouvelle ressource</span>
+    <div data-aos="fade-left" class="action-rapides">
+      <h2 data-aos="zoom-in">Actions rapides</h2>
+      <div data-aos="zoom-in" class="cards">
+        <div data-aos="zoom-in" class="action-card" onclick="window.location.href='{{ url_for('communaute') }}'">
+          <i data-aos="fade-left" class="fas fa-upload"></i>
+          <span data-aos="zoom-in">Partager une nouvelle ressource</span>
         </div>
 
-        <div class="action-card" onclick="shareRessourceFromProfile()">
-          <i class="fas fa-users"></i>
-          <span>Voir les étudiants actifs</span>
+        <div  class="action-card" onclick="shareRessourceFromProfile()">
+          <i data-aos="fade-left" class="fas fa-users"></i>
+          <span data-aos="zoom-in">Voir les étudiants actifs</span>
         </div>
 
         <div class="action-card" onclick="window.location.href='{{ url_for('videos') }}'">
-          <i class="fas fa-star"></i>
-          <span>Voir les ressources populaires</span>
+          <i data-aos="fade-left" class="fas fa-star"></i>
+          <span data-aos="zoom-in">Voir les ressources populaires</span>
         </div>
       </div>
     </div>

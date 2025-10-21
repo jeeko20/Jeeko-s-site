@@ -226,14 +226,14 @@
 <div class="about-container" style="margin-top: 50px;">
     <!-- En-tête -->
     <div class="about-header">
-        <h1>🎓 À Propos d'Edushare</h1>
-        <p>La plateforme qui révolutionne le partage de connaissances entre étudiants</p>
+        <h1 data-aos="zoom-in">🎓 À Propos d'Eudushare</h1>
+        <p data-aos="zoom-in">La plateforme qui révolutionne le partage de connaissances entre étudiants</p>
     </div>
 
     <!-- Contenu principal -->
     <div class="about-content">
         <!-- Carte du développeur -->
-        <div class="developer-card">
+        <div data-aos="fade-right" class="developer-card">
             <img src="{{ url_for('static', filename='img/jeeko.jpg') }}" 
                  alt="Jeeko The Best" 
                  class="developer-photo">
@@ -260,40 +260,40 @@
         </div>
 
         <!-- Informations sur le site -->
-        <div class="site-info">
-            <h2 class="section-title">🚀 À Propos de la Plateforme</h2>
-            <p><strong>Edushare</strong> est une plateforme collaborative conçue spécialement pour les étudiants, permettant un partage efficace de ressources éducatives et de connaissances.</p>
+        <div data-aos="fade-right" class="site-info">
+            <h2 class="section-title" id="help">🚀 À Propos de la Plateforme</h2>
+            <p><strong>Eudushare</strong> est une plateforme collaborative conçue spécialement pour les étudiants, permettant un partage efficace de ressources éducatives et de connaissances.</p>
 
             <h3 style="color: #333; margin: 30px 0 15px 0;">✨ Fonctionnalités Principales</h3>
             <div class="features-grid">
-                <div class="feature-card">
+                <div data-aos="zoom-in" class="feature-card">
                     <h4><i class="fas fa-share-alt"></i> Partage de Ressources</h4>
                     <p>Partagez vos documents, PDF, présentations, images et vidéos avec votre promotion.</p>
                 </div>
-                <div class="feature-card">
+                <div data-aos="zoom-in" class="feature-card">
                     <h4><i class="fas fa-comments"></i> Discussions Communautaires</h4>
                     <p>Posez des questions, échangez des idées et collaborez avec d'autres étudiants.</p>
                 </div>
-                <div class="feature-card">
+                <div data-aos="zoom-in" class="feature-card">
                     <h4><i class="fas fa-video"></i> Plateforme Vidéo Intégrée</h4>
                     <p>Uploader vos vidéos directement sur YouTube et les partager sur la plateforme.</p>
                 </div>
-                <div class="feature-card">
+                <div data-aos="zoom-in" class="feature-card">
                     <h4><i class="fas fa-bookmark"></i> Sauvegarde de Contenu</h4>
                     <p>Enregistrez vos ressources préférées pour y accéder facilement plus tard.</p>
                 </div>
-                <div class="feature-card">
+                <div data-aos="zoom-in" class="feature-card">
                     <h4><i class="fas fa-bell"></i> Système de Notifications</h4>
                     <p>Restez informé des nouveaux contenus partagés dans votre filière.</p>
                 </div>
-                <div class="feature-card">
+                <div data-aos="zoom-in" class="feature-card">
                     <h4><i class="fas fa-users"></i> Filtrage par Filière</h4>
                     <p>Contenu organisé par année d'étude et domaine de spécialisation.</p>
                 </div>
             </div>
 
             <h3 style="color: #333; margin: 30px 0 15px 0;">🛠️ Technologies Utilisées</h3>
-            <div class="tech-stack">
+            <div data-aos="zoom-in" class="tech-stack">
                 <p>Cette plateforme a été développée avec les technologies modernes suivantes :</p>
                 <div class="tech-badges">
                     <span class="tech-badge">Python Flask</span>
@@ -309,22 +309,22 @@
     </div>
 
     <!-- Statistiques (optionnel) -->
-    <div class="stats-section">
-        <h2 style="margin-bottom: 20px;">📊 Impact de la Plateforme</h2>
-        <div class="stats-grid">
-            <div class="stat-item">
+    <div data-aos="fade-left" class="stats-section">
+        <h2 data-aos="zoom-in" style="margin-bottom: 20px;">📊 Impact de la Plateforme</h2>
+        <div  class="stats-grid">
+            <div data-aos="zoom-in" class="stat-item">
                 <div class="stat-number" id="total-users">0</div>
                 <div class="stat-label">Étudiants Inscrits</div>
             </div>
-            <div class="stat-item">
+            <div data-aos="zoom-in" class="stat-item">
                 <div class="stat-number" id="total-ressources">0</div>
                 <div class="stat-label">Ressources Partagées</div>
             </div>
-            <div class="stat-item">
+            <div data-aos="zoom-in" class="stat-item">
                 <div class="stat-number" id="total-discussions">0</div>
                 <div class="stat-label">Discussions Actives</div>
             </div>
-            <div class="stat-item">
+            <div data-aos="zoom-in" class="stat-item">
                 <div class="stat-number" id="active-users">0</div>
                 <div class="stat-label">Utilisateurs Actifs</div>
             </div>
@@ -332,11 +332,11 @@
     </div>
 
     <!-- Appel à l'action -->
-    <div class="cta-section">
-        <h2 style="margin-bottom: 20px;">🎯 Rejoignez la Communauté</h2>
-        <p style="margin-bottom: 30px; font-size: 1.1em;">
+    <div data-aos="fade-right" class="cta-section">
+        <h2 data-aos="zoom-in" style="margin-bottom: 20px;">🎯 Rejoignez la Communauté</h2>
+        <p data-aos="zoom-in" style="margin-bottom: 30px; font-size: 1.1em;">
             Que vous soyez étudiant, enseignant ou simplement passionné d'apprentissage,<br>
-            Edushare est l'endroit idéal pour partager et acquérir des connaissances.
+            Eudushare est l'endroit idéal pour partager et acquérir des connaissances.
         </p>
         <a href="{{ url_for('register') }}" class="btn-primary">
             <i class="fas fa-user-plus"></i> Créer un Compte
@@ -346,9 +346,9 @@
         </a>
     </div>
     <!-- Dans about.html, après la section CTA -->
-<div style="text-align: center; margin-top: 40px; padding: 30px; background: #f8f9fa; border-radius: 10px;">
-    <h3>💬 Une question ?</h3>
-    <p>N'hésitez pas à me contacter pour toute question sur la plateforme ou pour collaborer !</p>
+<div data-aos="fade-up" style="text-align: center; margin-top: 40px; padding: 30px; background: #f8f9fa; border-radius: 10px;">
+    <h3 data-aos="zoom-in">💬 Une question ?</h3>
+    <p data-aos="zoom-in">N'hésitez pas à me contacter pour toute question sur la plateforme ou pour collaborer !</p>
     <a href="{{ url_for('contact') }}" class="btn-primary" style="background: #25D366;">
         <i class="fab fa-whatsapp"></i> Me Contacter
     </a>

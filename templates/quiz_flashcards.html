@@ -1737,7 +1737,7 @@ body.modal-open {
     container.innerHTML = quizzes
       .map(
         (quiz) => `
-        <div class="quiz-card" data-quiz-id="${
+        <div data-aos="fade-up" class="quiz-card" data-quiz-id="${
           quiz.id
         }"> <!-- ✅ AJOUT DATA ATTRIBUTE -->
             <div class="quiz-header">
@@ -1806,17 +1806,17 @@ body.modal-open {
     container.innerHTML = flashcards
       .map(
         (flashcard) => `
-        <div class="flashcard-card" data-flashcard-id="${
+        <div data-aos="zoom-in" class="flashcard-card" data-flashcard-id="${
           flashcard.id
         }"> <!-- ✅ AJOUT DATA ATTRIBUTE -->
-            <div class="flashcard-header">
+            <div data-aos="zoom-in" class="flashcard-header">
                 <img src="${flashcard.user_avatar}" alt="${
           flashcard.username
         }" class="flashcard-avatar"
                      onerror="this.src='https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'">
-                <div class="flashcard-info">
-                    <h3 class="flashcard-title">${flashcard.title}</h3>
-                    <div class="flashcard-meta">
+                <div data-aos="zoom-in" class="flashcard-info">
+                    <h3 data-aos="zoom-in" class="flashcard-title">${flashcard.title}</h3>
+                    <div data-aos="zoom-in" class="flashcard-meta">
                         <span>Par ${flashcard.username}</span>
                         <span>${flashcard.subject}</span>
                         <span>${new Date(
@@ -2658,59 +2658,86 @@ body.modal-open {
 
   // Résultats
   function showResults(results) {
-    closeQuizModal();
+  closeQuizModal();
 
-    const container = document.getElementById("results-container");
-    if (!container) return;
+  const container = document.getElementById("results-container");
+  if (!container) return;
 
-    container.innerHTML = `
-        <div class="results-container">
-            <div class="score-circle">
-                ${Math.round(results.score)}%
-            </div>
-            <h2>Résultats du quiz</h2>
-            <p>Vous avez répondu correctement à ${results.correct_count} sur ${
-      results.total_questions
-    } questions</p>
-            
-            <div class="results-details">
-                <h3>Détails des réponses:</h3>
-                ${Object.entries(results.results)
-                  .map(([questionId, result]) => {
-                    const question = currentQuestions.find(
-                      (q) => q.id == questionId
-                    );
-                    if (!question) return "";
-                    return `
-                        <div class="result-item ${
-                          result.correct ? "correct" : "incorrect"
-                        }">
-                            <strong style="color:#007bff !important;">${
-                              question.question_text
-                            }</strong><br>
-                            <span>Votre réponse: ${
-                              userAnswers[questionId]?.toUpperCase() || "Aucune"
-                            }</span><br>
-                            <span>Réponse correcte: ${result.correct_answer.toUpperCase()}</span>
-                            ${
-                              result.explanation
-                                ? `<br><span>Explication: ${result.explanation}</span>`
-                                : ""
-                            }
-                        </div>
-                    `;
-                  })
-                  .join("")}
-            </div>
-            
-            <button class="btn btn-primary" onclick="closeResultsModal()" style="margin-top: 20px;">
-                Fermer
-            </button>
-        </div>
-    `;
+  container.innerHTML = `
+    <div class="results-modal-content" 
+         style="max-height: 85vh; overflow-y: auto; background: #ffffff; padding: 25px 20px; border-radius: 12px;
+                width: 90%; max-width: 600px; text-align: center; position: relative;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.25); font-family: Arial, sans-serif; color: #222;">
 
-    document.getElementById("results-modal").style.display = "block";
+      <h2 style="margin-bottom: 10px; font-size: 22px; color: #007bff;">Résultats du quiz</h2>
+      <p style="margin-bottom: 20px; font-size: 16px;">
+        Vous avez répondu correctement à 
+        <strong>${results.correct_count}</strong> sur 
+        <strong>${results.total_questions}</strong> questions.
+      </p>
+
+      <div class="score-circle" 
+           style="width: 110px; height: 110px; border-radius: 50%; background: #007bff; color: #fff; 
+                  display: flex; align-items: center; justify-content: center; font-size: 28px; 
+                  margin: 0 auto 20px auto; font-weight: bold;">
+        ${Math.round(results.score)}%
+      </div>
+
+      <div class="results-details" 
+           style="text-align: left; margin-top: 10px;">
+        <h3 style="color: #333; font-size: 18px; margin-bottom: 10px;">Détails des réponses :</h3>
+        ${Object.entries(results.results)
+          .map(([questionId, result]) => {
+            const question = currentQuestions.find((q) => q.id == questionId);
+            if (!question) return "";
+            return `
+              <div class="result-item ${result.correct ? "correct" : "incorrect"}"
+                   style="padding: 12px; margin-bottom: 15px; border-radius: 8px; background: ${
+                     result.correct ? "#e7f9ef" : "#fdeaea"
+                   }; border-left: 5px solid ${
+              result.correct ? "#28a745" : "#dc3545"
+            }; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                
+                <strong style="color:#007bff;">${question.question_text}</strong><br>
+                <span>Votre réponse : <b>${userAnswers[questionId]?.toUpperCase() || "Aucune"}</b></span><br>
+                <span>Réponse correcte : <b>${result.correct_answer.toUpperCase()}</b></span>
+                ${
+                  result.explanation
+                    ? `<br><span>Explication : ${result.explanation}</span>`
+                    : ""
+                }
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+
+      <div style="text-align:center; margin-top: 25px; position: sticky; bottom: 0; background: #fff; padding-top: 10px;">
+        <button onclick="closeResultsModal()" 
+                style="padding: 10px 25px; background: #007bff; color: white; border: none; 
+                       border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;
+                       box-shadow: 0 3px 6px rgba(0,0,0,0.2);">
+          Fermer
+        </button>
+      </div>
+    </div>
+  `;
+
+  const modal = document.getElementById("results-modal");
+  if (modal) {
+    modal.style.display = "flex";
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.background = "rgba(0,0,0,0.6)";
+    modal.style.zIndex = "9999";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+    modal.style.padding = "20px";
   }
+}
 
   // Suppression
   async function deleteQuiz(quizId) {
