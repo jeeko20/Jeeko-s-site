@@ -440,35 +440,64 @@
     // ================= DARK MODE TOGGLE =================
     const darkModeToggle = document.getElementById('darkModeToggle');
     const darkModeIcon = document.getElementById('darkModeIcon');
-    const body = document.body;
+    const darkModeToggleMobile = document.getElementById('darkModeToggleMobile');
+    const darkModeIconMobile = document.getElementById('darkModeIconMobile');
+    const darkModeTextMobile = document.getElementById('darkModeTextMobile');
     
     // Check for saved dark mode preference
     const darkMode = localStorage.getItem('darkMode');
     
-    // Apply saved preference
-    if (darkMode === 'enabled') {
-      body.classList.add('dark-mode');
+    // Function to update icons and text
+    function updateDarkModeUI(isDark) {
       if (darkModeIcon) {
-        darkModeIcon.classList.remove('fa-moon');
-        darkModeIcon.classList.add('fa-sun');
-      }
-    }
-    
-    // Toggle dark mode on button click
-    if (darkModeToggle) {
-      darkModeToggle.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        
-        // Update icon
-        if (body.classList.contains('dark-mode')) {
+        if (isDark) {
           darkModeIcon.classList.remove('fa-moon');
           darkModeIcon.classList.add('fa-sun');
-          localStorage.setItem('darkMode', 'enabled');
         } else {
           darkModeIcon.classList.remove('fa-sun');
           darkModeIcon.classList.add('fa-moon');
-          localStorage.setItem('darkMode', 'disabled');
         }
+      }
+      
+      if (darkModeIconMobile && darkModeTextMobile) {
+        if (isDark) {
+          darkModeIconMobile.classList.remove('fa-moon');
+          darkModeIconMobile.classList.add('fa-sun');
+          darkModeTextMobile.textContent = 'Mode clair';
+        } else {
+          darkModeIconMobile.classList.remove('fa-sun');
+          darkModeIconMobile.classList.add('fa-moon');
+          darkModeTextMobile.textContent = 'Mode sombre';
+        }
+      }
+    }
+    
+    // Apply saved preference
+    if (darkMode === 'enabled') {
+      document.body.classList.add('dark-mode');
+      updateDarkModeUI(true);
+    }
+    
+    // Function to toggle dark mode
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      
+      const isDark = document.body.classList.contains('dark-mode');
+      updateDarkModeUI(isDark);
+      
+      localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    }
+    
+    // Toggle dark mode on button click (desktop)
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', toggleDarkMode);
+    }
+    
+    // Toggle dark mode on mobile menu click
+    if (darkModeToggleMobile) {
+      darkModeToggleMobile.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleDarkMode();
       });
     }
     
