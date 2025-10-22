@@ -430,6 +430,42 @@
   <script>
   // Expose current user id for client-side permission checks
   window.CURRENT_USER_ID = {{ (current_user.id if current_user.is_authenticated else none) | tojson }};
+  
+    // ================= DARK MODE TOGGLE =================
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const body = document.body;
+    
+    // Check for saved dark mode preference
+    const darkMode = localStorage.getItem('darkMode');
+    
+    // Apply saved preference
+    if (darkMode === 'enabled') {
+      body.classList.add('dark-mode');
+      if (darkModeIcon) {
+        darkModeIcon.classList.remove('fa-moon');
+        darkModeIcon.classList.add('fa-sun');
+      }
+    }
+    
+    // Toggle dark mode on button click
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        
+        // Update icon
+        if (body.classList.contains('dark-mode')) {
+          darkModeIcon.classList.remove('fa-moon');
+          darkModeIcon.classList.add('fa-sun');
+          localStorage.setItem('darkMode', 'enabled');
+        } else {
+          darkModeIcon.classList.remove('fa-sun');
+          darkModeIcon.classList.add('fa-moon');
+          localStorage.setItem('darkMode', 'disabled');
+        }
+      });
+    }
+    
     /*menu hamburger*/
     const hamburger = document.getElementById('hamburger');
     const menu_hamburger = document.getElementById('menu-hamburger');
