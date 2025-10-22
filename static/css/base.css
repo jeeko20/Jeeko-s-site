@@ -1325,3 +1325,345 @@ footer {
   color: #ff3b3b;
 }
 
+/* ================= DARK MODE - VIDEO PAGE ================= */
+.dark-mode .videos-container {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .filters {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+.dark-mode .filter-group label {
+  color: #0ff;
+}
+
+.dark-mode .filter-group select,
+.dark-mode .filter-group input {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .filter-group select:focus,
+.dark-mode .filter-group input:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .video-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .video-card:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-5px);
+}
+
+.dark-mode .video-thumbnail {
+  background: #0a0a0a;
+}
+
+.dark-mode .video-info {
+  background: #1a1a1a;
+}
+
+.dark-mode .video-title {
+  color: #0ff;
+}
+
+.dark-mode .video-meta {
+  color: #888;
+}
+
+.dark-mode .video-actions button {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .video-actions button:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+/* ================= DARK MODE - QUIZ & FLASHCARDS ================= */
+.dark-mode .quiz-container,
+.dark-mode .flashcard-container {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .quiz-card,
+.dark-mode .flashcard-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .quiz-card:hover,
+.dark-mode .flashcard-card:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-5px);
+}
+
+.dark-mode .quiz-title,
+.dark-mode .flashcard-title {
+  color: #0ff;
+}
+
+.dark-mode .quiz-description,
+.dark-mode .flashcard-description {
+  color: #888;
+}
+
+.dark-mode .quiz-button,
+.dark-mode .flashcard-button,
+.dark-mode .start-quiz-btn,
+.dark-mode .flip-card-btn {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .quiz-button:hover,
+.dark-mode .flashcard-button:hover,
+.dark-mode .start-quiz-btn:hover,
+.dark-mode .flip-card-btn:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+.dark-mode .quiz-stats,
+.dark-mode .flashcard-stats {
+  background: #0a0a0a;
+  color: #888;
+  border: 1px solid #333;
+}
+
+.dark-mode .question-text {
+  color: #e0e0e0;
+}
+
+.dark-mode .answer-option {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .answer-option:hover {
+  background: #252525;
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .answer-option.correct {
+  background: #1a2a1a;
+  border-color: #25D366;
+  box-shadow: 0 0 15px rgba(37, 211, 102, 0.3);
+}
+
+.dark-mode .answer-option.incorrect {
+  background: #2a1a1a;
+  border-color: #ff3b3b;
+  box-shadow: 0 0 15px rgba(255, 59, 59, 0.3);
+}
+
+.dark-mode .flashcard-front,
+.dark-mode .flashcard-back {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+.dark-mode .highlighted {
+  background: #1e2a3a !important;
+  border-color: #0ff !important;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5) !important;
+  animation: pulse-neon 2s ease-in-out;
+}
+
+@keyframes pulse-neon {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.5);
+  }
+}
+
+/* ================= DARK MODE - SYSTEME PAGE ================= */
+.dark-mode .systeme-container {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .systeme-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .systeme-card:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-5px);
+}
+
+.dark-mode .systeme-title {
+  color: #0ff;
+}
+
+.dark-mode .systeme-description {
+  color: #888;
+}
+
+/* ================= DARK MODE - LEARN HTML/CSS PAGES ================= */
+.dark-mode .learn-container {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .lesson-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .lesson-card:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+}
+
+.dark-mode .code-block {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+.dark-mode code {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode pre {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+/* ================= GENERIC DARK MODE ELEMENTS ================= */
+.dark-mode .container {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .section {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .box {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+.dark-mode .panel {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+.dark-mode .list-item {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+.dark-mode .list-item:hover {
+  background: #252525;
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode hr {
+  border-color: #333;
+}
+
+.dark-mode .divider {
+  background: #333;
+}
+
+.dark-mode .badge {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode .tag {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode .label {
+  color: #0ff;
+}
+
+.dark-mode table {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+.dark-mode th {
+  background: #0a0a0a;
+  color: #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode td {
+  background: #1a1a1a;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode tr:hover {
+  background: #252525;
+}
+
+/* Scrollbar dark mode */
+.dark-mode ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 5px;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Selection color dark mode */
+.dark-mode ::selection {
+  background: rgba(0, 255, 255, 0.3);
+  color: #0ff;
+}
+
+.dark-mode ::-moz-selection {
+  background: rgba(0, 255, 255, 0.3);
+  color: #0ff;
+}
+
