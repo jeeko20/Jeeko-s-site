@@ -427,3 +427,331 @@ background: #0056b3;
     background: #f8f9fa;
     position: relative;
 }
+
+/* ================= DARK MODE - COMMUNAUTE PAGE ================= */
+.dark-mode .header {
+  background: #0a0a0a;
+}
+
+.dark-mode .header-content {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)),
+    url("https://media.istockphoto.com/id/2162383464/photo/top-view-of-a-a-heart-shape-of-people-showing-unity-and-teamwork.jpg?s=1024x1024&w=is&k=20&c=BRgFe51VzW6xDXz1VjGkLenXHuamhm1XRiEvbCx4Ol0=");
+}
+
+.dark-mode .header-content h1 {
+  color: #0ff;
+  text-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .header-content p {
+  color: #e0e0e0;
+}
+
+/* Tri bar dark */
+.dark-mode .tri-bar select,
+.dark-mode .tri-bar input {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .tri-bar select:focus,
+.dark-mode .tri-bar input:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+/* Navigation tabs dark */
+.dark-mode nav {
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+}
+
+.dark-mode nav button {
+  color: #e0e0e0;
+}
+
+.dark-mode nav button.active {
+  border-bottom: 3px solid #0ff;
+  color: #0ff;
+}
+
+.dark-mode nav button:hover {
+  color: #0ff;
+}
+
+/* Main dark */
+.dark-mode main {
+  background-color: #0a0a0a;
+}
+
+/* Discussion cards dark */
+.dark-mode .start-discussion,
+.dark-mode .discussion-list {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+}
+
+.dark-mode .start-discussion:hover,
+.dark-mode .discussion-list:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-6px);
+}
+
+/* Form control dark */
+.dark-mode .form-control textarea {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .form-control textarea:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .form-control textarea::placeholder {
+  color: #888;
+}
+
+/* Area-3 (select + button) dark */
+.dark-mode #area-3 select {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode #area-3 select:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode #area-3 button {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode #area-3 button:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+/* Discussion list info dark */
+.dark-mode .discussion-list-info .p1 {
+  color: #0ff;
+}
+
+.dark-mode .discussion-list-info .p1 span:first-child {
+  color: #0ff;
+}
+
+.dark-mode .discussion-list-info .p1 span:first-child:hover {
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .discussion-list-info .p2,
+.dark-mode .discussion-list-info p:last-child {
+  color: #888;
+}
+
+/* Block-2 (aside) dark */
+.dark-mode .action-rapide,
+.dark-mode .sujet-populaire,
+.dark-mode .statistique {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+}
+
+.dark-mode .action-rapide h3,
+.dark-mode .sujet-populaire h3,
+.dark-mode .statistique h3 {
+  color: #0ff;
+}
+
+.dark-mode .action-rapide li {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+.dark-mode .action-rapide li:hover {
+  background: #252525;
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  transform: translateX(6px);
+}
+
+.dark-mode .sujet-populaire ul li,
+.dark-mode .statistique ul li {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  color: #e0e0e0;
+}
+
+.dark-mode .sujet-populaire ul li:hover,
+.dark-mode .statistique ul li:hover {
+  background: #252525;
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  transform: translateX(6px);
+}
+
+/* Buttons footer dark */
+.dark-mode .btn-footer a:first-child {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .btn-footer a:first-child:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff;
+}
+
+.dark-mode .btn-footer a:last-child,
+.dark-mode .btn-footer a:nth-child(2) {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .btn-footer a:last-child:hover,
+.dark-mode .btn-footer a:nth-child(2):hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+/* Modal overlay dark */
+.dark-mode .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Form partage dark */
+.dark-mode .form-partage {
+  background-color: #1a1a1a;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .form-partage h2 {
+  color: #0ff;
+}
+
+.dark-mode .form-partage label {
+  color: #0ff;
+}
+
+.dark-mode .form-partage input,
+.dark-mode .form-partage select,
+.dark-mode .form-partage textarea {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .form-partage input:focus,
+.dark-mode .form-partage select:focus,
+.dark-mode .form-partage textarea:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .form-partage input::placeholder,
+.dark-mode .form-partage textarea::placeholder {
+  color: #888;
+}
+
+.dark-mode .form-partage button {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .form-partage button:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+/* Like icon dark */
+.dark-mode .fa-thumbs-up {
+  color: #888;
+}
+
+.dark-mode .fa-thumbs-up:hover {
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Carousel dark */
+.dark-mode .ressource-carousel {
+  background: #1a1a1a;
+}
+
+.dark-mode .carousel-media {
+  background: #0a0a0a;
+}
+
+.dark-mode .carousel-nav {
+  background: rgba(0, 255, 255, 0.3);
+  border: 1px solid #0ff;
+}
+
+.dark-mode .carousel-nav:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .carousel-indicator {
+  background: rgba(0, 255, 255, 0.3);
+  border: 1px solid #333;
+}
+
+.dark-mode .carousel-indicator.active {
+  background: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .carousel-count {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #0ff;
+  color: #0ff;
+}
+
+.dark-mode .carousel-icon-placeholder {
+  color: #888;
+}
+
+.dark-mode .carousel-icon-placeholder i {
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .ressources-list {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .ressources-list:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+}
+
+.dark-mode .ressource-media {
+  background: #0a0a0a;
+}
