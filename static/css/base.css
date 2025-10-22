@@ -1054,3 +1054,274 @@ footer {
   color: #888;
 }
 
+/* ================= DARK MODE - ABOUT & CONTACT PAGES ================= */
+.dark-mode .about-container,
+.dark-mode .contact-container {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .about-header h1,
+.dark-mode .contact-header h1 {
+  color: #0ff;
+  text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .about-header p,
+.dark-mode .contact-header p {
+  color: #e0e0e0;
+}
+
+.dark-mode .developer-card,
+.dark-mode .site-info,
+.dark-mode .contact-info,
+.dark-mode .contact-form {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+.dark-mode .developer-card:hover,
+.dark-mode .site-info:hover,
+.dark-mode .contact-info:hover,
+.dark-mode .contact-form:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+}
+
+.dark-mode .developer-photo {
+  border: 5px solid #0ff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.dark-mode .developer-name {
+  color: #0ff;
+}
+
+.dark-mode .developer-title {
+  color: #0ff;
+  opacity: 0.8;
+}
+
+.dark-mode .developer-card p {
+  color: #e0e0e0;
+}
+
+.dark-mode .contact-item {
+  color: #e0e0e0;
+  background: #0a0a0a;
+  border: 1px solid #333;
+}
+
+.dark-mode .contact-item:hover {
+  background: #252525;
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .contact-item i {
+  color: #0ff;
+}
+
+.dark-mode .info-content h3 {
+  color: #0ff;
+}
+
+.dark-mode .info-content p {
+  color: #888;
+}
+
+.dark-mode .section-title {
+  color: #0ff;
+  border-bottom: 3px solid #0ff;
+}
+
+.dark-mode .site-info p,
+.dark-mode .site-info h3 {
+  color: #e0e0e0;
+}
+
+.dark-mode .feature-card {
+  background: #0a0a0a;
+  border-left: 4px solid #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode .feature-card:hover {
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  border-left-color: #0ff;
+}
+
+.dark-mode .feature-card h4 {
+  color: #0ff;
+}
+
+.dark-mode .feature-card h4 i {
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .feature-card p {
+  color: #888;
+}
+
+.dark-mode .tech-badge {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .stats-section {
+  background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  border: 1px solid #0ff;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .stats-section h2 {
+  color: #0ff;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .stat-number {
+  color: #0ff;
+  text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .stat-label {
+  color: #e0e0e0;
+}
+
+.dark-mode .btn-primary {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .btn-primary:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+.dark-mode .social-link {
+  color: #0ff;
+}
+
+.dark-mode .social-link:hover {
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .cta-section h2 {
+  color: #0ff;
+}
+
+.dark-mode .cta-section p {
+  color: #e0e0e0;
+}
+
+/* Contact page specific */
+.dark-mode .form-group label {
+  color: #0ff;
+}
+
+.dark-mode .form-control {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 2px solid #333;
+}
+
+.dark-mode .form-control:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .form-control::placeholder {
+  color: #888;
+}
+
+.dark-mode .btn-whatsapp {
+  background: #1e1e1e;
+  color: #25D366;
+  border: 1px solid #25D366;
+  box-shadow: 0 0 15px rgba(37, 211, 102, 0.3);
+}
+
+.dark-mode .btn-whatsapp:hover {
+  background: #25D366;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #25D366, 0 0 40px rgba(37, 211, 102, 0.3);
+}
+
+.dark-mode .btn-whatsapp:disabled {
+  background: #333;
+  border-color: #666;
+  box-shadow: none;
+}
+
+.dark-mode .social-link-contact {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .social-link-contact:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .quick-actions {
+  background: #0a0a0a;
+  border-left: 4px solid #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode .quick-actions h3 {
+  color: #0ff;
+}
+
+.dark-mode .quick-action-btn {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .quick-action-btn:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .alert {
+  background: #1a1a1a;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .alert-info {
+  background: #1e2a3a;
+  border-left: 4px solid #0ff;
+  color: #0ff;
+}
+
+.dark-mode .alert-warning {
+  background: #2a2a1a;
+  border-left: 4px solid #ff9800;
+  color: #ff9800;
+}
+
+.dark-mode .alert-success {
+  background: #1a2a1a;
+  border-left: 4px solid #25D366;
+  color: #25D366;
+}
+
+.dark-mode .alert-danger {
+  background: #2a1a1a;
+  border-left: 4px solid #ff3b3b;
+  color: #ff3b3b;
+}
+
