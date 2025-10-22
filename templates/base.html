@@ -164,6 +164,11 @@
   <!-- Notifications et utilisateur -->
   <div class="nav-right">
     {% if current_user.is_authenticated %}
+    <!-- Bouton Dark Mode Toggle -->
+    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+      <i class="fa-solid fa-moon" id="darkModeIcon"></i>
+    </button>
+    
     <!-- Cloche de notifications -->
     <div class="notification-bell">
       <i class="fa-solid fa-bell" id="notificationBell"></i>
