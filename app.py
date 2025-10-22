@@ -934,6 +934,7 @@ def api_ressources():
 
     return jsonify([{
         "id": r.id,
+        "user_id": r.user_id,
         "title": r.title,
         "subject": r.subject,
         "file_type": r.file_type,
@@ -1124,6 +1125,7 @@ def get_comments(discussion_id):
             "content": c.content,
             "created_at": c.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "user_avatar": c.user.avatar_url,
+            "user_id": c.user_id,
             "username": c.user.username,
             "parent_id": c.parent_id,
             "children": [serialize_comment(child) for child in sorted(c.children, key=lambda x: x.created_at)]
@@ -1877,6 +1879,40 @@ def delete_flashcard(flashcard_id):
     db.session.commit()
     
     return jsonify({"success": True})
+
+
+# Supprimer un commentaire (propriétaire seulement)
+@app.route('/api/comment/<int:comment_id>', methods=['DELETE'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    if comment.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    try:
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erreur suppression commentaire: {e}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
+
+# Supprimer une ressource (propriétaire seulement)
+@app.route('/api/ressource/<int:ressource_id>', methods=['DELETE'])
+@login_required
+def delete_ressource(ressource_id):
+    res = Ressource.query.get_or_404(ressource_id)
+    if res.user_id != current_user.id:
+        return jsonify({"error": "Non autorisé"}), 403
+    try:
+        db.session.delete(res)
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erreur suppression ressource: {e}")
+        return jsonify({"error": "Erreur serveur"}), 500
 
 # Notifications pour quiz/flashcards
 @app.route('/api/quiz_notifications')

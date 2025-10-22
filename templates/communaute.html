@@ -743,12 +743,33 @@
                         <i class="fa-solid fa-download"></i> Télécharger
                     </button>
                 </div>
+        <div style="margin-top:8px;">
+          ${window.CURRENT_USER_ID && window.CURRENT_USER_ID === r.user_id ? `<button class="btn-delete-ressource" data-ressource-id="${r.id}" style="background:none; border:none; color:#d9534f; cursor:pointer; padding:6px 0;">Supprimer la ressource</button>` : ''}
+        </div>
             </div>`;
     });
 
     // Initialiser les carousels après le rendu
     setTimeout(initializeCarousels, 100);
 }
+
+// Wire delete ressource actions (delegated since elements may be re-rendered)
+document.addEventListener('click', function(e) {
+  const del = e.target.closest('.btn-delete-ressource');
+  if (!del) return;
+  const id = del.dataset.ressourceId;
+  if (!confirm('Supprimer cette ressource ?')) return;
+  fetch(`/api/ressource/${id}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Reload ressources list
+        loadRessources();
+      } else {
+        alert(data.error || 'Impossible de supprimer la ressource');
+      }
+    }).catch(() => alert('Erreur réseau'));
+});
 
   
   // =============== FONCTION DE SAUVEGARDE ===============
@@ -978,7 +999,7 @@
   function renderCommentTree(comments) {
     if (!comments || !comments.length) return '<p style="color:#777;">Aucun commentaire.</p>';
 
-    const renderNode = (c, depth = 0) => {
+  const renderNode = (c, depth = 0) => {
       const indent = Math.min(depth * 12, 48);
       const children = (c.children || []);
       const childrenHtml = children.map(child => renderNode(child, depth + 1)).join('');
@@ -997,6 +1018,7 @@
               <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
                 <button class="btn-reply" data-comment-id="${c.id}" style="background:none; border:none; color:blueviolet; cursor:pointer; padding:0;">Répondre</button>
                 ${hasChildren ? `<button class="btn-toggle-children" data-target="${toggleId}" style="background:none; border:none; color:#666; cursor:pointer; padding:0;">Afficher ${children.length} réponse${children.length>1?'s':''}</button>` : ''}
+                ${window.CURRENT_USER_ID && window.CURRENT_USER_ID === c.user_id ? `<button class="btn-delete-comment" data-comment-id="${c.id}" style="background:none; border:none; color:#d9534f; cursor:pointer; padding:0;">Supprimer</button>` : ''}
               </div>
               ${hasChildren ? `<div id="${toggleId}" class="children-container" style="display:none; margin-top:8px;">${childrenHtml}</div>` : ''}
             </div>
@@ -1029,6 +1051,23 @@
             document.getElementById('reply-to-name').textContent = replyName;
             document.getElementById('reply-indicator').style.display = 'block';
             document.getElementById('modal-title').textContent = 'Répondre au commentaire';
+          });
+        });
+
+        // Wire delete comment buttons
+        document.querySelectorAll('.btn-delete-comment').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            if (!confirm('Supprimer ce commentaire ?')) return;
+            fetch(`/api/comment/${commentId}`, { method: 'DELETE' })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  loadComments(currentDiscussionId);
+                } else {
+                  alert(data.error || 'Impossible de supprimer le commentaire');
+                }
+              }).catch(() => alert('Erreur réseau'));
           });
         });
 

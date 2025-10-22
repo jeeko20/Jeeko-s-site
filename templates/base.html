@@ -407,6 +407,8 @@
 
   <!-- ================= SCRIPT ================= -->
   <script>
+  // Expose current user id for client-side permission checks
+  window.CURRENT_USER_ID = {{ (current_user.id if current_user.is_authenticated else none) | tojson }};
     /*menu hamburger*/
     const hamburger = document.getElementById('hamburger');
     const menu_hamburger = document.getElementById('menu-hamburger');
