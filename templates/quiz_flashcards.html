@@ -649,11 +649,19 @@ flashcards.{% endblock %} {% block extra_css %}
     margin: 5% auto;
     padding: 30px;
     border-radius: 12px;
-    width: 90%;
-    max-width: 800px;
+    width: 100%;
+    max-width: 920px;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
+  }
+
+  @media (max-width: 900px) {
+    .modal-content { max-width: 94%; padding: 20px; }
+  }
+
+  @media (max-width: 480px) {
+    .modal-content { max-width: 98%; padding: 14px; }
   }
 
   .close {
@@ -2171,6 +2179,10 @@ body.modal-open {
         // Recharger le contenu
         switchTab("my-content");
         loadMyContent();
+        // Rafraîchir les notifications immédiatement
+        if (typeof loadAllNotifications === 'function') {
+          try { loadAllNotifications(); } catch(e){ console.warn('Erreur rafraîchissement notifications', e); }
+        }
       } else {
         showNotification("❌ Erreur: " + result.error, "error");
       }
@@ -2245,6 +2257,10 @@ body.modal-open {
         // Recharger le contenu
         switchTab("my-content");
         loadMyContent();
+        // Rafraîchir les notifications immédiatement
+        if (typeof loadAllNotifications === 'function') {
+          try { loadAllNotifications(); } catch(e){ console.warn('Erreur rafraîchissement notifications', e); }
+        }
       } else {
         showNotification("❌ Erreur: " + result.error, "error");
       }

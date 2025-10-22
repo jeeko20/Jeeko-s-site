@@ -84,6 +84,70 @@ a { text-decoration: none; color: inherit; }
   display: inline-block;
 }
 
+/* ================= NEON / GLOW UTILITIES ================= */
+:root{
+  --neon-color: #7c4dff; /* purple by default */
+  --neon-glow: 0 0 8px rgba(124,77,255,0.6), 0 0 24px rgba(124,77,255,0.25);
+}
+
+/* utility class to apply neon glow */
+.neon {
+  position: relative;
+  transition: box-shadow .2s ease, transform .15s ease;
+  box-shadow: var(--neon-glow);
+}
+.neon:focus,
+.neon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(124,77,255,0.5), 0 0 36px rgba(124,77,255,0.22);
+}
+
+/* Variantes de neon plus intenses */
+.neon--purple {
+  --neon-color: #7c4dff;
+  box-shadow: 0 6px 30px rgba(124,77,255,0.22), 0 0 40px rgba(124,77,255,0.26);
+}
+.neon--purple:hover,
+.neon--purple:focus {
+  box-shadow: 0 8px 40px rgba(124,77,255,0.34), 0 0 54px rgba(124,77,255,0.36);
+}
+
+.neon--red {
+  --neon-color: #ff3b3b;
+  box-shadow: 0 6px 30px rgba(255,59,59,0.18), 0 0 40px rgba(255,59,59,0.22);
+}
+.neon--red:hover,
+.neon--red:focus {
+  box-shadow: 0 8px 40px rgba(255,59,59,0.28), 0 0 54px rgba(255,59,59,0.32);
+}
+
+/* Apply neon to common interactive elements by default */
+button[class^="btn"],
+button[class*=" btn-"],
+.btn-signup,
+.btn-connexion,
+.add-btn,
+.btn-primary,
+.btn-danger,
+.btn-success,
+.btn-warning,
+.btn-info,
+.btn-secondary,
+.logout-btn-visible {
+  --neon-color: #7c4dff;
+  box-shadow: 0 2px 8px rgba(124,77,255,0.12);
+}
+
+/* Cards glow */
+.quiz-card, .flashcard-card, .card, .feature-card, .developer-card {
+  transition: box-shadow .25s ease, transform .18s ease;
+}
+.quiz-card:hover, .flashcard-card:hover, .card:hover, .feature-card:hover, .developer-card:hover {
+  box-shadow: 0 10px 30px rgba(124,77,255,0.12), 0 0 18px rgba(124,77,255,0.08);
+  transform: translateY(-6px);
+}
+
+
 .btn-connexion {
   color: blue;
   padding: 10px 15px;
@@ -373,6 +437,42 @@ a { text-decoration: none; color: inherit; }
 .notification-list {
   max-height: 300px;
   overflow-y: auto;
+}
+
+/* Responsive dropdown adjustments */
+@media (max-width: 900px) {
+  .notification-dropdown {
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-width: calc(100% - 16px);
+  }
+  .notification-list { max-height: 50vh; }
+}
+
+/* Loader inside notification dropdown */
+.notification-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 0;
+  gap: 6px;
+}
+.notification-loader .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--neon-color, #7c4dff);
+  opacity: 0.7;
+  animation: jump 1s infinite ease-in-out;
+}
+.notification-loader .dot:nth-child(2) { animation-delay: 0.12s; }
+.notification-loader .dot:nth-child(3) { animation-delay: 0.24s; }
+
+@keyframes jump {
+  0% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-6px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 0.6; }
 }
 
 .notification-item {

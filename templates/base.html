@@ -30,14 +30,15 @@
 
     .modal-content {
       background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-      width: 380px;
-      max-width: 95%;
-      padding: 40px 30px;
-      border-radius: 20px;
+      width: 100%;
+      max-width: 720px; /* larger on desktop */
+      padding: 28px 24px;
+      border-radius: 16px;
       color: #fff;
       position: relative;
       overflow: hidden;
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.25s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: scale(0.9);}
@@ -93,6 +94,7 @@
       transition: 0.3s;
     }
     .btn-submit:hover { background: #f1f1f1; }
+    .btn-submit.neon { box-shadow: 0 6px 20px rgba(124,77,255,0.18), 0 0 28px rgba(124,77,255,0.12); }
 
     .toggle-link { text-align: center; margin-top: 15px; cursor: pointer; text-decoration: underline; color: #fff; }
 
@@ -128,6 +130,16 @@
 
     .notification-item[data-type="ressource"] {
       border-left: 3px solid #2196f3;
+    }
+
+    /* Modal responsive tweaks */
+    @media (max-width: 900px) {
+      .modal-content { max-width: 92%; padding: 20px; border-radius: 12px; }
+    }
+    @media (max-width: 480px) {
+      .modal-content { max-width: 98%; padding: 16px; border-radius: 8px; }
+      .form-group input { padding: 10px; font-size: 14px; }
+      .btn-submit { padding: 12px; font-size: 14px; }
     }
   </style>
 </head>
@@ -165,9 +177,10 @@
           </div>
         </div>
         <div class="notification-list" id="notificationList">
-          <div class="notification-item">
-            <div class="notification-message">Chargement des notifications...</div>
+          <div class="notification-loader" id="notificationLoader" style="display:flex;">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
           </div>
+          <div class="notification-empty" id="notificationEmpty" style="display:none; padding:12px; text-align:center; color:#777;">Aucune notification</div>
         </div>
         <div class="notification-footer">
           <a href="{{url_for('profile')}}#overview">Voir les activités</a>
@@ -475,35 +488,45 @@
 
     function loadNotifications() {
       if (!document.getElementById('notificationBell')) return;
-      
+      const loader = document.getElementById('notificationLoader');
+      const empty = document.getElementById('notificationEmpty');
+      if (loader) loader.style.display = 'flex';
+      if (empty) empty.style.display = 'none';
       fetch('/api/notifications')
         .then(res => {
           if (!res.ok) throw new Error('Network response was not ok');
           return res.json();
         })
         .then(notifications => {
+          if (loader) loader.style.display = 'none';
           console.log('Notifications ressources chargées:', notifications);
           updateNotificationUI(notifications);
+          if (empty && notifications.length === 0) empty.style.display = 'block';
         })
         .catch(err => {
+          if (loader) loader.style.display = 'none';
           console.error('Erreur chargement notifications:', err);
           updateNotificationUI([]);
+          if (empty) empty.style.display = 'block';
         });
     }
 
     function loadQuizNotifications() {
       if (!document.getElementById('notificationBell')) return;
-      
+      const loader = document.getElementById('notificationLoader');
+      if (loader) loader.style.display = 'flex';
       fetch('/api/quiz_notifications')
         .then(res => {
           if (!res.ok) throw new Error('Network response was not ok');
           return res.json();
         })
         .then(notifications => {
+          if (loader) loader.style.display = 'none';
           console.log('Notifications quiz chargées:', notifications);
           updateQuizNotificationUI(notifications);
         })
         .catch(err => {
+          if (loader) loader.style.display = 'none';
           console.error('Erreur chargement notifications quiz:', err);
         });
     }
@@ -534,25 +557,18 @@
 
     function updateQuizNotificationUI(notifications) {
       const unreadQuizCount = notifications.filter(n => !n.is_read).length;
-      
-      // Calculer le total des notifications non lues
+
+      // Try to fetch resource unread count and compute total unread
       let totalUnread = unreadQuizCount;
-      
-      console.log('Notifications quiz non lues:', unreadQuizCount, 'Total:', totalUnread);
-      
-      // Mettre à jour le compteur TOTAL
-      const notificationCount = document.getElementById('notificationCount');
-      const mobileCount = document.getElementById('mobileNotificationCount');
-      
-      if (notificationCount) {
-        notificationCount.textContent = totalUnread;
-        notificationCount.style.display = totalUnread > 0 ? 'flex' : 'none';
-      }
-      
-      if (mobileCount) {
-        mobileCount.textContent = totalUnread;
-        mobileCount.style.display = totalUnread > 0 ? 'inline-flex' : 'none';
-      }
+      fetch('/api/notifications/count').then(r => r.json()).then(data => {
+        const ressourcesCount = data.count || 0;
+        totalUnread = unreadQuizCount + ressourcesCount;
+        applyNotificationCounts(totalUnread);
+      }).catch(() => {
+        // fallback
+        applyNotificationCounts(totalUnread);
+      });
+      console.log('Notifications quiz non lues:', unreadQuizCount);
       
       // Mettre à jour la liste
       const list = document.getElementById('notificationList');
@@ -587,6 +603,19 @@
         } else {
           list.innerHTML = '<div class="notification-item"><div class="notification-message">Aucune notification</div></div>';
         }
+      }
+    }
+
+    function applyNotificationCounts(totalUnread) {
+      const notificationCount = document.getElementById('notificationCount');
+      const mobileCount = document.getElementById('mobileNotificationCount');
+      if (notificationCount) {
+        notificationCount.textContent = totalUnread;
+        notificationCount.style.display = totalUnread > 0 ? 'flex' : 'none';
+      }
+      if (mobileCount) {
+        mobileCount.textContent = totalUnread;
+        mobileCount.style.display = totalUnread > 0 ? 'inline-flex' : 'none';
       }
     }
 
