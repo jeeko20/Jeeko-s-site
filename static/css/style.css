@@ -377,3 +377,205 @@
     width: 80%;
   }
 }
+
+/* ================= DARK MODE - PAGE ACCUEIL ================= */
+.dark-mode .header {
+  background-color: #0a0a0a;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+.dark-mode .header-content {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('../img/istockphoto-1759628359-1024x1024.jpg');
+}
+
+.dark-mode .header-content h1 {
+  color: #0ff;
+  text-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .header-content p {
+  color: #e0e0e0;
+}
+
+/* Search bar dark */
+.dark-mode .input-search {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .input-search:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .input-search::placeholder {
+  color: #888;
+}
+
+/* Search buttons with neon */
+.dark-mode .search a {
+  background-color: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .search a:hover {
+  background-color: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+.dark-mode .search .join-button {
+  border: 2px solid #0ff;
+}
+
+.dark-mode .search .learn-more {
+  background-color: #0ff;
+  color: #0a0a0a;
+  border: none;
+}
+
+.dark-mode .search .learn-more:hover {
+  box-shadow: 0 0 25px #0ff, 0 0 50px rgba(0, 255, 255, 0.5);
+}
+
+/* Info matiere dark */
+.dark-mode .info-matiere {
+  color: #e0e0e0;
+  background-color: #0a0a0a;
+}
+
+.dark-mode .info-matiere .info {
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .info ~ span {
+  color: #888;
+}
+
+/* Separator dark */
+.dark-mode .separator {
+  color: #e0e0e0;
+}
+
+.dark-mode .separator h2 {
+  color: #0ff;
+}
+
+/* Matiere cards dark with neon */
+.dark-mode .matiere .card {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .matiere .card:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-5px);
+}
+
+.dark-mode .card .titre {
+  color: #0ff;
+}
+
+.dark-mode .card .ressources,
+.dark-mode .card .mise-a-jour span,
+.dark-mode .card p {
+  color: #888;
+}
+
+/* Fonctionnalites dark */
+.dark-mode .fonctionalite {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .fonctionalite h2,
+.dark-mode .fonctionalite-card h3 {
+  color: #0ff;
+}
+
+.dark-mode .fonctionalite-card p {
+  color: #888;
+}
+
+.dark-mode .fonctionalite-card i {
+  color: #0ff;
+  background-color: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+/* Join communaute dark */
+.dark-mode .join-communaute .discussion,
+.dark-mode .join-communaute .partage {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .join-communaute .discussion:hover,
+.dark-mode .join-communaute .partage:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-5px);
+}
+
+.dark-mode .discussion i,
+.dark-mode .partage i {
+  color: #0ff;
+  background-color: #0a0a0a;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .join-communaute h3 {
+  color: #0ff;
+}
+
+.dark-mode .join-communaute p {
+  color: #888;
+}
+
+.dark-mode .join-communaute a {
+  color: #0ff;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.dark-mode .join-communaute a:hover {
+  background-color: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+}
+
+/* Call to action dark */
+.dark-mode .call-to-action {
+  background-color: #1a1a1a;
+  border-top: 1px solid #0ff;
+  border-bottom: 1px solid #0ff;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+}
+
+.dark-mode .call-to-action h2 {
+  color: #0ff;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .call-to-action p {
+  color: #e0e0e0;
+}
+
+.dark-mode .call-to-action a {
+  color: #0ff;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .call-to-action a:hover {
+  background-color: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 25px #0ff, 0 0 50px rgba(0, 255, 255, 0.5);
+}
