@@ -280,6 +280,7 @@
     <button class="tab" data-page="partages">
       <i class="fas fa-folder-open"></i> Partages recentes
     </button>
+  <!-- global view removed -->
     <button class="tab" onclick="window.location.href='/videos'" 
     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
 <i class="fas fa-video"></i> Vidéos
@@ -309,7 +310,9 @@
                   <option value="autre">Autre (précisez)</option>
                 </select>
                 <input type="text" id="autre-subject" placeholder="Précisez la matière" style="display: none; margin-top: 8px; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                <button type="submit">Publier</button>
+                <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                  <button type="submit">Publier</button>
+                </div>
               </div>
             </form>
           </div>
@@ -376,6 +379,11 @@
     <div class="modal-content">
       <span class="close">&times;</span>
       <h3 id="modal-title">Commentaires</h3>
+      <!-- Indicator when replying to a specific comment -->
+      <div id="reply-indicator" style="display:none; margin-bottom:8px; padding:8px; background:#fff3e0; border-radius:6px; border:1px solid #ffd6a5;">
+        <small>En réponse à <strong id="reply-to-name"></strong></small>
+        <button id="cancel-reply" style="float:right; background:none; border:none; color:#007bff; cursor:pointer;">Annuler la réponse</button>
+      </div>
       <div id="comments-list"></div>
       <form id="comment-form" style="margin-top:15px;">
         <textarea id="comment-input" placeholder="Écrivez un commentaire..." required style="width:100%; height:60px; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea>
@@ -967,23 +975,89 @@
     document.getElementById('comment-modal').style.display = 'flex';
     loadComments(discussionId);
   }
+  function renderCommentTree(comments) {
+    if (!comments || !comments.length) return '<p style="color:#777;">Aucun commentaire.</p>';
+
+    const renderNode = (c, depth = 0) => {
+      const indent = Math.min(depth * 12, 48);
+      const children = (c.children || []);
+      const childrenHtml = children.map(child => renderNode(child, depth + 1)).join('');
+      const hasChildren = children.length > 0;
+      const toggleId = `children-of-${c.id}`;
+      return `
+        <div style="margin-bottom:8px; padding:10px; border-radius:6px; background:#fff; margin-left:${indent}px; border-left:3px solid #007bff;">
+          <div style="display:flex; gap:8px; align-items:flex-start;">
+            <img src="${c.user_avatar || 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'}" width="34" style="border-radius:50%;">
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <strong>${c.username}</strong>
+                <small style="color:#777;">${formatTimeAgo(c.created_at)}</small>
+              </div>
+              <div style="margin-top:6px;">${c.content}</div>
+              <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                <button class="btn-reply" data-comment-id="${c.id}" style="background:none; border:none; color:blueviolet; cursor:pointer; padding:0;">Répondre</button>
+                ${hasChildren ? `<button class="btn-toggle-children" data-target="${toggleId}" style="background:none; border:none; color:#666; cursor:pointer; padding:0;">Afficher ${children.length} réponse${children.length>1?'s':''}</button>` : ''}
+              </div>
+              ${hasChildren ? `<div id="${toggleId}" class="children-container" style="display:none; margin-top:8px;">${childrenHtml}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    return comments.map(c => renderNode(c)).join('');
+  }
 
   function loadComments(discussionId) {
     fetch(`/api/discussion/${discussionId}/comments`)
       .then(res => res.json())
       .then(comments => {
         const list = document.getElementById('comments-list');
-        list.innerHTML = comments.length ? comments.map(c => `
-          <div style="margin-bottom:12px; padding:10px; border-bottom:1px solid #eee;">
-            <div style="display:flex; align-items:start; gap:8px;">
-              <img src="${c.user_avatar || 'https://cdn.pixabay.com/photo/2024/06/22/22/55/man-8847064_640.jpg'}" width="30" style="border-radius:50%;">
-              <div>
-                <strong>${c.username}</strong> • <span style="color:#777;">${formatTimeAgo(c.created_at)}</span>
-                <p style="margin:6px 0 0 0;">${c.content}</p>
-              </div>
-            </div>
-          </div>
-        `).join('') : '<p style="color:#777;">Aucun commentaire.</p>';
+        list.innerHTML = renderCommentTree(comments);
+
+        // Wire reply buttons
+        document.querySelectorAll('.btn-reply').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const parentId = this.dataset.commentId;
+            const input = document.getElementById('comment-input');
+            input.focus();
+            input.dataset.parentId = parentId; // set parent_id for next submit
+            // show reply indicator with the username
+            const parentContainer = this.closest('div');
+            const nameEl = parentContainer.querySelector('strong');
+            const replyName = nameEl ? nameEl.textContent : 'utilisateur';
+            document.getElementById('reply-to-name').textContent = replyName;
+            document.getElementById('reply-indicator').style.display = 'block';
+            document.getElementById('modal-title').textContent = 'Répondre au commentaire';
+          });
+        });
+
+        // Cancel reply button
+        const cancelBtn = document.getElementById('cancel-reply');
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', function() {
+            const input = document.getElementById('comment-input');
+            delete input.dataset.parentId;
+            document.getElementById('reply-indicator').style.display = 'none';
+            document.getElementById('modal-title').textContent = 'Commentaires';
+          });
+        }
+        // Wire toggle children buttons
+        document.querySelectorAll('.btn-toggle-children').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            if (el.style.display === 'none' || !el.style.display) {
+              el.style.display = 'block';
+              this.textContent = 'Masquer les réponses';
+            } else {
+              el.style.display = 'none';
+              const count = el.querySelectorAll(':scope > div').length;
+              this.textContent = `Afficher ${count} réponse${count>1?'s':''}`;
+            }
+          });
+        });
       });
   }
 
@@ -1036,6 +1110,7 @@
       document.getElementById('discussion-subject').value = '';
       document.getElementById('autre-subject').value = '';
       document.getElementById('autre-subject').style.display = 'none';
+      // Reset any removed global inputs
       loadAllDiscussions();
     }).catch(() => alert("Erreur lors de la publication."));
   });
@@ -1056,14 +1131,26 @@
     e.preventDefault();
     const content = document.getElementById('comment-input').value.trim();
     if (!content) return;
+    const parentId = document.getElementById('comment-input').dataset.parentId || null;
     fetch(`/api/discussion/${currentDiscussionId}/comment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
+      body: JSON.stringify({ content, parent_id: parentId })
     }).then(() => {
       document.getElementById('comment-input').value = '';
+      delete document.getElementById('comment-input').dataset.parentId;
+      document.getElementById('reply-indicator').style.display = 'none';
+      document.getElementById('modal-title').textContent = 'Commentaires';
       loadComments(currentDiscussionId);
     });
+  });
+
+  // Global community toggle
+  let isGlobalView = false;
+  document.getElementById('global-toggle')?.addEventListener('click', function() {
+    isGlobalView = !isGlobalView;
+    this.textContent = isGlobalView ? 'Vue locale' : 'Vue globale';
+    loadAllDiscussions();
   });
 
   // =============== MODAL PARTAGE ===============

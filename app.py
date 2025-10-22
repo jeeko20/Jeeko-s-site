@@ -183,9 +183,12 @@ class Comment(db.Model):
     discussion_id = db.Column(db.Integer, db.ForeignKey('discussion.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('comments', lazy=True))
+    # Relationship to discussion and to parent/children comments (threaded)
     discussion = db.relationship('Discussion', backref=db.backref('comments', lazy=True, cascade="all, delete-orphan"))
+    parent = db.relationship('Comment', remote_side=[id], backref=db.backref('children', lazy=True))
 
     @property
     def user_avatar(self):
@@ -981,10 +984,8 @@ def api_videos():
 def api_discussions():
     if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
         return jsonify([])
-    
     current_year = current_user.profile.year_of_study
     current_field = current_user.profile.field_of_study
-
     query = Discussion.query.join(User).join(Profile).filter(
         Profile.year_of_study == current_year,
         Profile.field_of_study == current_field
@@ -1046,6 +1047,9 @@ def create_discussion():
         "username": new_discussion.user.username,
         "comment_count": 0
     }), 201
+
+
+
 
 @app.route('/api/save_ressource/<int:ressource_id>', methods=['POST'])
 @login_required
@@ -1110,27 +1114,38 @@ def api_my_ressources():
 @app.route('/api/discussion/<int:discussion_id>/comments', methods=['GET'])
 def get_comments(discussion_id):
     comments = Comment.query.options(
-        joinedload(Comment.user)
+        joinedload(Comment.user),
+        joinedload(Comment.children)
     ).filter_by(discussion_id=discussion_id).order_by(Comment.created_at.asc()).all()
-    return jsonify([{
-        "id": c.id,
-        "content": c.content,
-    "created_at": c.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "user_avatar": c.user.avatar_url,
-        "username": c.user.username
-    } for c in comments])
+
+    def serialize_comment(c):
+        return {
+            "id": c.id,
+            "content": c.content,
+            "created_at": c.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "user_avatar": c.user.avatar_url,
+            "username": c.user.username,
+            "parent_id": c.parent_id,
+            "children": [serialize_comment(child) for child in sorted(c.children, key=lambda x: x.created_at)]
+        }
+
+    # Return only top-level comments; children nested inside
+    top_level = [c for c in comments if c.parent_id is None]
+    return jsonify([serialize_comment(c) for c in sorted(top_level, key=lambda x: x.created_at)])
 
 @app.route('/api/discussion/<int:discussion_id>/comment', methods=['POST'])
 @login_required
 def add_comment(discussion_id):
     data = request.get_json()
     content = data.get('content')
+    parent_id = data.get('parent_id')
     if not content:
         return jsonify({"error": "Contenu requis"}), 400
     new_comment = Comment(
         discussion_id=discussion_id,
         user_id=current_user.id,
-        content=content
+        content=content,
+        parent_id=parent_id
     )
     db.session.add(new_comment)
     db.session.commit()
