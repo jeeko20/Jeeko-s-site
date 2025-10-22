@@ -145,6 +145,17 @@
 </head>
 <body>
 
+<!-- ================= DARK MODE SCRIPT (execute immediately to avoid flash) ================= -->
+<script>
+  // Load dark mode preference immediately before page renders
+  (function() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+  })();
+</script>
+
  
 <!-- ================= NAVBAR ================= -->
 <nav class="custom-navbar">
