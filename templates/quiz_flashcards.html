@@ -2812,9 +2812,9 @@ body.modal-open {
             <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
             <div style="padding: 20px;">
                 <h3>Question complète</h3>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; line-height: 1.6;">
-                    ${question.question_text}
-                </div>
+        <div class="modal-panel">
+          ${question.question_text}
+        </div>
                 <button class="btn btn-primary" onclick="this.closest('.modal').style.display='none'">
                     Fermer
                 </button>
@@ -2833,9 +2833,9 @@ body.modal-open {
             <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
             <div style="padding: 20px;">
                 <h3>Option ${optionKey.toUpperCase()}</h3>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; line-height: 1.6;">
-                    ${fullText}
-                </div>
+        <div class="modal-panel">
+          ${fullText}
+        </div>
                 <button class="btn btn-primary" onclick="this.closest('.modal').style.display='none'">
                     Fermer
                 </button>

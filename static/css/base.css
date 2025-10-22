@@ -853,6 +853,34 @@ footer {
   box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
 }
 
+/* Higher-specificity dark-mode modal override to win against inline/late .modal-content rules
+   in templates (inline styles in head), use element+class specificity so it takes precedence. */
+body.dark-mode .modal-content {
+  background: linear-gradient(135deg, #0e0e0e 0%, #171717 100%);
+  color: #dff9ff; /* light cyan-ish for readable headings and text */
+  border: 1px solid rgba(0,255,255,0.06);
+  box-shadow: 0 8px 40px rgba(0,255,255,0.06), 0 0 30px rgba(0,255,255,0.06) inset;
+}
+
+body.dark-mode .modal-content .close,
+body.dark-mode .modal-content .close-btn {
+  color: #e6f8ff;
+}
+
+/* Ensure modal-panel also follows high-specificity rule */
+body.dark-mode .modal-panel {
+  background: #121212;
+  color: #e6f8ff;
+  border: 1px solid #222;
+}
+
+/* Ensure modal-panel (used by quiz modals) is dark in dark-mode */
+.dark-mode .modal-panel {
+  background: #121212;
+  color: #e6f8ff;
+  border: 1px solid #222;
+}
+
 .dark-mode .modal-content h2 {
   color: #0ff;
   text-shadow: 0 0 10px #0ff;
@@ -1198,6 +1226,101 @@ footer {
   box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
 }
 
+/* Additional dark-mode fixes for pages that still had white blocks */
+/* Resource / note cards and generic page blocks */
+.dark-mode .ressources-list,
+.dark-mode .start-discussion,
+.dark-mode .discussion-list,
+.dark-mode .action-rapide,
+.dark-mode .sujet-populaire,
+.dark-mode .statistique,
+.dark-mode .form-partage,
+.dark-mode .page,
+.dark-mode main,
+.dark-mode .block-2,
+.dark-mode .discussion-list-info,
+.dark-mode .discussion-list-info p,
+.dark-mode .discussion-list-info .p1,
+.dark-mode .discussion-list-info .p2 {
+  background-color: #141414;
+  color: #dcdcdc;
+  border: 1px solid #222;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+}
+
+/* Header sections that use background images or explicit white backgrounds */
+.dark-mode .header,
+.dark-mode .header-content,
+.dark-mode .about-header,
+.dark-mode .contact-header {
+  background-color: rgba(10,10,10,0.6) !important;
+  color: #e6faff;
+}
+
+/* Resource media area (images/videos placeholders) */
+.dark-mode .ressource-media,
+.dark-mode .ressource-media .icon-placeholder {
+  background: linear-gradient(180deg, #111111, #1a1a1a);
+  color: #bfefff;
+}
+.dark-mode .ressource-media img,
+.dark-mode .ressource-media video { background: #0a0a0a !important; }
+
+/* Buttons in footers / page sections: ensure hover contrast */
+.dark-mode .btn-footer a:first-child:hover {
+  background: rgba(124,77,255,0.95);
+  color: #fff;
+}
+.dark-mode .btn-footer a:last-child:hover,
+.dark-mode .btn-footer a:nth-child(2):hover {
+  background: #0ff;
+  color: #0a0a0a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,255,255,0.12);
+}
+
+/* Ensure small action buttons are legible on hover */
+.dark-mode .btn-view:hover,
+.dark-mode .btn-download:hover,
+.dark-mode .btn-primary:hover,
+.dark-mode .btn-submit:hover {
+  background: #0ff !important;
+  color: #070707 !important;
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0,255,255,0.18) !important;
+}
+
+/* Replace explicit white hover backgrounds used in some local CSS */
+.dark-mode .btn-footer a:last-child:hover { border-color: transparent; }
+
+/* Fix modal overlay and form background when inline styles were used */
+.dark-mode .modal-content[style],
+.dark-mode [style*="background: #fff"],
+.dark-mode [style*="background: #ffffff"] {
+  background: linear-gradient(135deg,#121212,#1a1a1a) !important;
+  color: #e8faff !important;
+  border: 1px solid #222 !important;
+}
+
+/* Developer / info boxes */
+.dark-mode .developer-card,
+.dark-mode .site-info,
+.dark-mode .contact-info,
+.dark-mode .contact-form {
+  background: linear-gradient(180deg,#0f0f0f,#151515);
+  border: 1px solid #222;
+}
+
+/* Make sure link hover in dark mode remains visible */
+.dark-mode .btn-footer a:last-child:hover a,
+.dark-mode a:hover { text-shadow: 0 0 10px #0ff; }
+
+/* Small accessibility tweak: increase button text contrast on hover in sections like profile/note */
+.dark-mode .activity-item:hover,
+.dark-mode .note-card:hover,
+.dark-mode .ressources-list:hover {
+  color: #030303;
+}
+
 .dark-mode .btn-primary:hover {
   background: #0ff;
   color: #0a0a0a;
@@ -1477,6 +1600,37 @@ footer {
   border-color: #ff3b3b;
   box-shadow: 0 0 15px rgba(255, 59, 59, 0.3);
 }
+
+/* Alias and additional coverage for quiz_flashcards .option/.option-text and expand button
+   (the quiz template uses .option/.option-text while older rules targeted .answer-option)
+   This ensures hover and three-dots (btn-expand) remain readable in dark mode. */
+.dark-mode .option,
+.dark-mode .option .option-text {
+  background: #1e1e1e;
+  color: #e6f8ff; /* slightly icy-cyan for good contrast */
+  border-color: #333;
+}
+
+.dark-mode .option:hover {
+  background: #122029; /* darker cyan-tinged background on hover */
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.18);
+  color: #e6f8ff;
+}
+
+.dark-mode .option.selected {
+  border-color: #0ff;
+  background: rgba(0,255,255,0.04);
+  color: #e6f8ff;
+}
+
+/* btn-expand is rendered with an inline color in the template; force a readable color in dark mode */
+.dark-mode .btn-expand {
+  color: #0ff !important;
+  background: transparent !important;
+  border: none !important;
+}
+
 
 .dark-mode .flashcard-front,
 .dark-mode .flashcard-back {

@@ -372,6 +372,56 @@
     background: #e3f2fd;
 }
 
+/* Ensure option text is explicitly dark in normal (light) mode so hover/bg changes don't make it invisible
+   Some global rules set color: white in other parts of the site which can cascade here. */
+.option, .option .option-text, .option strong {
+    color: #0b2430; /* dark slate for high contrast on light backgrounds */
+}
+
+.option:hover, .option.selected {
+    /* keep text dark on hover/selected states */
+    color: #0b2430;
+}
+
+/* Make the expand button (three dots) visible in normal mode as well */
+.btn-expand {
+    color: #007bff;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+/* Modal content defaults for expandOption/showFullQuestion: ensure backgrounds and text are readable
+   in both normal (light) and dark modes. */
+.modal .modal-content {
+    background: #ffffff; /* light card by default */
+    color: #0b2430; /* dark text */
+}
+
+.modal .modal-content h3,
+.modal .modal-content h2 {
+    color: #0b2430;
+}
+
+.modal .modal-content .close {
+    color: #333;
+}
+
+/* Dark-mode overrides are in base.css; ensure modal inner panels keep readable bg when template injects inline light backgrounds */
+.modal .modal-content div[style] {
+    color: inherit;
+}
+
+/* Panel inside expand modal / full-question modal */
+.modal-panel {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    line-height: 1.6;
+    color: #0b2430;
+}
+
 .quiz-navigation {
     display: flex;
     justify-content: space-between;
