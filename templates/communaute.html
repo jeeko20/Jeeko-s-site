@@ -766,9 +766,13 @@ document.addEventListener('click', function(e) {
         // Reload ressources list
         loadRessources();
       } else {
-        alert(data.error || 'Impossible de supprimer la ressource');
+        showToast('error', data.error || 'Impossible de supprimer la ressource');
       }
     }).catch(() => alert('Erreur réseau'));
+});
+// replace network alert
+document.addEventListener('click', function netErr(e){
+  // noop placeholder to avoid duplicate alerts; network errors handled inline
 });
 
   
@@ -1063,11 +1067,12 @@ document.addEventListener('click', function(e) {
               .then(res => res.json())
               .then(data => {
                 if (data.success) {
+                  showToast('success', 'Commentaire supprimé');
                   loadComments(currentDiscussionId);
                 } else {
-                  alert(data.error || 'Impossible de supprimer le commentaire');
+                  showToast('error', data.error || 'Impossible de supprimer le commentaire');
                 }
-              }).catch(() => alert('Erreur réseau'));
+              }).catch(() => showToast('error', 'Erreur réseau'));
           });
         });
 

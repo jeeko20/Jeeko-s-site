@@ -409,6 +409,29 @@
   <script>
   // Expose current user id for client-side permission checks
   window.CURRENT_USER_ID = {{ (current_user.id if current_user.is_authenticated else none) | tojson }};
+  
+  // Simple toast helper
+  (function(){
+    const style = document.createElement('style');
+    style.innerHTML = `
+      #app-toast { position: fixed; right: 16px; bottom: 24px; z-index: 2000; }
+      .app-toast-item { background: rgba(0,0,0,0.85); color: #fff; padding: 10px 14px; margin-top: 8px; border-radius: 8px; min-width: 200px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+      .app-toast-item.success { background: #2f855a; }
+      .app-toast-item.error { background: #c53030; }
+    `;
+    document.head.appendChild(style);
+    const container = document.createElement('div');
+    container.id = 'app-toast';
+    document.body.appendChild(container);
+    window.showToast = function(type, message, ttl=3500){
+      const el = document.createElement('div');
+      el.className = 'app-toast-item ' + (type === 'success' ? 'success' : (type === 'error' ? 'error' : ''));
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(()=>{ el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; }, ttl - 300);
+      setTimeout(()=> el.remove(), ttl);
+    };
+  })();
     /*menu hamburger*/
     const hamburger = document.getElementById('hamburger');
     const menu_hamburger = document.getElementById('menu-hamburger');
