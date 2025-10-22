@@ -2862,8 +2862,15 @@ body.modal-open {
     }, 5000);
   }
 
+  // Use the centralized notification loader if available to keep behavior consistent
   async function loadQuizNotifications() {
     try {
+      if (window.notificationCenter && typeof window.notificationCenter.loadQuizNotifications === 'function') {
+        // call the centralized loader which also updates dropdown
+        return window.notificationCenter.loadQuizNotifications();
+      }
+
+      // Fallback to local fetch if notificationCenter is not yet available
       const response = await fetch("/api/quiz_notifications");
       if (response.ok) {
         const notifications = await response.json();

@@ -748,7 +748,7 @@ def debug_user_notifications():
             "is_read": n.is_read,
             "ressource_id": n.ressource_id,
             "ressource_type": n.ressource.file_type if n.ressource else None,
-            "created_at": n.created_at.isoformat()
+            "created_at": n.created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
         } for n in notifications]
     }
     
@@ -873,7 +873,7 @@ def api_my_notes():
             "file_type": r.file_type,
             "file_url": r.file_url,
             "download_url": r.download_url,
-            "created_at": r.created_at.isoformat(),
+            "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "page_count": r.page_count,
             "is_saved": True,  # C'est une ressource partagée par l'utilisateur
             "is_shared": True,
@@ -887,11 +887,11 @@ def api_my_notes():
             "file_type": s.ressource.file_type,
             "file_url": s.ressource.file_url,
             "download_url": s.ressource.download_url,
-            "created_at": s.ressource.created_at.isoformat(),
+            "created_at": s.ressource.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "page_count": s.ressource.page_count,
             "is_saved": True,
             "is_shared": False,
-            "saved_at": s.saved_at.isoformat(),
+            "saved_at": s.saved_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "type": "saved"
         } for s in saved_ressources]
         
@@ -935,7 +935,7 @@ def api_ressources():
         "subject": r.subject,
         "file_type": r.file_type,
         "likes": r.likes,
-        "created_at": r.created_at.isoformat(),
+    "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": r.user.avatar_url,
         "username": r.user.username,
         "file_url": r.file_url,
@@ -968,7 +968,7 @@ def api_videos():
         "subject": r.subject,
         "file_type": r.file_type,
         "likes": r.likes,
-        "created_at": r.created_at.isoformat(),
+    "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": r.user.avatar_url,
         "username": r.user.username,
         "file_url": r.file_url,
@@ -1008,7 +1008,7 @@ def api_discussions():
         "subject": d.subject,
         "content": d.content,
         "likes": d.likes,
-        "created_at": d.created_at.isoformat(),
+    "created_at": d.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": d.user.avatar_url,
         "username": d.user.username,
         "comment_count": len(d.comments)
@@ -1041,7 +1041,7 @@ def create_discussion():
         "subject": new_discussion.subject,
         "content": new_discussion.content,
         "likes": 0,
-        "created_at": new_discussion.created_at.isoformat(),
+    "created_at": new_discussion.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": new_discussion.user.avatar_url,
         "username": new_discussion.user.username,
         "comment_count": 0
@@ -1080,7 +1080,7 @@ def api_saved_ressources():
         "title": s.ressource.title,
         "subject": s.ressource.subject,
         "file_type": s.ressource.file_type,
-        "created_at": s.ressource.created_at.isoformat(),
+    "created_at": s.ressource.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "file_url": s.ressource.file_url,
         "download_url": s.ressource.download_url,
         "page_count": s.ressource.page_count,
@@ -1100,7 +1100,7 @@ def api_my_ressources():
         "title": r.title,
         "subject": r.subject,
         "file_type": r.file_type,
-        "created_at": r.created_at.isoformat(),
+    "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "file_url": r.file_url,
         "download_url": r.download_url,
         "page_count": r.page_count,
@@ -1115,7 +1115,7 @@ def get_comments(discussion_id):
     return jsonify([{
         "id": c.id,
         "content": c.content,
-        "created_at": c.created_at.isoformat(),
+    "created_at": c.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": c.user.avatar_url,
         "username": c.user.username
     } for c in comments])
@@ -1137,7 +1137,7 @@ def add_comment(discussion_id):
     return jsonify({
         "id": new_comment.id,
         "content": new_comment.content,
-        "created_at": new_comment.created_at.isoformat(),
+    "created_at": new_comment.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": new_comment.user.avatar_url,
         "username": new_comment.user.username
     }), 201
@@ -1171,7 +1171,7 @@ def api_notifications():
         "id": n.id,
         "message": n.message,
         "is_read": n.is_read,
-        "created_at": n.created_at.isoformat(),
+        "created_at": n.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "ressource_id": n.ressource_id,
         "ressource_type": n.ressource.file_type if n.ressource else None,
         "ressource_title": n.ressource.title if n.ressource else None
@@ -1313,7 +1313,7 @@ def api_quizzes():
         "description": q.description,
         "time_limit": q.time_limit,
         "question_count": len(q.questions),
-        "created_at": q.created_at.isoformat(),
+    "created_at": q.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": q.user.avatar_url,
         "username": q.user.username,
         "attempt_count": len(q.attempts)
@@ -1333,7 +1333,7 @@ def api_my_quizzes():
         "description": q.description,
         "time_limit": q.time_limit,
         "question_count": len(q.questions),
-        "created_at": q.created_at.isoformat(),
+    "created_at": q.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": q.user.avatar_url,
         "username": q.user.username,
         "attempt_count": len(q.attempts)
@@ -1352,7 +1352,7 @@ def api_my_flashcards():
         "subject": f.subject,
         "description": f.description,
         "card_count": len(f.cards),
-        "created_at": f.created_at.isoformat(),
+    "created_at": f.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": f.user.avatar_url,
         "username": f.user.username
     } for f in flashcards])
@@ -1379,7 +1379,7 @@ def api_flashcards():
         "subject": f.subject,
         "description": f.description,
         "card_count": len(f.cards),
-        "created_at": f.created_at.isoformat(),
+    "created_at": f.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": f.user.avatar_url,
         "username": f.user.username
     } for f in flashcards])
@@ -1407,7 +1407,7 @@ def get_quiz_participants(quiz_id):
         "user_avatar": attempt.user.avatar_url,
         "score": attempt.score,
         "time_taken": attempt.time_taken,
-        "completed_at": attempt.completed_at.isoformat()
+            "completed_at": attempt.completed_at.strftime("%Y-%m-%dT%H:%M:%SZ")
     } for attempt in attempts])
 # Route avec recherche et tri
 
@@ -1461,7 +1461,7 @@ def api_quizzes_search():
         "description": q.description,
         "time_limit": q.time_limit,
         "question_count": len(q.questions),
-        "created_at": q.created_at.isoformat(),
+    "created_at": q.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": q.user.avatar_url,
         "username": q.user.username,
         "attempt_count": len(q.attempts)
@@ -1515,7 +1515,7 @@ def api_flashcards_search():
         "subject": f.subject,
         "description": f.description,
         "card_count": len(f.cards),
-        "created_at": f.created_at.isoformat(),
+    "created_at": f.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": f.user.avatar_url,
         "username": f.user.username
     } for f in flashcards])
@@ -1877,7 +1877,7 @@ def api_quiz_notifications():
         "id": n.id,
         "message": n.message,
         "is_read": n.is_read,
-        "created_at": n.created_at.isoformat(),
+        "created_at": n.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "quiz_id": n.quiz_id,
         "flashcard_id": n.flashcard_id,
         "notification_type": n.notification_type,

@@ -447,7 +447,19 @@ button[class*=" btn-"],
     width: auto;
     max-width: calc(100% - 16px);
   }
-  .notification-list { max-height: 50vh; }
+  /* On mobile make the dropdown compact, fixed below navbar and scrollable */
+  .notification-dropdown {
+    position: fixed;
+    top: 72px; /* just below navbar (80px) */
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: calc(100% - 16px);
+    z-index: 1500;
+    margin-top: 0;
+    border-radius: 10px;
+  }
+  .notification-list { max-height: 45vh; overflow-y: auto; }
 }
 
 /* Loader inside notification dropdown */
@@ -532,9 +544,15 @@ button[class*=" btn-"],
 @media (max-width: 861px) {
   .custom-navbar .menu, 
   .custom-navbar .auth-buttons,
-  .user-menu,
-  .notification-bell {
+  .user-menu {
     display: none;
+  }
+
+  /* Keep notification bell visible on mobile */
+  .custom-navbar .notification-bell {
+    display: flex !important;
+    align-items: center;
+    margin-right: 8px;
   }
 
   .custom-navbar h3 {
@@ -653,11 +671,11 @@ footer {
 @media (max-width: 861px) {
   .custom-navbar .menu,
   .custom-navbar .auth-buttons,
-  .custom-navbar .notification-bell,
   .custom-navbar .user-menu {
     display: none !important;
   }
 
+  /* Keep notification bell visible on mobile (do not hide it) */
   .custom-navbar .hamburger {
     display: block !important;
   }
