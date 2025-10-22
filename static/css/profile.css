@@ -545,3 +545,312 @@ main {
   }
 }
 /*====================end section=====================*/
+
+/* ================= DARK MODE - PROFILE PAGE ================= */
+.dark-mode .header {
+  background-color: #0a0a0a;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+.dark-mode .header-content {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), 
+    url("https://media.istockphoto.com/id/624695614/fr/photo/%C3%A9tudiants-universitaires-faisant-des-%C3%A9tudes-de-groupe.jpg?s=1024x1024&w=is&k=20&c=bv5UBZTumvtoB4w7RQbHDVrzISgXs7rs6X3SPbHEWOM=");
+}
+
+.dark-mode .header-content h2,
+.dark-mode .profile-details h2 {
+  color: #0ff;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .header-content p {
+  color: #e0e0e0;
+}
+
+.dark-mode .header-content img {
+  border: 4px solid #0ff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.dark-mode .btn-edit-profile {
+  background-color: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .btn-edit-profile:hover {
+  background-color: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
+
+.dark-mode .info-matiere {
+  background-color: #0a0a0a;
+  color: #e0e0e0;
+}
+
+.dark-mode .info-matiere .info {
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .info ~ span {
+  color: #888;
+}
+
+/* Navigation dark */
+.dark-mode nav {
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+.dark-mode nav button {
+  color: #e0e0e0;
+}
+
+.dark-mode nav button.active {
+  border-bottom: 3px solid #0ff;
+  color: #0ff;
+}
+
+.dark-mode nav button:hover {
+  color: #0ff;
+}
+
+/* Main sections dark */
+.dark-mode main {
+  background-color: #0a0a0a;
+}
+
+.dark-mode .section1,
+.dark-mode .section2,
+.dark-mode .section3 {
+  background: #0a0a0a;
+}
+
+.dark-mode .recent-ativities,
+.dark-mode .action-rapides,
+.dark-mode .ressources-list,
+.dark-mode .save-ressources {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+}
+
+.dark-mode .recent-ativities:hover,
+.dark-mode .action-rapides:hover,
+.dark-mode .ressources-list:hover,
+.dark-mode .save-ressources:hover {
+  box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.3);
+  border-color: #0ff;
+  transform: translateY(-5px);
+}
+
+.dark-mode .action-card {
+  background: #0a0a0a;
+  border: 1px solid #333;
+}
+
+.dark-mode .action-card i {
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Activities dark */
+.dark-mode .activity-filters select,
+.dark-mode .activity-filters input {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .activity-filters select:focus,
+.dark-mode .activity-filters input:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .activities-list {
+  background: #0a0a0a;
+  border: 1px solid #333;
+}
+
+.dark-mode .activity-item {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .activity-item:hover {
+  border-color: #0ff;
+  background: #252525;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .activity-message {
+  color: #e0e0e0;
+}
+
+.dark-mode .activity-meta {
+  color: #888;
+}
+
+.dark-mode .activity-type {
+  background: #2a2a2a;
+  color: #0ff;
+}
+
+/* Activity types with neon borders */
+.dark-mode .activity-video {
+  border-left: 4px solid #0ff;
+  background: linear-gradient(135deg, #1a1a1a, #1e2a3a);
+}
+
+.dark-mode .activity-pdf {
+  border-left: 4px solid #0ff;
+  background: linear-gradient(135deg, #1a1a1a, #1e2a3a);
+}
+
+.dark-mode .activity-image {
+  border-left: 4px solid #0ff;
+  background: linear-gradient(135deg, #1a1a1a, #1e2a3a);
+}
+
+.dark-mode .activity-youtube {
+  border-left: 4px solid #ff3b3b;
+  background: linear-gradient(135deg, #1a1a1a, #2a1a1a);
+}
+
+.dark-mode .activity-document {
+  border-left: 4px solid #0ff;
+  background: linear-gradient(135deg, #1a1a1a, #1e2a3a);
+}
+
+/* Loading spinner dark */
+.dark-mode .loading-activities {
+  color: #888;
+}
+
+.dark-mode .loading-activities .spinner {
+  border: 3px solid #333;
+  border-top: 3px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+/* Pagination dark */
+.dark-mode .pagination button {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode .pagination button:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.dark-mode .pagination .current-page {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+
+/* Ressources list dark */
+.dark-mode .head-section h2 {
+  color: #0ff;
+}
+
+.dark-mode .head-section a {
+  background-color: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .head-section a:hover {
+  background-color: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff;
+}
+
+.dark-mode .ressource-head span {
+  background-color: #2a2a2a;
+  color: #0ff;
+  border: 1px solid #333;
+}
+
+.dark-mode .ressources-list a {
+  border: 1px solid #333;
+  color: #0ff;
+}
+
+.dark-mode .ressources-list h3,
+.dark-mode .ressources-list h4 {
+  color: #0ff;
+}
+
+.dark-mode .ressources-list p {
+  color: #888;
+}
+
+.dark-mode .text p {
+  color: #888;
+}
+
+.dark-mode .save-ressources div > a {
+  background-color: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode .save-ressources div > a:hover {
+  background-color: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff;
+}
+
+/* Settings form dark */
+.dark-mode #settings form {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+}
+
+.dark-mode #settings form label {
+  color: #0ff;
+}
+
+.dark-mode #settings form input,
+.dark-mode #settings form select,
+.dark-mode #settings form textarea {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
+}
+
+.dark-mode #settings form input:focus,
+.dark-mode #settings form select:focus,
+.dark-mode #settings form textarea:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode #settings form button {
+  background: #1e1e1e;
+  color: #0ff;
+  border: 1px solid #0ff;
+  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.dark-mode #settings form button:hover {
+  background: #0ff;
+  color: #0a0a0a;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+}
