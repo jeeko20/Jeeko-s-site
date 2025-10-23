@@ -1902,17 +1902,35 @@ def delete_comment(comment_id):
 @app.route('/api/ressource/<int:ressource_id>', methods=['DELETE'])
 @login_required
 def delete_ressource(ressource_id):
-    res = Ressource.query.get_or_404(ressource_id)
-    if res.user_id != current_user.id:
-        return jsonify({"error": "Non autorisé"}), 403
     try:
+        # Vérifier si la ressource existe
+        res = Ressource.query.get(ressource_id)
+        if not res:
+            logger.error(f"Ressource non trouvée: {ressource_id}")
+            return jsonify({"error": "Ressource non trouvée"}), 404
+            
+        # Vérifier que l'utilisateur est le propriétaire
+        if res.user_id != current_user.id:
+            logger.warning(f"Tentative de suppression non autorisée - Utilisateur: {current_user.id}, Propriétaire: {res.user_id}")
+            return jsonify({"error": "Non autorisé"}), 403
+            
+        # Supprimer d'abord les entrées liées dans la table SavedRessource
+        SavedRessource.query.filter_by(ressource_id=ressource_id).delete()
+        
+        # Supprimer les notifications liées à cette ressource
+        Notification.query.filter_by(ressource_id=ressource_id).delete()
+        
+        # Supprimer la ressource
         db.session.delete(res)
         db.session.commit()
+        
+        logger.info(f"Ressource {ressource_id} supprimée avec succès par l'utilisateur {current_user.id}")
         return jsonify({"success": True})
+        
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Erreur suppression ressource: {e}")
-        return jsonify({"error": "Erreur serveur"}), 500
+        logger.error(f"Erreur lors de la suppression de la ressource {ressource_id}: {str(e)}", exc_info=True)
+        return jsonify({"error": "Une erreur est survenue lors de la suppression"}), 500
 
 # Notifications pour quiz/flashcards
 @app.route('/api/quiz_notifications')

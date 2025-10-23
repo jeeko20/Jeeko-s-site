@@ -85,40 +85,40 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ================= NEON / GLOW UTILITIES ================= */
-:root{
+:root {
   --neon-color: #7c4dff; /* purple by default */
-  --neon-glow: 0 0 8px rgba(124,77,255,0.6), 0 0 24px rgba(124,77,255,0.25);
+  --neon-glow: 0 0 2px rgba(124,77,255,0.2), 0 0 4px rgba(124,77,255,0.1);
 }
 
 /* utility class to apply neon glow */
 .neon {
   position: relative;
-  transition: box-shadow .2s ease, transform .15s ease;
+  transition: box-shadow .2s ease, transform .15s ease, background-color .2s ease, color .2s ease;
   box-shadow: var(--neon-glow);
 }
 .neon:focus,
 .neon:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(124,77,255,0.5), 0 0 36px rgba(124,77,255,0.22);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 5px rgba(124,77,255,0.2), 0 0 9px rgba(124,77,255,0.1);
 }
 
 /* Variantes de neon plus intenses */
 .neon--purple {
   --neon-color: #7c4dff;
-  box-shadow: 0 6px 30px rgba(124,77,255,0.22), 0 0 40px rgba(124,77,255,0.26);
+  box-shadow: 0 2px 8px rgba(124,77,255,0.1), 0 0 10px rgba(124,77,255,0.08);
 }
 .neon--purple:hover,
 .neon--purple:focus {
-  box-shadow: 0 8px 40px rgba(124,77,255,0.34), 0 0 54px rgba(124,77,255,0.36);
+  box-shadow: 0 3px 10px rgba(124,77,255,0.15), 0 0 15px rgba(124,77,255,0.1);
 }
 
 .neon--red {
   --neon-color: #ff3b3b;
-  box-shadow: 0 6px 30px rgba(255,59,59,0.18), 0 0 40px rgba(255,59,59,0.22);
+  box-shadow: 0 2px 8px rgba(255,59,59,0.1), 0 0 10px rgba(255,59,59,0.1);
 }
 .neon--red:hover,
 .neon--red:focus {
-  box-shadow: 0 8px 40px rgba(255,59,59,0.28), 0 0 54px rgba(255,59,59,0.32);
+  box-shadow: 0 3px 10px rgba(255,59,59,0.15), 0 0 15px rgba(255,59,59,0.12);
 }
 
 /* Apply neon to common interactive elements by default */
@@ -135,7 +135,8 @@ button[class*=" btn-"],
 .btn-secondary,
 .logout-btn-visible {
   --neon-color: #7c4dff;
-  box-shadow: 0 2px 8px rgba(124,77,255,0.12);
+  box-shadow: 0 1px 4px rgba(124,77,255,0.08);
+  transition: box-shadow .2s ease, transform .15s ease, background-color .2s ease, color .2s ease;
 }
 
 /* Cards glow */
@@ -711,20 +712,20 @@ footer {
 
 /* ================= DARK MODE STYLES ================= */
 .dark-mode {
-  background-color: #0a0a0a;
+  background-color: #121212;
   color: #e0e0e0;
 }
 
 /* Body and main containers */
 .dark-mode body {
-  background-color: #0a0a0a;
+  background-color: #121212;
   color: #e0e0e0;
 }
 
 /* Navbar Dark */
 .dark-mode .custom-navbar {
-  background-color: #1a1a1a;
-  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+  background-color: #1e1e1e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid #333;
 }
 
@@ -757,10 +758,11 @@ footer {
 .dark-mode .btn-secondary,
 .dark-mode .logout-btn-visible {
   background-color: #1e1e1e;
-  color: #0ff;
+  color: #7cf8ff; /* Lighter cyan for better contrast */
   border: 1px solid #0ff;
-  box-shadow: 0 0 15px #0ff, 0 0 30px rgba(0, 255, 255, 0.5);
-  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3), 0 0 15px rgba(0, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 .dark-mode button:hover,
@@ -770,8 +772,9 @@ footer {
 .dark-mode .logout-btn-visible:hover {
   background-color: #0ff;
   color: #0a0a0a;
-  box-shadow: 0 0 20px #0ff, 0 0 40px #0ff, 0 0 60px rgba(0, 255, 255, 0.3);
-  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.2);
+  transform: translateY(-1px);
+  text-shadow: none;
 }
 
 /* Logout button specific */
@@ -796,7 +799,9 @@ footer {
 .dark-mode .developer-card,
 .dark-mode .notification-item,
 .dark-mode .modal-content {
-  background-color: #1a1a1a;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #333;
   color: #e0e0e0;
   border: 1px solid #333;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -819,10 +824,10 @@ footer {
 .dark-mode .form-control,
 .dark-mode .form-select,
 .dark-mode .input-search {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  border: 1px solid #333;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  background-color: #252525;
+  color: #f0f0f0;
+  border: 1px solid #444;
+  transition: all 0.2s ease;
 }
 
 .dark-mode input:focus,
@@ -831,15 +836,16 @@ footer {
 .dark-mode .form-control:focus,
 .dark-mode .form-select:focus,
 .dark-mode .input-search:focus {
-  background-color: #252525;
   border-color: #0ff;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  background-color: #2a2a2a;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
   outline: none;
 }
 
 .dark-mode input::placeholder,
 .dark-mode textarea::placeholder {
-  color: #888;
+  color: #aaa;
+  opacity: 1;
 }
 
 /* Modal Dark */
@@ -1028,7 +1034,7 @@ body.dark-mode .modal-panel {
 
 /* Alert messages Dark */
 .dark-mode .alert {
-  background-color: #1a1a1a;
+  background: #1a1a1a;
   color: #e0e0e0;
   border: 1px solid #333;
 }

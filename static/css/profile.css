@@ -68,11 +68,27 @@
   color: white;
   text-decoration: none;
   font-weight: bold;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .btn-edit-profile:hover {
-  background-color: #574fd6;
+  background-color: #7c6cf0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+}
+
+/* Styles pour le mode sombre */
+.dark-mode .btn-edit-profile {
+  background-color: #4a3bbd;
+  color: #fff;
+  border: 1px solid #5a4bcd;
+}
+
+.dark-mode .btn-edit-profile:hover {
+  background-color: #5a4bcd;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(90, 75, 205, 0.5);
 }
 
 /* Responsive */
@@ -147,12 +163,35 @@ nav button {
   cursor: pointer;
   font-size: 16px;
   color: #333;
+  transition: all 0.3s ease;
 }
 
 nav button.active {
-  border-bottom: 3px solid blue;
+  border-bottom: 3px solid #6c5ce7;
   font-weight: bold;
-  color: blue;
+  color: #6c5ce7;
+}
+
+/* Styles pour le mode sombre */
+.dark-mode nav {
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode nav button {
+  color: #e0e0e0;
+}
+
+.dark-mode nav button.active {
+  color: #8a7cff;
+  border-bottom: 3px solid #8a7cff;
+}
+
+.dark-mode nav button:hover {
+  color: #8a7cff;
+  background-color: rgba(138, 124, 255, 0.1);
 }
 
 /* MAIN / PAGES */
