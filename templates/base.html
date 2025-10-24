@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+d<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -920,12 +920,34 @@
   {%endblock%}
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
  <script>
+ // Créer un identifiant unique par page
+const pageId = window.location.pathname;
+
+// Vérifier si AOS a déjà été exécuté sur cette page
+const aosHistory = JSON.parse(sessionStorage.getItem('aosHistory') || '{}');
+
+if (!aosHistory[pageId]) {
+  // Première visite sur cette page - activer AOS
   AOS.init({
-    once:true,
-    duration:500,
-    easing:'ease-in-sine',
-    delay:100
+    once: true,
+    mirror: false,
+    duration: 800,
+    offset: 120,
+    easing: 'ease-in-out'
   });
+  
+  // Marquer cette page comme "animée"
+  aosHistory[pageId] = true;
+  sessionStorage.setItem('aosHistory', JSON.stringify(aosHistory));
+  
+  // Réinitialiser AOS après le chargement complet
+  window.addEventListener('load', () => {
+    AOS.refresh();
+  });
+} else {
+  // Visite suivante - désactiver AOS
+  AOS.init({ disable: true });
+}
 </script>
 </body>
 </html>
