@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Connexion</h2>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('auth.login') }}" class="mb-4">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Adresse email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Se connecter</button>
+                            <a href="{{ url_for('register') }}" class="btn btn-outline-secondary">Créer un compte</a>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">Mot de passe oublié ?</a>
+                    </div>
+
+                    {% if supabase_enabled %}
+                    <div class="text-center mb-3">
+                        <p class="text-muted">Ou connectez-vous avec</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="#" class="btn btn-outline-dark" id="google-login">
+                                <i class="fab fa-google me-2"></i> Google
+                            </a>
+                            <a href="#" class="btn btn-outline-primary" id="github-login">
+                                <i class="fab fa-github me-2"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="text-center">
+                        <p class="mb-1">
+                            <a href="{{ url_for('forgot_password') }}">Mot de passe oublié ?</a>
+                        </p>
+                        <p class="mb-0">
+                            Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if supabase_enabled %}
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+    // Initialisation de Supabase
+    const supabaseUrl = '{{ SUPABASE_URL }}';
+    const supabaseKey = '{{ SUPABASE_KEY }}';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Gestion de la connexion Google
+    document.getElementById('google-login').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/auth/callback'
+                }
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Erreur lors de la connexion avec Google:', error);
+            alert('Erreur lors de la connexion avec Google');
+        }
+    });
+
+    // Gestion de la connexion GitHub
+    document.getElementById('github-login').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'github',
+                options: {
+                    redirectTo: window.location.origin + '/auth/callback'
+                }
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Erreur lors de la connexion avec GitHub:', error);
+            alert('Erreur lors de la connexion avec GitHub');
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

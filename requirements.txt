@@ -17,3 +17,5 @@ google-auth==2.41.1
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.2
 googleapis-common-protos==1.70.0
+supabase==2.22.2
+gotrue==2.12.4

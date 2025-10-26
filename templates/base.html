@@ -174,7 +174,7 @@ d<!DOCTYPE html>
 
   <!-- Notifications et utilisateur -->
   <div class="nav-right">
-    {% if current_user.is_authenticated %}
+    {% if session.user %}
     <!-- Bouton Dark Mode Toggle -->
     <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
       <i class="fa-solid fa-moon" id="darkModeIcon"></i>
@@ -208,7 +208,7 @@ d<!DOCTYPE html>
     <!-- Menu utilisateur avec avatar -->
     <div class="user-menu">
       <div class="user-avatar">
-        <img src="{{ current_user.avatar_url }}" alt="Avatar" />
+        <img src="https://ui-avatars.com/api/?name={{ session.user.email|urlencode }}&background=random" alt="Avatar" />
         <div class="user-dropdown">
           <a href="{{url_for('profile')}}">
             <i class="fa-solid fa-user"></i>
@@ -222,7 +222,7 @@ d<!DOCTYPE html>
       </div>
       
       <!-- Bouton déconnexion visible -->
-      <a href="{{url_for('logout')}}" class="logout-btn-visible">
+      <a href="{{url_for('auth.logout')}}" class="logout-btn-visible">
         <i class="fa-solid fa-right-from-bracket"></i>
         Déconnexion
       </a>
@@ -232,24 +232,31 @@ d<!DOCTYPE html>
     <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
       <i class="fa-solid fa-moon" id="darkModeIcon"></i>
     </button>
-    
+    <ul class="nav justify-content-end">
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('auth.login') }}">Connexion</a>
+      </li>
+      <li class="nav-item">
+        <a class="btn btn-primary ms-2" href="{{ url_for('auth.register') }}">S'inscrire</a>
+      </li>
+    </ul>
     <!-- Boutons connexion/inscription -->
     <div class="auth-buttons">
-      <a class="btn-connexion pointer" style="cursor: pointer;"  id="openLogin">Connexion</a>
-      <a class="btn-signup pointer pointer" style="cursor: pointer;" id="openRegister">S'inscrire</a>
+      <a href="{{url_for('auth.login')}}" class="btn-connexion">Connexion</a>
+      <a href="{{url_for('auth.register')}}" class="btn-signup">S'inscrire</a>
     </div>
     {% endif %}
   </div>
 
   <!-- Menu Mobile -->
   <div class="menu-hamburger" id="menu-hamburger">
-    {% if current_user.is_authenticated %}
+    {% if session.user %}
     <!-- Avatar utilisateur mobile -->
     <div class="mobile-user-info">
-      <img src="{{ current_user.avatar_url }}" alt="Avatar" class="mobile-avatar" />
+      <img src="https://ui-avatars.com/api/?name={{ session.user.email|urlencode }}&background=random" alt="Avatar" class="mobile-avatar" />
       <div class="mobile-user-details">
-        <strong>{{ current_user.username }}</strong>
-        <span>{{ current_user.profile.complete_name if current_user.profile else 'Utilisateur' }}</span>
+        <strong>{{ session.user.email }}</strong>
+        <span>{{ session.user.email }}</span>
       </div>
     </div>
     <div class="dropdown-divider"></div>
@@ -265,14 +272,14 @@ d<!DOCTYPE html>
       <i class="fa-solid fa-users"></i>
       Communauté
     </a>
-    <a href="{{url_for('notes')}}" class="navbar-menu">
-      <i class="fa-solid fa-note-sticky"></i>
-      Mes notes
-    </a>
-    <a href="{{url_for('profile')}}" class="navbar-menu">
-      <i class="fa-solid fa-user"></i>
-      Profil
-    </a>
+    <a href="{{url_for('auth.login')}}" class="navbar-menu">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        Connexion
+      </a>
+      <a href="{{url_for('auth.register')}}" class="navbar-menu">
+        <i class="fa-solid fa-user-plus"></i>
+        Inscription
+      </a>
     <a href="{{url_for('about')}}" class="navbar-menu">
       <i class="fa-solid fa-info"></i>
       A propos
@@ -281,21 +288,19 @@ d<!DOCTYPE html>
       <i class="fa-solid fa-address-card"></i>
       Contact
     </a>
-    
-    {% if current_user.is_authenticated %}
-    <!-- Notification dans le menu mobile -->
-    <div class="mobile-notification">
-      <a href="{{url_for('profile')}}#overview" class="navbar-menu">
-        <i class="fa-solid fa-bell"></i>
-        Notifications <span class="mobile-notification-count" id="mobileNotificationCount">0</span>
+    <div id="user-menu-mobile" style="display: none;">
+      <div class="mobile-notification">
+        <a href="#" class="navbar-menu" id="notifications-link-mobile">
+          <i class="fa-regular fa-bell"></i>
+          Notifications
+        </a>
+      </div>
+      <div class="dropdown-divider"></div>
+      <a href="{{url_for('auth.logout')}}" class="navbar-menu logout-mobile">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Déconnexion
       </a>
     </div>
-    <div class="dropdown-divider"></div>
-    <a href="{{url_for('logout')}}" class="navbar-menu logout-mobile">
-      <i class="fa-solid fa-right-from-bracket"></i>
-      Déconnexion
-    </a>
-    {% else %}
     <a class="btn-connexion mobile-auth-btn pointer" style="cursor: pointer;" id="openLoginMobile">
       <i class="fa-solid fa-right-to-bracket"></i>
       Connexion
@@ -332,7 +337,7 @@ d<!DOCTYPE html>
       <button class="close-btn" id="closeModal">&times;</button>
 
       <!-- LOGIN -->
-      <form method="post" action="{{url_for('login')}}" class="form-wrapper" id="loginForm">
+      <form method="post" action="{{url_for('auth.login')}}" class="form-wrapper" id="loginForm">
         <h2>Connexion</h2>
         <div class="form-group">
           <input type="email" name="email" placeholder="Email" required>
@@ -416,9 +421,9 @@ d<!DOCTYPE html>
 
       <div class="footer-col">
         <h3 data-aos="zoom-in">Support</h3>
-        <p data-aos="zoom-in" onclick="window.location.href='{{url_for('about')}}#help'">Aide</p>
-        <p data-aos="zoom-in" onclick="window.location.href='{{url_for('contact')}}'">Contact</p>
-        <p data-aos="zoom-in" onclick="window.location.href='{{url_for('contact')}}#FAQ'">FAQ</p>
+        <p data-aos="zoom-in"><a href="{{url_for('about')}}#help" style="color: inherit; text-decoration: none;">Aide</a></p>
+        <p data-aos="zoom-in"><a href="{{url_for('contact')}}" style="color: inherit; text-decoration: none;">Contact</a></p>
+        <p data-aos="zoom-in"><a href="{{url_for('contact')}}#FAQ" style="color: inherit; text-decoration: none;">FAQ</a></p>
         <p data-aos="zoom-in">Made by David</p>
       </div>
     </div>
@@ -430,10 +435,10 @@ d<!DOCTYPE html>
 
   <!-- ================= SCRIPT ================= -->
   <script>
-  // Expose current user id for client-side permission checks
-  window.CURRENT_USER_ID = {{ (current_user.id if current_user.is_authenticated else none) | tojson }};
+  // Initialisation des variables globales
+  window.CURRENT_USER_ID = '{{ session.user.id if session and session.user else "" }}';
   
-    // ================= DARK MODE TOGGLE =================
+  // ================= DARK MODE TOGGLE =================
     const darkModeToggle = document.getElementById('darkModeToggle');
     const darkModeIcon = document.getElementById('darkModeIcon');
     const darkModeToggleMobile = document.getElementById('darkModeToggleMobile');
@@ -949,5 +954,8 @@ if (!aosHistory[pageId]) {
   AOS.init({ disable: true });
 }
 </script>
+
+<!-- Gestion de la session utilisateur -->
+<script src="{{ url_for('static', filename='js/user-session.js') }}"></script>
 </body>
 </html>

@@ -1,14 +1,17 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask, render_template,session, request, redirect,Response, url_for, flash, jsonify,send_from_directory
+from flask import Flask, render_template, session, request, redirect, Response, url_for, flash, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+# Flask-Login a été remplacé par Supabase Auth
+from auth import auth_bp
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
+import secrets
+from supabase import create_client, Client
 import PyPDF2
 from io import BytesIO
 from werkzeug.utils import secure_filename
@@ -40,13 +43,22 @@ def get_client_config():
 # -------------------- Configuration --------------------
 
 load_dotenv()
-# 🔥 Ajoute cette ligne ici
+
+# Configuration Supabase
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+
 if os.getenv("RENDER") is None:
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Création de l'application Flask
 app = Flask(__name__)
+
+# Enregistrement du blueprint d'authentification
+app.register_blueprint(auth_bp, url_prefix='/auth')
 app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret_key")
 app.permanent_session_lifetime = timedelta(days=7)
 
@@ -55,25 +67,16 @@ compress = Compress()
 compress.init_app(app)
 
 # -------------------- Database --------------------
-database_url = os.environ.get("DATABASE_URL")
-if not database_url: 
+database_url = os.environ.get("DIRECT_URL")  # <-- important pour les migrations
+if not database_url:
     raise RuntimeError("❌ DATABASE_URL introuvable !")
-if database_url.startswith("postgres://"):
-   database_url = database_url.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-# -------------------- Flask-Login --------------------
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
-login_manager.login_message_category = "warning"
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+# Authentification gérée par Supabase Auth
 
 # -------------------- Cloudinary --------------------
 cloudinary.config(
@@ -117,7 +120,7 @@ def upload_avatar_to_cloudinary(file):
         return None
 
 # -------------------- Modèles --------------------
-class User(UserMixin, db.Model):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
@@ -316,9 +319,7 @@ app.jinja_env.filters['time_ago'] = time_ago
 # -------------------- Before Request --------------------
 @app.before_request
 def update_last_seen():
-    if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow()
-        db.session.commit()
+    # Mise à jour de la dernière activité de l'utilisateur via Supabase si nécessaire
 
 # -------------------- Routes --------------------
 @app.route('/')
@@ -342,56 +343,208 @@ def api_stats():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        user = User.query.filter_by(email=email).first()
-        if user and user.is_active and check_password_hash(user.password, password):
-            login_user(user, remember=True)
-            flash('Connecté avec succès !', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('Email ou mot de passe incorrect.', 'danger')
-    return render_template('index.html')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        remember = True if request.form.get('remember') else False
+        
+        try:
+            # Essayer d'abord avec Supabase
+            if supabase:
+                try:
+                    # Tenter de se connecter avec Supabase
+                    response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                    user_data = response.user
+                    
+                    # Vérifier si l'utilisateur existe dans notre base de données
+                    user = User.query.filter_by(email=email).first()
+                    
+                    if not user:
+                        # Créer l'utilisateur dans notre base de données s'il n'existe pas
+                        user = User(
+                            email=email,
+                            username=email.split('@')[0],
+                            password=generate_password_hash(password, method='sha256'),
+                            is_active=True
+                        )
+                        db.session.add(user)
+                        db.session.commit()
+                        
+                        # Créer un profil pour l'utilisateur
+                        profile = Profile(user_id=user.id, email=email)
+                        db.session.add(profile)
+                        db.session.commit()
+                    
+                    login_user(user, remember=remember)
+                    return redirect(url_for('profile'))
+                    
+                except Exception as e:
+                    logger.error(f"Erreur d'authentification Supabase: {str(e)}")
+                    
+            # Si Supabase n'est pas configuré ou en cas d'échec, essayer l'authentification locale
+            user = User.query.filter_by(email=email).first()
+            
+            if not user or not check_password_hash(user.password, password):
+                flash('Email ou mot de passe incorrect', 'danger')
+                return redirect(url_for('login'))
+                
+            login_user(user, remember=remember)
+            return redirect(url_for('profile'))
+            
+        except Exception as e:
+            flash('Une erreur est survenue lors de la connexion', 'danger')
+            logger.error(f"Erreur de connexion: {str(e)}")
+            return redirect(url_for('login'))
+        
+    return render_template('login.html', supabase_enabled=bool(supabase))
+
+@app.route('/auth/callback')
+def auth_callback():
+    """Gère le retour de l'authentification OAuth"""
+    try:
+        if not supabase:
+            flash("L'authentification externe n'est pas configurée", 'danger')
+            return redirect(url_for('login'))
+            
+        # Récupérer la session depuis l'URL
+        response = supabase.auth.get_session()
+        
+        if not response or not response.user:
+            flash("Échec de l'authentification. Veuillez réessayer.", 'danger')
+            return redirect(url_for('login'))
+            
+        user_data = response.user
+        
+        # Vérifier si l'utilisateur existe déjà
+        user = User.query.filter_by(email=user_data.email).first()
+        
+        if not user:
+            # Créer un nouvel utilisateur
+            username = user_data.user_metadata.get('username') or user_data.email.split('@')[0]
+            
+            # S'assurer que le nom d'utilisateur est unique
+            base_username = username
+            counter = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            # Créer l'utilisateur
+            user = User(
+                username=username,
+                email=user_data.email,
+                password=generate_password_hash(secrets.token_urlsafe(16)),  # Mot de passe aléatoire
+                is_active=True
+            )
+            
+            db.session.add(user)
+            db.session.flush()  # Pour obtenir l'ID de l'utilisateur
+            
+            # Créer un profil vide
+            profile = Profile(
+                user_id=user.id,
+                email=user_data.email,
+                complete_name=user_data.user_metadata.get('full_name', '')
+            )
+            
+            db.session.add(profile)
+            db.session.commit()
+            
+            flash('Compte créé avec succès !', 'success')
+        
+        # Connecter l'utilisateur
+        login_user(user)
+        
+        # Rediriger vers la page de profil ou la page d'accueil
+        next_page = request.args.get('next') or url_for('profile')
+        return redirect(next_page)
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'authentification OAuth: {str(e)}")
+        flash("Une erreur est survenue lors de l'authentification. Veuillez réessayer.", 'danger')
+        return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        security_question = request.form['security_question']
-        security_answer = request.form['security_answer']
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
         
-        if not all([username, email, password, security_question, security_answer]):
-            flash('Tous les champs sont obligatoires.', 'danger')
-            return render_template('index.html')
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        security_question = request.form.get('security_question')
+        security_answer = request.form.get('security_answer')
+        
+        if password != confirm_password:
+            flash('Les mots de passe ne correspondent pas', 'danger')
+            return redirect(url_for('register'))
             
         if User.query.filter_by(email=email).first():
-            flash('Cet email est déjà utilisé.', 'danger')
-        elif User.query.filter_by(username=username).first():
-            flash('Ce nom d\'utilisateur est déjà pris.', 'danger')
-        else:
-            hash_password = generate_password_hash(password)
+            flash('Un compte existe déjà avec cet email', 'danger')
+            return redirect(url_for('register'))
+            
+        if User.query.filter_by(username=username).first():
+            flash("Ce nom d'utilisateur est déjà pris", 'danger')
+            return redirect(url_for('register'))
+            
+        try:
+            # Si Supabase est configuré, enregistrer l'utilisateur d'abord dans Supabase
+            if supabase:
+                try:
+                    # Créer l'utilisateur dans Supabase
+                    response = supabase.auth.sign_up({
+                        "email": email,
+                        "password": password,
+                        "options": {
+                            "data": {
+                                "username": username,
+                                "full_name": username
+                            }
+                        }
+                    })
+                    
+                    # Vérifier si l'inscription a réussi
+                    if not response.user:
+                        raise Exception("Échec de l'inscription avec Supabase")
+                        
+                except Exception as e:
+                    logger.error(f"Erreur d'inscription Supabase: {str(e)}")
+                    flash("Erreur lors de l'inscription avec Supabase. Veuillez réessayer.", 'danger')
+                    return redirect(url_for('register'))
+            
+            # Créer l'utilisateur dans notre base de données locale
+            hashed_password = generate_password_hash(password, method='sha256')
+            
             new_user = User(
-                username=username, 
-                email=email, 
-                password=hash_password,
+                username=username,
+                email=email,
+                password=hashed_password,
                 security_question=security_question,
-                security_answer=security_answer.lower()
+                security_answer=generate_password_hash(security_answer.lower(), method='sha256')
             )
+            
             db.session.add(new_user)
-            try:
-                db.session.commit()
-                flash('Inscription réussie, veuillez creer un profile !', 'success')
-                user = User.query.filter_by(email=email).first()      
-                login_user(user, remember=True)
-                return redirect(url_for('profile'))
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Erreur lors de l'inscription : {e}")
-                flash("Une erreur est survenue. Veuillez réessayer.", "danger")
-    return render_template('index.html')
+            db.session.commit()
+            
+            # Créer un profil vide pour le nouvel utilisateur
+            profile = Profile(user_id=new_user.id, email=email)
+            db.session.add(profile)
+            db.session.commit()
+            
+            flash('Compte créé avec succès ! Vous pouvez maintenant vous connecter.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash("Une erreur est survenue lors de la création du compte", 'danger')
+            logger.error(f"Erreur lors de l'inscription: {str(e)}")
+            
+    return render_template('register.html', supabase_enabled=bool(supabase))
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
