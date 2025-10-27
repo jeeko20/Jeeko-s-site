@@ -1,613 +1,78 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Eudushare - Partagez et apprenez à maîtriser Windows avec des astuces, commandes CMD, tutoriels d'installation et ressources gratuites.">
-    <meta name="keywords" content="Windows, astuces Windows, commandes CMD, installation Windows, tutoriel, Eudushare, partage de connaissances">
-    <meta name="author" content="Eudushare">
-    <title>Eudushare - Partagez la connaissance, maîtrisez Windows</title>
-    <!-- Font Awesome pour les icônes -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- Lien vers le fichier CSS externe -->
-    <link rel="stylesheet" href="{{url_for('static',filename='css/systeme.css')}}">
-</head>
-<body>
-    <!-- Loader -->
-    <div id="loader">
-        <div class="loader-spinner"></div>
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/systeme.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ================= HEADER SYSTEME ================= -->
+<header  class="mt-5 systeme-header">
+  <div class="systeme-hero">
+    <h1>Systèmes d'Exploitation</h1>
+    <p>Maîtrisez Windows, Linux et les concepts fondamentaux des OS</p>
+    <div class="header-stats">
+      <div class="stat">
+        <span class="number">15+</span>
+        <span class="label">Ressources</span>
+      </div>
+      <div class="stat">
+        <span class="number">50+</span>
+        <span class="label">Commandes</span>
+      </div>
+      <div class="stat">
+        <span class="number">20+</span>
+        <span class="label">Astuces</span>
+      </div>
     </div>
-    <!-- Barre de progression -->
-    <div id="progress-container">
-        <div id="progress-bar"></div>
-    </div>
-    <!-- Header avec navigation -->
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <a href="#" class="logo"><i class="fas fa-laptop-code"></i> Eudu<span>share</span></a>
-                <div class="header-actions">
-                    <button class="mobile-menu-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
-                    <button class="theme-toggle" aria-label="Basculer le thème"><i class="fas fa-moon"></i></button>
-                </div>
-                <nav>
-                    <ul>
-                        <li><a href="#accueil" class="nav-link active">Accueil</a></li>
-                        <li><a href="#astuces" class="nav-link">Astuces Windows</a></li>
-                        <li><a href="#cmd" class="nav-link">Commandes CMD</a></li>
-                        <li><a href="#installation" class="nav-link">Installation</a></li>
-                        <li><a href="#ressources" class="nav-link">Ressources</a></li>
-                        <li><a href="#contact" class="nav-link">Contact</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </header>
-    <!-- Bouton scroll to top -->
-    <div id="scrollToTop" title="Retour en haut"><i class="fas fa-arrow-up"></i></div>
-    <!-- Contenu principal -->
-    <main>
-        <!-- Page d'accueil -->
-        <section id="accueil" class="page active">
-            <div class="hero">
-                <div class="hero-content">
-                    <h1>Maîtrisez Windows comme un pro</h1>
-                    <p>Découvrez des astuces méconnues, des commandes CMD puissantes et des guides d'installation pas à pas pour devenir un expert des systèmes d'exploitation.</p>
-                    <a href="#astuces" class="btn nav-link">Explorer les astuces</a>
-                </div>
-            </div>
-            <div class="container">
-                <div class="features">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-lightbulb"></i></div>
-                        <h3>100+ Astuces Windows</h3>
-                        <p>Optimisez votre PC, découvrez des raccourcis cachés et améliorez votre productivité avec nos astuces testées.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-terminal"></i></div>
-                        <h3>Commandes CMD & PowerShell</h3>
-                        <p>Apprenez à automatiser, dépanner et administrer votre système comme un professionnel de l'informatique.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fas fa-download"></i></div>
-                        <h3>Guides d'installation complets</h3>
-                        <p>Suivez nos tutoriels détaillés pour installer Windows 10/11 proprement, avec ou sans dual-boot.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Page Astuces Windows -->
-        <section id="astuces" class="page">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Astuces Windows Pro</h2>
-                    <p>Des dizaines d'astuces pour booster vos performances, sécuriser votre système et découvrir des fonctionnalités cachées.</p>
-                </div>
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-keyboard"></i></div>
-                        <div class="card-content">
-                            <h3>Raccourcis clavier ultimes</h3>
-                            <p>Win + V pour l'historique du presse-papiers, Win + . pour les emojis, Ctrl + Maj + Esc pour le gestionnaire des tâches...</p>
-                            <a href="#" class="btn">Voir les 25 raccourcis</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-bolt"></i></div>
-                        <div class="card-content">
-                            <h3>Accélérer Windows au démarrage</h3>
-                            <p>Désactivez les programmes inutiles au démarrage, nettoyez le registre et libérez de la RAM pour un PC 3x plus rapide.</p>
-                            <a href="#" class="btn">Optimiser maintenant</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-shield-alt"></i></div>
-                        <div class="card-content">
-                            <h3>Sécurité Windows avancée</h3>
-                            <p>Configurez le pare-feu, activez BitLocker, gérez les permissions et protégez-vous contre les ransomwares.</p>
-                            <a href="#" class="btn">Renforcer la sécurité</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-paint-brush"></i></div>
-                        <div class="card-content">
-                            <h3>Personnalisation avancée</h3>
-                            <p>Changez les thèmes, les icônes, la transparence, le menu démarrer... Transformez Windows à votre image.</p>
-                            <a href="#" class="btn">Personnaliser</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-sync-alt"></i></div>
-                        <div class="card-content">
-                            <h3>Réparer Windows sans réinstall</h3>
-                            <p>Utilisez sfc /scannow, DISM, les points de restauration et le mode sans échec pour tout réparer.</p>
-                            <a href="#" class="btn">Voir les solutions</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-hdd"></i></div>
-                        <div class="card-content">
-                            <h3>Gestion des disques et partitions</h3>
-                            <p>Redimensionnez, fusionnez, formatez des partitions sans perdre vos données avec nos guides pas à pas.</p>
-                            <a href="#" class="btn">Gérer les disques</a>
-                        </div>
-                    </div>
-                    <!-- NOUVELLES ASTUCES AJOUTÉES -->
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-search"></i></div>
-                        <div class="card-content">
-                            <h3>Recherche Windows ultra-rapide</h3>
-                            <p>Utilisez "Everything" (logiciel tiers) pour trouver n'importe quel fichier en moins d'une seconde, bien plus rapide que la recherche native.</p>
-                            <a href="#" class="btn">Essayer Everything</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-battery-full"></i></div>
-                        <div class="card-content">
-                            <h3>Optimiser la batterie sur PC portable</h3>
-                            <p>Générez un rapport détaillé de la batterie avec `powercfg /batteryreport` et suivez nos conseils pour prolonger son autonomie.</p>
-                            <a href="#" class="btn">Générer le rapport</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-users"></i></div>
-                        <div class="card-content">
-                            <h3>Créer un compte local (sans Microsoft)</h3>
-                            <p>Préservez votre vie privée en créant un compte local lors de l'installation ou en modifiant les paramètres existants.</p>
-                            <a href="#" class="btn">Guide pas à pas</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-cloud-download-alt"></i></div>
-                        <div class="card-content">
-                            <h3>Sauvegarde Windows intégrée</h3>
-                            <p>Configurez l'historique des fichiers et les images système pour protéger vos données contre toute perte.</p>
-                            <a href="#" class="btn">Configurer la sauvegarde</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-gamepad"></i></div>
-                        <div class="card-content">
-                            <h3>Mode Jeu & Optimisation Gaming</h3>
-                            <p>Activez le mode jeu, mettez à jour vos pilotes graphiques et désactivez les services inutiles pour les meilleures performances.</p>
-                            <a href="#" class="btn">Optimiser pour le jeu</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-wifi"></i></div>
-                        <div class="card-content">
-                            <h3>Réparer une connexion Wi-Fi instable</h3>
-                            <p>Utilisez `netsh winsock reset` et `netsh int ip reset` en CMD pour réinitialiser la pile réseau et résoudre les problèmes de connexion.</p>
-                            <a href="#" class="btn">Réparer le Wi-Fi</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Page Commandes CMD -->
-        <section id="cmd" class="page">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Commandes CMD & PowerShell</h2>
-                    <p>Les commandes indispensables pour administrer, dépanner et automatiser votre système Windows.</p>
-                </div>
-                <div class="command-list">
-                    <h3>Commandes système de base</h3>
-                    <div class="command-item">
-                        <p><strong>ipconfig /all</strong> - Affiche la configuration IP détaillée de votre ordinateur</p>
-                        <code>ipconfig /all</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>systeminfo</strong> - Affiche des informations détaillées sur le système d'exploitation, le matériel et les correctifs</p>
-                        <code>systeminfo</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>tasklist | findstr "chrome"</strong> - Liste les processus Chrome en cours</p>
-                        <code>tasklist | findstr "chrome"</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>shutdown /s /t 0</strong> - Éteint immédiatement l'ordinateur</p>
-                        <code>shutdown /s /t 0</code>
-                    </div>
-                </div>
-                <div class="command-list">
-                    <h3>Commandes de gestion des fichiers</h3>
-                    <div class="command-item">
-                        <p><strong>dir /w</strong> - Liste le contenu d'un répertoire en format large</p>
-                        <code>dir /w</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>xcopy source destination /E /H /C /I</strong> - Copie un dossier récursivement avec tous les fichiers cachés</p>
-                        <code>xcopy C:\source D:\backup /E /H /C /I</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>del /S /Q *.tmp</strong> - Supprime tous les fichiers .tmp dans le dossier et sous-dossiers sans confirmation</p>
-                        <code>del /S /Q *.tmp</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>tree /F</strong> - Affiche l'arborescence des dossiers et fichiers</p>
-                        <code>tree /F</code>
-                    </div>
-                </div>
-                <div class="command-list">
-                    <h3>Commandes réseau avancées</h3>
-                    <div class="command-item">
-                        <p><strong>ping -t google.com</strong> - Ping continu jusqu'à interruption (Ctrl+C)</p>
-                        <code>ping -t google.com</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>tracert google.com</strong> - Trace le chemin réseau jusqu'à la destination</p>
-                        <code>tracert google.com</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>netstat -ano</strong> - Affiche toutes les connexions actives avec les PID</p>
-                        <code>netstat -ano</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>nslookup google.com</strong> - Interroge les serveurs DNS pour obtenir l'adresse IP</p>
-                        <code>nslookup google.com</code>
-                    </div>
-                </div>
-                <div class="command-list">
-                    <h3>Commandes PowerShell utiles</h3>
-                    <div class="command-item">
-                        <p><strong>Get-Process | Sort-Object CPU -Descending | Select-Object -First 5</strong> - Top 5 processus gourmands en CPU</p>
-                        <code>Get-Process | Sort-Object CPU -Descending | Select-Object -First 5</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>Get-NetIPAddress</strong> - Affiche les adresses IP réseau (équivalent moderne d'ipconfig)</p>
-                        <code>Get-NetIPAddress</code>
-                    </div>
-                    <div class="command-item">
-                        <p><strong>Get-Service | Where-Object {$_.Status -eq "Running"}</strong> - Liste les services actifs</p>
-                        <code>Get-Service | Where-Object {$_.Status -eq "Running"}</code>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Page Installation Windows -->
-        <section id="installation" class="page">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Installation de Windows 10/11</h2>
-                    <p>Guide pas à pas avec captures d'écran, conseils d'experts et solutions aux erreurs courantes.</p>
-                </div>
-                <div class="step-by-step">
-                    <h3>Préparation avant l'installation</h3>
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h4>Sauvegardez vos données</h4>
-                            <p>Utilisez un disque dur externe ou OneDrive pour sauvegarder documents, photos, musiques et paramètres. Exportez aussi vos mots de passe navigateur.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h4>Téléchargez l'outil de création de média</h4>
-                            <p>Rendez-vous sur le site officiel Microsoft, téléchargez "Media Creation Tool" et créez une clé USB bootable (min. 8 Go).</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h4>Vérifiez la compatibilité (surtout pour Windows 11)</h4>
-                            <p>Utilisez "PC Health Check" pour vérifier le TPM 2.0, Secure Boot, CPU compatible et 4 Go de RAM minimum.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="step-by-step">
-                    <h3>Processus d'installation</h3>
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h4>Boot sur la clé USB</h4>
-                            <p>Redémarrez, appuyez sur F2/F12/DEL pour entrer dans le BIOS/UEFI. Mettez la clé USB en premier dans l'ordre de boot. Sauvegardez et quittez.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h4>Configuration initiale</h4>
-                            <p>Choisissez langue, clavier, puis "Installer maintenant". Entrez votre clé de produit (optionnel) ou cliquez sur "Je n'ai pas de clé produit".</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h4>Partitionnement du disque</h4>
-                            <p>Sélectionnez le disque, supprimez les partitions existantes (si réinstall), puis cliquez sur "Nouveau" > "Appliquer". Windows crée automatiquement les partitions nécessaires.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <h4>Attendez la copie des fichiers</h4>
-                            <p>Le PC va redémarrer plusieurs fois. Ne débranchez pas la clé avant le redémarrage final. L'installation prend 20 à 45 minutes.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="step-by-step">
-                    <h3>Configuration post-installation</h3>
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h4>Paramètres initiaux</h4>
-                            <p>Choisissez votre région, clavier, compte Microsoft (ou local), confidentialité (désactivez la télémétrie si souhaité) et mot de passe.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h4>Installation des pilotes</h4>
-                            <p>Windows Update installe la plupart des pilotes. Pour les cartes graphiques NVIDIA/AMD, téléchargez les pilotes depuis le site officiel.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h4>Optimisations essentielles</h4>
-                            <p>Désactivez les apps inutiles au démarrage, installez un antivirus (Windows Defender est suffisant), activez les sauvegardes et les mises à jour automatiques.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Page Ressources -->
-        <section id="ressources" class="page">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Ressources & Téléchargements</h2>
-                    <p>Guides PDF, outils gratuits, checklists et vidéos pour approfondir vos connaissances.</p>
-                </div>
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-book"></i></div>
-                        <div class="card-content">
-                            <h3>Guide ultime Windows 11 (PDF)</h3>
-                            <p>120 pages de conseils, raccourcis, commandes et optimisations. Parfait pour les débutants comme les pros.</p>
-                            <a href="#" class="btn" onclick="downloadPDF('guide_windows_11.pdf'); return false;"><i class="fas fa-download"></i> Télécharger (5 Mo)</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-tools"></i></div>
-                        <div class="card-content">
-                            <h3>Outils système recommandés</h3>
-                            <p>CCleaner, Rufus, HWiNFO, Everything, BleachBit... Notre sélection des meilleurs outils gratuits pour administrer Windows.</p>
-                            <a href="#" class="btn">Voir la liste</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-video"></i></div>
-                        <div class="card-content">
-                            <h3>Tutoriels vidéo YouTube</h3>
-                            <p>Installation pas à pas, optimisation, dépannage... Retrouvez toutes nos vidéos sur notre chaîne YouTube.</p>
-                            <a href="https://youtube.com/@Eudushare" target="_blank" class="btn"><i class="fab fa-youtube"></i> Voir la chaîne</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-check-square"></i></div>
-                        <div class="card-content">
-                            <h3>Checklist d'installation</h3>
-                            <p>Téléchargez notre checklist PDF pour ne rien oublier lors de votre prochaine installation de Windows.</p>
-                            <a href="#" class="btn" onclick="downloadPDF('checklist_installation.pdf'); return false;"><i class="fas fa-download"></i> Télécharger</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-file-code"></i></div>
-                        <div class="card-content">
-                            <h3>Scripts d'automatisation</h3>
-                            <p>Scripts PowerShell pour nettoyer, sauvegarder, surveiller les performances... Prêts à l'emploi.</p>
-                            <a href="#" class="btn">Télécharger les scripts</a>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-img"><i class="fas fa-question-circle"></i></div>
-                        <div class="card-content">
-                            <h3>FAQ & Support communautaire</h3>
-                            <p>Questions fréquentes, forum d'entraide, et support technique pour résoudre vos problèmes spécifiques.</p>
-                            <a href="#" class="btn">Accéder au forum</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <!-- Page Contact -->
-        <section id="contact" class="page">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Contactez-nous</h2>
-                    <p>Une question ? Une suggestion ? Notre équipe est là pour vous aider.</p>
-                </div>
-                <div class="contact-form">
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <label for="name">Nom complet</label>
-                            <input type="text" id="name" class="form-control" required placeholder="Entrez votre nom">
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" class="form-control" required placeholder="votre@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label for="subject">Sujet</label>
-                            <input type="text" id="subject" class="form-control" required placeholder="Objet de votre message">
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Message</label>
-                            <textarea id="message" class="form-control" required placeholder="Décrivez votre question ou suggestion..."></textarea>
-                        </div>
-                        <button type="submit" class="btn">Envoyer le message</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-    </main>
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3><i class="fas fa-laptop-code"></i> Eudushare</h3>
-                    <p>Votre plateforme de partage pour maîtriser Windows, Linux et les systèmes d'exploitation. Cours gratuits, astuces pro et communauté active.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                        <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>Navigation rapide</h3>
-                    <ul>
-                        <li><a href="#accueil" class="nav-link">Accueil</a></li>
-                        <li><a href="#astuces" class="nav-link">Astuces Windows</a></li>
-                        <li><a href="#cmd" class="nav-link">Commandes CMD</a></li>
-                        <li><a href="#installation" class="nav-link">Installation</a></li>
-                        <li><a href="#ressources" class="nav-link">Ressources</a></li>
-                        <li><a href="#contact" class="nav-link">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Liens utiles</h3>
-                    <ul>
-                        <li><a href="#" target="_blank">Documentation Microsoft</a></li>
-                        <li><a href="#" target="_blank">Forum Microsoft Technet</a></li>
-                        <li><a href="#" target="_blank">GitHub Eudushare</a></li>
-                        <li><a href="#" target="_blank">Politique de confidentialité</a></li>
-                        <li><a href="#" target="_blank">Mentions légales</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Newsletter</h3>
-                    <p>Recevez chaque mois nos meilleures astuces et mises à jour.</p>
-                    <form class="newsletter-form">
-                        <input type="email" placeholder="Votre email" class="form-control" style="margin-bottom: 10px;">
-                        <button type="submit" class="btn btn-outline" style="width: 100%;">S'abonner</button>
-                    </form>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; 2025 Eudushare. Tous droits réservés. Conçu avec ❤️ pour les passionnés d'informatique.</p>
-            </div>
-        </div>
-    </footer>
-    <script>
-        // Simuler le chargement
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                document.getElementById('loader').classList.add('hidden');
-            }, 1500);
-        });
-        // Navigation SPA améliorée
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.nav-link');
-            const pages = document.querySelectorAll('.page');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const nav = document.querySelector('nav ul');
-            const themeToggle = document.querySelector('.theme-toggle');
-            const scrollToTopBtn = document.getElementById('scrollToTop');
-            const progressBar = document.getElementById('progress-bar');
-            // Gestion de la navigation
-            function navigateTo(targetId) {
-                // Retirer la classe active de tous les liens et pages
-                navLinks.forEach(l => l.classList.remove('active'));
-                pages.forEach(page => page.classList.remove('active'));
-                // Ajouter la classe active au lien cliqué
-                const activeLink = document.querySelector(`[href="#${targetId}"]`);
-                if (activeLink) activeLink.classList.add('active');
-                // Afficher la page correspondante
-                const targetPage = document.getElementById(targetId);
-                if (targetPage) targetPage.classList.add('active');
-                // Scroll en haut de la page
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                // Fermer le menu mobile
-                if (window.innerWidth <= 768) {
-                    nav.classList.remove('show');
-                }
-                // Mettre à jour l'URL sans recharger
-                history.pushState(null, null, `#${targetId}`);
-            }
-            navLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href').substring(1);
-                    navigateTo(targetId);
-                });
-            });
-            // Gérer le retour en arrière du navigateur
-            window.addEventListener('popstate', function() {
-                const hash = window.location.hash.substring(1) || 'accueil';
-                navigateTo(hash);
-            });
-            // Menu mobile toggle
-            mobileMenuBtn.addEventListener('click', function() {
-                nav.classList.toggle('show');
-            });
-            // Fermer le menu mobile en cliquant ailleurs
-            document.addEventListener('click', function(e) {
-                if (window.innerWidth <= 768 &&
-                    !e.target.closest('nav') &&
-                    !e.target.closest('.mobile-menu-btn')) {
-                    nav.classList.remove('show');
-                }
-            });
-            // Mode sombre
-            themeToggle.addEventListener('click', function() {
-                document.body.classList.toggle('dark-mode');
-                const icon = themeToggle.querySelector('i');
-                if (document.body.classList.contains('dark-mode')) {
-                    icon.classList.replace('fa-moon', 'fa-sun');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    icon.classList.replace('fa-sun', 'fa-moon');
-                    localStorage.setItem('theme', 'light');
-                }
-            });
-            // Charger le thème sauvegardé
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                themeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
-            }
-            // Scroll to top button
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 300) {
-                    scrollToTopBtn.classList.add('show');
-                } else {
-                    scrollToTopBtn.classList.remove('show');
-                }
-                // Barre de progression
-                const scrollTop = window.scrollY;
-                const docHeight = document.body.scrollHeight - window.innerHeight;
-                const scrollPercent = (scrollTop / docHeight) * 100;
-                progressBar.style.width = scrollPercent + '%';
-            });
-            scrollToTopBtn.addEventListener('click', function() {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-            // Formulaire de contact (simulé)
-            const contactForm = document.getElementById('contactForm');
-            if (contactForm) {
-                contactForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    alert('Merci pour votre message ! Notre équipe vous répondra sous 48h.');
-                    contactForm.reset();
-                });
-            }
-            // Fonction de téléchargement simulée
-            window.downloadPDF = function(filename) {
-                alert(`Téléchargement de "${filename}" simulé. Dans une vraie application, le fichier serait téléchargé.`);
-            }
-            // Ajuster l'affichage du menu en fonction de la taille de l'écran
-            function handleResize() {
-                if (window.innerWidth > 768) {
-                    nav.classList.remove('show');
-                    nav.removeAttribute('style');
-                }
-            }
-            window.addEventListener('resize', handleResize);
-            handleResize(); // Appel initial
-        });
-    </script>
-</body>
-</html>
+  </div>
+</header>
+
+<!-- ================= NAVIGATION INTERNE ================= -->
+<nav class="systeme-nav">
+  <ul>
+    <li><a href="#windows" class="nav-link active" data-section="windows">Windows</a></li>
+    <li><a href="#linux" class="nav-link" data-section="linux">Linux</a></li>
+    <li><a href="#commandes" class="nav-link" data-section="commandes">Commandes</a></li>
+    <li><a href="#astuces" class="nav-link" data-section="astuces">Astuces</a></li>
+    <li><a href="#ressources" class="nav-link" data-section="ressources">Ressources</a></li>
+  </ul>
+</nav>
+
+<!-- ================= CONTENU PRINCIPAL ================= -->
+<main class="systeme-main">
+  
+  <!-- SECTION WINDOWS -->
+  <section id="windows" class="systeme-section active">
+    {% include 'systeme/windows.html' %}
+  </section>
+
+  <!-- SECTION LINUX -->
+  <section id="linux" class="systeme-section">
+    {% include 'systeme/linux.html' %}
+  </section>
+
+  <!-- SECTION COMMANDES -->
+  <section id="commandes" class="systeme-section">
+    {% include 'systeme/commandes.html' %}
+  </section>
+
+  <!-- SECTION ASTUCES -->
+  <section id="astuces" class="systeme-section">
+    {% include 'systeme/astuces.html' %}
+  </section>
+
+  <!-- SECTION RESSOURCES -->
+  <section id="ressources" class="systeme-section">
+    {% include 'systeme/ressources.html' %}
+  </section>
+</main>
+
+<!-- ================= SCROLL TO TOP ================= -->
+<button class="scroll-top" id="scrollTop">
+  <i class="fas fa-chevron-up"></i>
+</button>
+
+<script src="{{ url_for('static', filename='js/systeme.js') }}"></script>
+
+{% endblock %}

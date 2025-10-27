@@ -1006,6 +1006,7 @@ def api_discussions():
     discussions = query.all()
     return jsonify([{
         "id": d.id,
+        "user_id": d.user_id,
         "title": d.title,
         "subject": d.subject,
         "content": d.content,
@@ -1048,6 +1049,27 @@ def create_discussion():
         "username": new_discussion.user.username,
         "comment_count": 0
     }), 201
+
+
+@app.route('/api/discussion/<int:discussion_id>', methods=['DELETE'])
+@login_required
+def delete_discussion(discussion_id):
+    """Supprime une discussion (seul l'auteur peut supprimer)."""
+    discussion = Discussion.query.get(discussion_id)
+    if not discussion:
+        return jsonify({"error": "Discussion introuvable."}), 404
+
+    if discussion.user_id != current_user.id:
+        return jsonify({"error": "Vous n'êtes pas autorisé·e à supprimer cette discussion."}), 403
+
+    try:
+        db.session.delete(discussion)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.exception(e)
+        return jsonify({"success": False, "error": "Erreur lors de la suppression."}), 500
 
 
 

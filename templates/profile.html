@@ -66,6 +66,18 @@
   border-radius: 12px;
   font-weight: 500;
 }
+/* Highlight pour la section paramètres lorsqu'on clique sur 'Modifier le profil' */
+.settings-highlight {
+  animation: settings-pulse 3s ease-in-out;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  border-radius: 8px;
+}
+@keyframes settings-pulse {
+  0% { background-color: rgba(255,255,255,0); }
+  10% { background-color: rgba(255,250,200,0.95); }
+  60% { background-color: rgba(255,250,200,0.65); }
+  100% { background-color: rgba(255,255,255,0); }
+}
 </style>
 {%endblock%}
  {%block content%}
@@ -281,6 +293,29 @@
       // Afficher la section correspondante
       const target = tab.getAttribute("data-page");
       document.getElementById(target).classList.add("active");
+    });
+  });
+
+  // Lorsque l'utilisateur clique sur 'Modifier le profil' dans l'en-tête,
+  // on active l'onglet 'Paramètres', on scrolle vers la section et on met en évidence.
+  document.querySelectorAll('.btn-edit-profile').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      // activer l'onglet settings
+      const settingsTab = Array.from(tabs).find(t => t.getAttribute('data-page') === 'settings');
+      if (settingsTab) settingsTab.click();
+
+      // scroll et mise en évidence
+      const settingsSection = document.getElementById('settings');
+      if (settingsSection) {
+        setTimeout(() => {
+          settingsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // ajouter la classe de highlight
+          settingsSection.classList.add('settings-highlight');
+          // supprimer la classe après l'animation
+          setTimeout(() => settingsSection.classList.remove('settings-highlight'), 3000);
+        }, 150); // petit délai pour s'assurer que la section est visible
+      }
     });
   });
 

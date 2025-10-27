@@ -223,6 +223,29 @@
   color: #007bff;
 }
 
+  /* Améliore la lisibilité du lien 'Partager une ressource' en clair et sombre */
+  .action-rapide .share-ressource {
+    cursor: pointer;
+    color: #212529; /* texte foncé par défaut */
+    font-weight: 600;
+  }
+  .action-rapide .share-ressource:hover {
+    text-decoration: underline;
+    color: #0b5ed7;
+  }
+
+  /* Si l'utilisateur a un thème sombre, forcer une couleur claire pour une bonne lisibilité */
+  @media (prefers-color-scheme: dark) {
+    .action-rapide .share-ressource {
+      color: #ffffff; /* blanc pur pour bonne lisibilité en dark */
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+    .action-rapide .share-ressource:hover {
+      color: #ffffff;
+      opacity: 0.92;
+    }
+  }
+
 .ressource-title {
   font-size: 1.1em;
   font-weight: 600;
@@ -755,6 +778,21 @@
 
 // Wire delete ressource actions (delegated since elements may be re-rendered)
 document.addEventListener('click', function(e) {
+    const delDisc = e.target.closest('.btn-delete-discussion');
+    if (delDisc) {
+      const id = delDisc.dataset.discussionId;
+      if (!confirm('Supprimer cette discussion ?')) return;
+      fetch(`/api/discussion/${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            loadAllDiscussions();
+          } else {
+            alert(data.error || 'Impossible de supprimer la discussion');
+          }
+        }).catch(() => alert('Erreur réseau'));
+      return;
+    }
   const del = e.target.closest('.btn-delete-ressource');
   if (!del) return;
   const id = del.dataset.ressourceId;
@@ -955,6 +993,7 @@ document.addEventListener('click', function(e) {
               <span onclick="openComments(${d.id})" style="cursor:pointer;">
                 <i class="fa-solid fa-comment"></i> ${d.comment_count} réponse${d.comment_count !== 1 ? 's' : ''} 
               </span>
+              ${window.CURRENT_USER_ID && window.CURRENT_USER_ID === d.user_id ? `<button class="btn-delete-discussion" data-discussion-id="${d.id}" style="background:none;border:none;color:#d9534f;cursor:pointer;padding:0;margin-left:8px;">Supprimer</button>` : ''}
             </p>
           </div>
         </div>
