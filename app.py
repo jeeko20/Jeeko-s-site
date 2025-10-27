@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask, render_template,session, request, redirect,Response, url_for, flash, jsonify,send_from_directory
+from flask import Flask, render_template,session, request, redirect,Response, url_for, flash, jsonify,send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,6 +24,10 @@ import io
 import json
 import pickle
 import tempfile
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from zipfile import ZipFile
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -1072,6 +1076,77 @@ def delete_discussion(discussion_id):
         return jsonify({"success": False, "error": "Erreur lors de la suppression."}), 500
 
 
+@app.route('/api/ressources/download', methods=['POST'])
+@login_required
+def api_ressources_download():
+    """Proxy côté serveur pour télécharger une ou plusieurs URLs et renvoyer
+    soit le fichier unique (stream) soit un ZIP contenant plusieurs fichiers.
+
+    Corps JSON attendu: { "files": [url1, url2, ...], "title": "nom" }
+    """
+    data = request.get_json() or {}
+    files = data.get('files') or []
+    title = data.get('title') or 'resources'
+    if not files:
+        return jsonify({"error": "Aucune URL fournie."}), 400
+
+    logger.info('API download request received. files=%s title=%s user_id=%s', files, title, getattr(current_user, 'id', None))
+
+    # Préparer une session requests avec retries pour plus de robustesse
+    session = requests.Session()
+    retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504])
+    adapter = HTTPAdapter(max_retries=retries)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+    # Si un seul fichier : proxy stream direct
+    if len(files) == 1:
+        url = files[0]
+        try:
+            r = session.get(url, stream=True, timeout=30,
+                            headers={'User-Agent': 'Mozilla/5.0 (compatible; EduShare/1.0)'},
+                            allow_redirects=True)
+        except Exception as e:
+            logger.exception('Erreur fetch remote file for URL: %s', url)
+            return jsonify({"error": "Impossible de récupérer le fichier distant.", "detail": str(e)}), 502
+
+        if r.status_code != 200:
+            logger.warning('Remote file returned status %s for URL: %s', r.status_code, url)
+            return jsonify({"error": f"Fichier distant introuvable (status {r.status_code}).", "status": r.status_code}), 502
+
+        # Déterminer un nom de fichier
+        filename = secure_filename(url.split('?')[0].split('/')[-1]) or f"file_{int(datetime.utcnow().timestamp())}"
+        response = Response(r.iter_content(chunk_size=4096), content_type=r.headers.get('Content-Type', 'application/octet-stream'))
+        response.headers.set('Content-Disposition', f'attachment; filename="{filename}"')
+        return response
+
+    # Plusieurs fichiers -> créer ZIP en mémoire
+    try:
+        zip_io = io.BytesIO()
+        with ZipFile(zip_io, 'w') as zf:
+            for idx, url in enumerate(files, start=1):
+                try:
+                    # idem pour les requêtes multiples : utiliser la session avec retries
+                    rr = session.get(url, timeout=30,
+                                     headers={'User-Agent': 'Mozilla/5.0 (compatible; EduShare/1.0)'},
+                                     allow_redirects=True)
+                    if rr.status_code != 200:
+                        logger.warning('Skip file %s status %s', url, rr.status_code)
+                        continue
+                    fname = secure_filename(url.split('?')[0].split('/')[-1]) or f"file_{idx}"
+                    zf.writestr(f"{str(idx).zfill(2)}_{fname}", rr.content)
+                except Exception:
+                    logger.exception('Erreur lors de la récupération d\'un fichier pour le ZIP')
+                    continue
+
+        zip_io.seek(0)
+        zip_name = secure_filename(f"{title}.zip")
+        return send_file(zip_io, mimetype='application/zip', as_attachment=True, download_name=zip_name)
+    except Exception as e:
+        logger.exception('Erreur création ZIP')
+        return jsonify({"error": "Erreur lors de la création du ZIP."}), 500
+
+
 
 
 @app.route('/api/save_ressource/<int:ressource_id>', methods=['POST'])
@@ -1289,10 +1364,7 @@ def robots():
 public_routes = [
     "home",
     "about",
-    "profile",
     "communaute",
-    "videos",
-    "notes",
     "learn_html",
     "learn_css",
     "contact",

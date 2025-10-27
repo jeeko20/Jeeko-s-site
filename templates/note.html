@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Notes | Eudushare{% endblock %}
-{% block description %}Consulte et partage tes notes sur Eudushare.{% endblock %}
+{% block title %}Notes | Univloop{% endblock %}
+{% block description %}Consulte et partage tes notes sur Univloop.{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/note.css') }}">
@@ -576,9 +576,9 @@ function renderRessources(list, containerId) {
                             <i class="fa-solid fa-eye"></i> Voir
                         </button>
                     `}
-                    <button class="btn-download" onclick="window.open('${r.files[0].download_url || r.files[0].file_url}', '_blank')">
-                        <i class="fa-solid fa-download"></i> Télécharger
-                    </button>
+          <button class="btn-download" onclick="downloadRessource(${r.id})">
+            <i class="fa-solid fa-download"></i> Télécharger
+          </button>
                 </div>
             </div>`;
     });
@@ -599,6 +599,81 @@ function renderPagination(totalPages, currentPage, onPageChange, containerId, pa
     if (mainContainer) {
       mainContainer.after(paginationContainer);
     }
+  }
+
+  /* ==========================
+     Téléchargement des ressources (images / pdf / multiple)
+     (même logique que dans communaute)
+  ========================== */
+  function getFilenameFromUrl(url){
+    try{ const u = url.split('?')[0]; return decodeURIComponent(u.substring(u.lastIndexOf('/')+1)) || 'file'; }catch(e){return 'file';}
+  }
+  function sanitizeFilename(name){ return name.replace(/[^a-z0-9._-]/gi, '_'); }
+  async function downloadUrlAsFile(url, filename){
+    try{ const resp = await fetch(url); if(!resp.ok) throw new Error('Erreur réseau'); const blob = await resp.blob(); const a = document.createElement('a'); const objectUrl = URL.createObjectURL(blob); a.href = objectUrl; a.download = filename || getFilenameFromUrl(url); document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=> URL.revokeObjectURL(objectUrl), 10000); }
+    catch(err){
+      console.error('download error', err);
+      try{
+        const resp2 = await fetch('/api/ressources/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: [url], title: filename || '' })
+        });
+        if(!resp2.ok) throw new Error('Proxy failed');
+        const blob2 = await resp2.blob();
+        const a2 = document.createElement('a');
+        const objectUrl2 = URL.createObjectURL(blob2);
+        a2.href = objectUrl2;
+        a2.download = filename || getFilenameFromUrl(url) || 'download';
+        document.body.appendChild(a2);
+        a2.click();
+        a2.remove();
+        setTimeout(()=> URL.revokeObjectURL(objectUrl2), 10000);
+        return;
+      }catch(proxyErr){
+        console.error('proxy download error', proxyErr);
+        alert('Erreur lors du téléchargement (CORS ou réseau).');
+      }
+    }
+  }
+  function ensureLibs(){ return new Promise((resolve)=>{ const libs = []; if(!window.JSZip){ libs.push(new Promise(res=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js'; s.onload=res; s.onerror=res; document.head.appendChild(s); })); } if(!window.saveAs){ libs.push(new Promise(res=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'; s.onload=res; s.onerror=res; document.head.appendChild(s); })); } if(libs.length===0) return resolve(); Promise.all(libs).then(()=>resolve()).catch(()=>resolve()); }); }
+  async function downloadRessource(ressourceId){
+    let resObj = (typeof ressources !== 'undefined' && ressources ? ressources.find(r=>r.id == ressourceId) : null) || (typeof filteredRessources !== 'undefined' && filteredRessources ? filteredRessources.find(r=>r.id == ressourceId) : null);
+    if(!resObj){ try{ const r = await fetch(`/api/ressources`); const all = await r.json(); resObj = all.find(x=>x.id==ressourceId); }catch(e){}
+    }
+    if(!resObj) return alert('Ressource introuvable pour le téléchargement.');
+    const files = resObj.files || [];
+    if(files.length === 0) return alert('Aucun fichier disponible.');
+    if(files.length === 1){ const url = files[0].download_url || files[0].file_url; const name = getFilenameFromUrl(url) || (`ressource-${resObj.id}`); return downloadUrlAsFile(url, name); }
+    // Plusieurs fichiers -> demander au serveur de créer un ZIP (évite problèmes CORS)
+    try{
+      const urls = files.map(f => f.download_url || f.file_url);
+      const resp = await fetch('/api/ressources/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: urls, title: resObj.title || `ressources-${resObj.id}` })
+      });
+      if(!resp.ok) throw new Error('Proxy ZIP failed');
+      const blob = await resp.blob();
+      const zipName = sanitizeFilename(resObj.title || `ressources-${resObj.id}`) + '.zip';
+      const a = document.createElement('a');
+      const objectUrl = URL.createObjectURL(blob);
+      a.href = objectUrl;
+      a.download = zipName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=> URL.revokeObjectURL(objectUrl), 10000);
+    }catch(err){ console.error('proxy zip error', err); alert('Erreur lors du téléchargement du ZIP.'); }
+  
+  // Exposer les helpers et la fonction principale globalement pour les onclick inline
+  try{
+    window.getFilenameFromUrl = getFilenameFromUrl;
+    window.sanitizeFilename = sanitizeFilename;
+    window.downloadUrlAsFile = downloadUrlAsFile;
+    window.ensureLibs = ensureLibs;
+    window.downloadRessource = downloadRessource;
+  }catch(e){ console.warn('Impossible d\'exposer download helpers globalement', e); }
   }
   
   if (totalPages <= 1) {

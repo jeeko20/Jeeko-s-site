@@ -6,7 +6,7 @@
    <!-- tag pour google indexer -->
    <meta name="google-site-verification" content="-lkVyoDkxGU99sD66nXIJ9BZIeqmtMXi0qES7V58_Xs" />
    
-   <title>{% block title %}Eudushare{% endblock %}</title>
+   <title>{% block title %}Univloop{% endblock %}</title>
   <link rel="stylesheet" href="{{url_for('static',filename='css/base.css')}}">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -131,6 +131,35 @@
     .notification-item[data-type="ressource"] {
       border-left: 3px solid #2196f3;
     }
+    
+    /* Animation du logo Univloop avec plusieurs couleurs */
+    .logo-animated {
+      background: linear-gradient(
+        90deg,
+        #6c5ce7,
+        #a29bfe,
+        #00b894,
+        #00cec9,
+        #0984e3,
+        #6c5ce7
+      );
+      background-size: 500% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradient 12s ease infinite;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
+    }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      25% { background-position: 25% 50%; }
+      50% { background-position: 50% 50%; }
+      75% { background-position: 75% 50%; }
+      100% { background-position: 100% 50%; }
+    }
 
     /* Modal responsive tweaks */
     @media (max-width: 900px) {
@@ -159,8 +188,8 @@
  
 <!-- ================= NAVBAR ================= -->
 <nav class="custom-navbar">
-  <!-- Logo -->
-  <h3>Eudushare</h3> 
+  <!-- Logo avec animation de dégradé de couleurs -->
+  <h3 class="logo-animated">Univloop</h3>
 
   <!-- Menu Desktop -->
   <div class="menu">
@@ -394,7 +423,7 @@
   <footer>
     <div class="footer-content">
       <div class="footer-col">
-        <h3 data-aos="zoom-in">Eudushare</h3>
+        <h3 data-aos="zoom-in">Univloop</h3>
         <p data-aos="zoom-in">La plateforme de partage de connaissances pour les étudiants en informatique</p>
       </div>
 
@@ -424,7 +453,7 @@
     </div>
 
     <div class="footer-bottom">
-      <p>© 2025 Eudushare. Tous droits réservés.</p>
+      <p>© 2025 Univloop. Tous droits réservés.</p>
     </div>
   </footer>
 

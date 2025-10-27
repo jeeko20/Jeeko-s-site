@@ -8,4 +8,4 @@ Disallow: /security_question
 Disallow: /debug
 Disallow: /api
 
-Sitemap: https://www.tonsite.com/sitemap.xml
+Sitemap: https://www.univloop.site/sitemap.xml
