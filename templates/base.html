@@ -949,34 +949,32 @@
   {%endblock%}
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
  <script>
- // Créer un identifiant unique par page
-const pageId = window.location.pathname;
-
-// Vérifier si AOS a déjà été exécuté sur cette page
-const aosHistory = JSON.parse(sessionStorage.getItem('aosHistory') || '{}');
-
-if (!aosHistory[pageId]) {
-  // Première visite sur cette page - activer AOS
-  AOS.init({
-    once: true,
-    mirror: false,
-    duration: 800,
-    offset: 120,
-    easing: 'ease-in-out'
-  });
-  
-  // Marquer cette page comme "animée"
-  aosHistory[pageId] = true;
-  sessionStorage.setItem('aosHistory', JSON.stringify(aosHistory));
-  
-  // Réinitialiser AOS après le chargement complet
-  window.addEventListener('load', () => {
-    AOS.refresh();
-  });
-} else {
-  // Visite suivante - désactiver AOS
-  AOS.init({ disable: true });
-}
+// Version simplifiée et sécurisée
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                once: true,
+                mirror: false,
+                duration: 800,
+                offset: 120,
+                easing: 'ease-in-out',
+                disable: false // Toujours activer
+            });
+            
+            // Rafraîchir après un délai pour le contenu dynamique
+            setTimeout(() => {
+                try {
+                    AOS.refresh();
+                } catch (e) {
+                    console.warn('AOS refresh error:', e);
+                }
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('AOS initialization error:', error);
+    }
+});
 </script>
 </body>
 </html>
