@@ -1,13 +1,6 @@
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cours HTML Complet</title>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/learn_html.css')}}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-   
+{%extends 'base.html'%}
+{%block extra_css%}
+<link href="{{url_for('static', filename='css/learn_html.css')}}" rel="stylesheet">
    <style>
         /* Pour la SPA */
         section {
@@ -37,41 +30,38 @@
             font-weight: bolder;
         }
     </style>
-</head>
-
-<body>
-
-    <header>
-        <a href="{{url_for('home')}}"><i class="fa-solid fa-arrow-right"></i></a>
+{%endblock%}
+{%block content%}
+    <header style="margin-top: 100px;">
         <h1>📘 Cours CSS</h1>
         <p>Apprenez toutes les balises HTML et leurs utilisations</p>
     </header>
 
-    <nav>
-        <a href="#acceuil">Accueil</a>
-        <a href="#ressources">ressources</a>
-        <a href="#css-bases">Bases</a>
-        <a href="#css-texte">Texte</a>
-        <a href="#css-background">Fonds</a>
-        <a href="#css-boxmodel">Box Model</a>
-        <a href="#css-position">Positionnement</a>
-        <a href="#css-flexbox">Flexbox</a>
-        <a href="#css-flexbox-advanced">Flexbox Avancé</a>
-        <a href="#css-grid">Grid</a>
-        <a href="#css-grid-advanced">Grid Avancé</a>
-        <a href="#css-pseudo">Pseudo-Classes/Éléments</a>
-        <a href="#css-object-fit">Object Fit</a>
-        <a href="#css-scroll-snap">Scroll Snap</a>
-        <a href="#css-filters">Filtres & Blend</a>
-        <a href="#css-responsive">Responsive</a>
-        <a href="#css-variables">Variables CSS</a>
-        <a href="#css-transitions-advanced">Transitions Avancées</a>
-        <a href="#css-animations">Animations</a>
-        <a href="#css-animations-advanced">Animations Avancées</a>
-        <a href="#css-logical">CSS Logique (RTL)</a>
-        <a href="#css-containment">Performance (Containment)</a>
-        <a href="#css-supports">Détection navigateur (@supports)</a>
-    </nav>
+  <nav class="page-nav">
+    <a href="#acceuil">Accueil</a>
+    <a href="#ressources">ressources</a>
+    <a href="#css-bases">Bases</a>
+    <a href="#css-texte">Texte</a>
+    <a href="#css-background">Fonds</a>
+    <a href="#css-boxmodel">Box Model</a>
+    <a href="#css-position">Positionnement</a>
+    <a href="#css-flexbox">Flexbox</a>
+    <a href="#css-flexbox-advanced">Flexbox Avancé</a>
+    <a href="#css-grid">Grid</a>
+    <a href="#css-grid-advanced">Grid Avancé</a>
+    <a href="#css-pseudo">Pseudo-Classes/Éléments</a>
+    <a href="#css-object-fit">Object Fit</a>
+    <a href="#css-scroll-snap">Scroll Snap</a>
+    <a href="#css-filters">Filtres & Blend</a>
+    <a href="#css-responsive">Responsive</a>
+    <a href="#css-variables">Variables CSS</a>
+    <a href="#css-transitions-advanced">Transitions Avancées</a>
+    <a href="#css-animations">Animations</a>
+    <a href="#css-animations-advanced">Animations Avancées</a>
+    <a href="#css-logical">CSS Logique (RTL)</a>
+    <a href="#css-containment">Performance (Containment)</a>
+    <a href="#css-supports">Détection navigateur (@supports)</a>
+  </nav>
 
 
     <div class="container">
@@ -7077,15 +7067,12 @@ style.css
 
             </section>
     </div>
-
-    <footer>
-        &copy; 2025 Mon Site d'Apprentissage | Cours HTML complet
-    </footer>
-
+{%endblock%}
+{%block script%}
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const sections = document.querySelectorAll("section");
-            const links = document.querySelectorAll("nav a");
+            const links = document.querySelectorAll(".page-nav a");
 
             links.forEach(link => {
                 link.addEventListener("click", (e) => {
@@ -7099,9 +7086,4 @@ style.css
             });
         });
     </script>
-
-
-
-</body>
-
-</html>
+{%endblock%}

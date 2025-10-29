@@ -233,11 +233,10 @@ class Question(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
     question_type = db.Column(db.String(20), default='multiple_choice')
-    options = db.Column(db.JSON)
+    options = db.Column(db.JSON)  # ← C'est correct
     correct_answer = db.Column(db.String(10), nullable=False)
     explanation = db.Column(db.Text)
     order = db.Column(db.Integer, default=0)
- 
 class Flashcard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -1986,6 +1985,531 @@ def delete_comment(comment_id):
         db.session.rollback()
         logger.error(f"Erreur suppression commentaire: {e}")
         return jsonify({"error": "Erreur serveur"}), 500
+
+from functools import wraps
+# -------------------- Configuration Clé API --------------------
+API_KEYS = {
+    "edushare_admin_2024": "admin",  # Clé: Valeur (vous pouvez avoir plusieurs clés)
+}
+
+def require_api_key(f):
+    """Décorateur pour vérifier la clé API"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
+        
+        if not api_key:
+            return jsonify({"success": False, "error": "Clé API manquante"}), 401
+        
+        if api_key not in API_KEYS:
+            return jsonify({"success": False, "error": "Clé API invalide"}), 401
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+# -------------------- Routes API Publiques avec Clé API --------------------
+def validate_and_fix_question_data(question_data):
+    """Valide et corrige les données des questions"""
+    fixed_data = question_data.copy()
+    
+    # S'assurer que les options sont une liste valide
+    options = fixed_data.get('options', [])
+    
+    if not isinstance(options, list):
+        fixed_data['options'] = []
+    else:
+        # Filtrer les valeurs None, 'undefined' (toutes casses) ou vides
+        cleaned_options = []
+        for opt in options:
+            if opt is None:
+                continue
+            if isinstance(opt, str) and opt.strip().lower() == "undefined":
+                continue
+            if isinstance(opt, str) and opt.strip() == "":
+                continue
+            cleaned_options.append(opt)
+
+        fixed_data['options'] = cleaned_options
+
+        # Si toutes les options sont invalides, créer des options par défaut
+        if len(fixed_data['options']) == 0:
+            fixed_data['options'] = ["Option A", "Option B", "Option C", "Option D"]
+    
+    # Normaliser les options en un dictionnaire {a:..., b:..., c:..., d:...}
+    # Accepter soit une liste soit un dict en entrée
+    normalized_options = {}
+    try:
+        # Si options est une dict déjà, respectons l'ordre a,b,c,d si présent
+        if isinstance(question_data.get('options'), dict):
+            for key in ['a', 'b', 'c', 'd']:
+                val = question_data['options'].get(key)
+                if val is not None and not (isinstance(val, str) and val.strip().lower() == 'undefined') and not (isinstance(val, str) and val.strip() == ''):
+                    normalized_options[key] = val
+        else:
+            # options is list-like
+            opts = fixed_data.get('options', [])
+            # already cleaned list in fixed_data['options'] above
+            for idx, val in enumerate(fixed_data['options']):
+                if idx == 0:
+                    normalized_options['a'] = val
+                elif idx == 1:
+                    normalized_options['b'] = val
+                elif idx == 2:
+                    normalized_options['c'] = val
+                elif idx == 3:
+                    normalized_options['d'] = val
+    except Exception:
+        # Fallback: create default options
+        normalized_options = {'a': 'Option A', 'b': 'Option B', 'c': 'Option C', 'd': 'Option D'}
+
+    # Garantir au moins a et b
+    if 'a' not in normalized_options:
+        normalized_options['a'] = 'Option A'
+    if 'b' not in normalized_options:
+        normalized_options['b'] = 'Option B'
+
+    fixed_data['options'] = normalized_options
+
+    # S'assurer que la réponse correcte est valide et la convertir en clé ('a'|'b'|'c'|'d')
+    correct_answer = fixed_data.get('correct_answer')
+    chosen_key = None
+
+    # Normalize candidate
+    if isinstance(correct_answer, str):
+        ca = correct_answer.strip()
+        # if the client provided the textual value, find the matching key
+        for k, v in normalized_options.items():
+            # compare stripped strings
+            try:
+                if isinstance(v, str) and v.strip() == ca:
+                    chosen_key = k
+                    break
+            except Exception:
+                continue
+
+        # if client already provided a key like 'a' or 'b', accept it if present
+        if ca.lower() in normalized_options.keys():
+            chosen_key = ca.lower()
+
+    # default to 'a' if no match
+    if not chosen_key:
+        chosen_key = list(normalized_options.keys())[0]
+
+    fixed_data['correct_answer'] = chosen_key
+    
+    return fixed_data
+
+@app.route('/api/public/quiz', methods=['POST'])
+@require_api_key
+def api_public_create_quiz():
+    """
+    Route API publique pour créer un quiz pour n'importe quel utilisateur
+    Authentification par clé API
+    """
+    try:
+        data = request.get_json()
+        
+        # Récupérer l'ID de l'utilisateur cible
+        target_user_id = data.get('user_id')
+        if not target_user_id:
+            return jsonify({"success": False, "error": "user_id requis"}), 400
+        
+        # Vérifier que l'utilisateur cible existe
+        target_user = User.query.get(target_user_id)
+        if not target_user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        
+        # Créer le quiz
+        new_quiz = Quiz(
+            user_id=target_user_id,
+            title=data['title'],
+            subject=data['subject'],
+            description=data.get('description', ''),
+            time_limit=data.get('time_limit', 0),
+            is_public=data.get('is_public', True)
+        )
+        
+        db.session.add(new_quiz)
+        db.session.flush()
+        
+        # Ajouter les questions
+        for i, q_data in enumerate(data.get('questions', [])):
+            # LOG: dump raw incoming question payload to help debug 'undefined' answers
+            try:
+                logger.debug(f"Incoming question payload (index={i}): {q_data!r}")
+            except Exception:
+                pass
+
+            # VALIDER ET CORRIGER LES DONNÉES DE LA QUESTION
+            q_data = validate_and_fix_question_data(q_data)
+
+            try:
+                logger.debug(f"Validated question payload (index={i}): {q_data!r}")
+            except Exception:
+                pass
+
+            question = Question(
+                quiz_id=new_quiz.id,
+                question_text=q_data['question_text'],
+                question_type=q_data.get('question_type', 'multiple_choice'),
+                options=q_data['options'],  # ← Utiliser les options corrigées
+                correct_answer=q_data['correct_answer'],
+                explanation=q_data.get('explanation', ''),
+                order=i
+            )
+            db.session.add(question)
+        
+        db.session.commit()
+        # Après commit, loguer les réponses correctes stockées pour vérification
+        try:
+            saved_questions = Question.query.filter_by(quiz_id=new_quiz.id).order_by(Question.order).all()
+            for sq in saved_questions:
+                logger.info(f"Saved question id={sq.id} correct_answer={sq.correct_answer!r}")
+        except Exception as _e:
+            logger.warning(f"Impossible de lister les questions enregistrées: {_e}")
+        # 🔥 NOTIFICATION : Créer des notifications pour les utilisateurs de la même filière
+        try:
+            if new_quiz.is_public and target_user.profile:
+                users_same_year_and_field = User.query.join(Profile).filter(
+                    Profile.year_of_study == target_user.profile.year_of_study,
+                    Profile.field_of_study == target_user.profile.field_of_study,
+                    User.is_active == True,
+                    User.id != target_user.id
+                ).all()
+
+                for user in users_same_year_and_field:
+                    notification = QuizNotification(
+                        user_id=user.id,
+                        quiz_id=new_quiz.id,
+                        message=f"{target_user.username} a créé un nouveau quiz : {new_quiz.title}",
+                        notification_type='quiz'
+                    )
+                    db.session.add(notification)
+
+                db.session.commit()
+                logger.info(f"✅ {len(users_same_year_and_field)} notifications quiz créées via API")
+        except Exception as _e:
+            # Ne pas faire échouer la création principale si la notification échoue
+            db.session.rollback()
+            logger.error(f"⚠️ Erreur lors de la création des notifications quiz API: {_e}")
+
+        logger.info(f"✅ Quiz créé via API pour l'utilisateur {target_user_id}: {new_quiz.title}")
+        return jsonify({
+            "success": True, 
+            "quiz_id": new_quiz.id,
+            "message": f"Quiz créé avec succès pour {target_user.username}",
+            "data": {
+                "quiz_id": new_quiz.id,
+                "title": new_quiz.title,
+                "subject": new_quiz.subject,
+                "question_count": len(data.get('questions', [])),
+                "created_for": target_user.username
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur création quiz API: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/public/flashcard', methods=['POST'])
+@require_api_key
+def api_public_create_flashcard():
+    """
+    Route API publique pour créer des flashcards pour n'importe quel utilisateur
+    Authentification par clé API
+    """
+    try:
+        data = request.get_json()
+        
+        # Récupérer l'ID de l'utilisateur cible
+        target_user_id = data.get('user_id')
+        if not target_user_id:
+            return jsonify({"success": False, "error": "user_id requis"}), 400
+        
+        # Vérifier que l'utilisateur cible existe
+        target_user = User.query.get(target_user_id)
+        if not target_user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"}), 404
+        
+        # Créer la flashcard
+        new_flashcard = Flashcard(
+            user_id=target_user_id,
+            title=data['title'],
+            subject=data['subject'],
+            description=data.get('description', ''),
+            is_public=data.get('is_public', True)
+        )
+        
+        db.session.add(new_flashcard)
+        db.session.flush()
+        
+        # Ajouter les cartes
+        for i, card_data in enumerate(data.get('cards', [])):
+            card = FlashcardItem(
+                flashcard_id=new_flashcard.id,
+                front_content=card_data['front_content'],
+                back_content=card_data['back_content'],
+                order=i
+            )
+            db.session.add(card)
+        
+        db.session.commit()
+        # 🔥 NOTIFICATION : Créer des notifications pour les flashcards
+        try:
+            if new_flashcard.is_public and target_user.profile:
+                users_same_year_and_field = User.query.join(Profile).filter(
+                    Profile.year_of_study == target_user.profile.year_of_study,
+                    Profile.field_of_study == target_user.profile.field_of_study,
+                    User.is_active == True,
+                    User.id != target_user.id
+                ).all()
+
+                for user in users_same_year_and_field:
+                    notification = QuizNotification(
+                        user_id=user.id,
+                        flashcard_id=new_flashcard.id,
+                        message=f"{target_user.username} a créé de nouvelles flashcards : {new_flashcard.title}",
+                        notification_type='flashcard'
+                    )
+                    db.session.add(notification)
+
+                db.session.commit()
+                logger.info(f"✅ {len(users_same_year_and_field)} notifications flashcards créées via API")
+        except Exception as _e:
+            db.session.rollback()
+            logger.error(f"⚠️ Erreur lors de la création des notifications flashcards API: {_e}")
+
+        logger.info(f"✅ Flashcards créées via API pour l'utilisateur {target_user_id}: {new_flashcard.title}")
+        return jsonify({
+            "success": True, 
+            "flashcard_id": new_flashcard.id,
+            "message": f"Flashcards créées avec succès pour {target_user.username}",
+            "data": {
+                "flashcard_id": new_flashcard.id,
+                "title": new_flashcard.title,
+                "subject": new_flashcard.subject,
+                "card_count": len(data.get('cards', [])),
+                "created_for": target_user.username
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur création flashcards API: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/public/users', methods=['GET'])
+@require_api_key
+def api_public_get_users():
+    """
+    Route API publique pour obtenir la liste des utilisateurs
+    """
+    try:
+        # Récupérer les paramètres de recherche
+        search = request.args.get('search', '')
+        limit = request.args.get('limit', 50, type=int)
+        
+        # Construire la requête
+        query = User.query
+        
+        if search:
+            query = query.filter(
+                db.or_(
+                    User.username.ilike(f'%{search}%'),
+                    User.email.ilike(f'%{search}%')
+                )
+            )
+        
+        users = query.order_by(User.created_at.desc()).limit(limit).all()
+        
+        return jsonify({
+            "success": True,
+            "users": [{
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "created_at": user.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "profile_completed": bool(user.profile),
+                "quiz_count": len(user.quizzes),
+                "flashcard_count": len(user.flashcards)
+            } for user in users]
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erreur récupération utilisateurs API: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/public/batch_quizzes', methods=['POST'])
+@require_api_key
+def api_public_batch_create_quizzes():
+    """
+    Route API pour créer plusieurs quizzes en une seule requête
+    """
+    try:
+        data = request.get_json()
+        quizzes_data = data.get('quizzes', [])
+        
+        results = []
+        
+        for quiz_data in quizzes_data:
+            target_user_id = quiz_data.get('user_id')
+            if not target_user_id:
+                results.append({"success": False, "error": "user_id manquant", "title": quiz_data.get('title')})
+                continue
+            
+            target_user = User.query.get(target_user_id)
+            if not target_user:
+                results.append({"success": False, "error": "Utilisateur non trouvé", "user_id": target_user_id})
+                continue
+            
+            # Créer le quiz
+            new_quiz = Quiz(
+                user_id=target_user_id,
+                title=quiz_data['title'],
+                subject=quiz_data['subject'],
+                description=quiz_data.get('description', ''),
+                time_limit=quiz_data.get('time_limit', 0),
+                is_public=quiz_data.get('is_public', True)
+            )
+            
+            db.session.add(new_quiz)
+            db.session.flush()
+            
+            # Ajouter les questions
+            for i, q_data in enumerate(quiz_data.get('questions', [])):
+                question = Question(
+                    quiz_id=new_quiz.id,
+                    question_text=q_data['question_text'],
+                    question_type=q_data.get('question_type', 'multiple_choice'),
+                    options=q_data.get('options', []),
+                    correct_answer=q_data['correct_answer'],
+                    explanation=q_data.get('explanation', ''),
+                    order=i
+                )
+                db.session.add(question)
+            # Créer notifications pour ce quiz si public
+            try:
+                if new_quiz.is_public and target_user.profile:
+                    users_same_year_and_field = User.query.join(Profile).filter(
+                        Profile.year_of_study == target_user.profile.year_of_study,
+                        Profile.field_of_study == target_user.profile.field_of_study,
+                        User.is_active == True,
+                        User.id != target_user.id
+                    ).all()
+
+                    for user in users_same_year_and_field:
+                        notification = QuizNotification(
+                            user_id=user.id,
+                            quiz_id=new_quiz.id,
+                            message=f"{target_user.username} a créé un nouveau quiz : {new_quiz.title}",
+                            notification_type='quiz'
+                        )
+                        db.session.add(notification)
+            except Exception as _e:
+                logger.error(f"⚠️ Erreur notification batch quiz: {_e}")
+            
+            results.append({
+                "success": True,
+                "quiz_id": new_quiz.id,
+                "title": new_quiz.title,
+                "user_id": target_user_id,
+                "username": target_user.username
+            })
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"{len([r for r in results if r['success']])} quizzes créés avec succès",
+            "results": results
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur création batch quizzes API: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/public/batch_flashcards', methods=['POST'])
+@require_api_key
+def api_public_batch_create_flashcards():
+    """
+    Route API pour créer plusieurs flashcards en une seule requête
+    """
+    try:
+        data = request.get_json()
+        flashcards_data = data.get('flashcards', [])
+        
+        results = []
+        
+        for flashcard_data in flashcards_data:
+            target_user_id = flashcard_data.get('user_id')
+            if not target_user_id:
+                results.append({"success": False, "error": "user_id manquant", "title": flashcard_data.get('title')})
+                continue
+            
+            target_user = User.query.get(target_user_id)
+            if not target_user:
+                results.append({"success": False, "error": "Utilisateur non trouvé", "user_id": target_user_id})
+                continue
+            
+            # Créer la flashcard
+            new_flashcard = Flashcard(
+                user_id=target_user_id,
+                title=flashcard_data['title'],
+                subject=flashcard_data['subject'],
+                description=flashcard_data.get('description', ''),
+                is_public=flashcard_data.get('is_public', True)
+            )
+            
+            db.session.add(new_flashcard)
+            db.session.flush()
+            
+            # Ajouter les cartes
+            for i, card_data in enumerate(flashcard_data.get('cards', [])):
+                card = FlashcardItem(
+                    flashcard_id=new_flashcard.id,
+                    front_content=card_data['front_content'],
+                    back_content=card_data['back_content'],
+                    order=i
+                )
+                db.session.add(card)
+            
+            results.append({
+                "success": True,
+                "flashcard_id": new_flashcard.id,
+                "title": new_flashcard.title,
+                "user_id": target_user_id,
+                "username": target_user.username
+            })
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"{len([r for r in results if r['success']])} flashcards créées avec succès",
+            "results": results
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur création batch flashcards API: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Route pour vérifier la santé de l'API
+@app.route('/api/public/health', methods=['GET'])
+@require_api_key
+def api_public_health():
+    """Vérifier que l'API fonctionne"""
+    # Retour propre sans caractères non-ASCII invisibles
+    return jsonify({
+        "success": True,
+        "message": "API EduShare fonctionnelle",
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "total_users": User.query.count(),
+        "total_quizzes": Quiz.query.count(),
+        "total_flashcards": Flashcard.query.count()
+    })
 
 
 # Supprimer une ressource (propriétaire seulement)

@@ -1,14 +1,11 @@
-<!DOCTYPE html>
-<html lang="fr">
+ {%extends 'base.html'%}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cours HTML Complet</title>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/learn_html.css')}}">
+ {%block title%}<title>Cours HTML Complet</title>{%endblock%}
+ {%block extra_css%}  
+ <link rel="stylesheet" href="{{url_for('static', filename='css/learn_html.css')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
    
-   <style>
+    <style>
         /* Pour la SPA */
         section {
             display: none;
@@ -37,17 +34,15 @@
             font-weight: bolder;
         }
     </style>
-</head>
-
-<body>
-
-    <header>
+    {%endblock%}
+   {%block content%} 
+    <header style="margin-top: 100px;">
         <a href="{{url_for('home')}}"><i class="fa-solid fa-arrow-right"></i></a>
         <h1>📘 Cours HTML Complet</h1>
         <p>Apprenez toutes les balises HTML et leurs utilisations</p>
     </header>
 
-    <nav>
+    <nav class="page-nav">
         <a href="#structure">Structure</a>
         <a href="#textes">Textes</a>
         <a href="#liens">Liens</a>
@@ -676,15 +671,12 @@
 
           </section>
     </div>
-
-    <footer>
-        &copy; 2025 Mon Site d'Apprentissage | Cours HTML complet
-    </footer>
-
+{%endblock%}
+ {%block script%}
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const sections = document.querySelectorAll("section");
-            const links = document.querySelectorAll("nav a");
+            const links = document.querySelectorAll(".page-nav a");
 
             links.forEach(link => {
                 link.addEventListener("click", (e) => {
@@ -698,9 +690,4 @@
             });
         });
     </script>
-
-
-
-</body>
-
-</html>
+{%endblock%}

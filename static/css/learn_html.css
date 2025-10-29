@@ -77,3 +77,8 @@ footer {
     .container { padding: 15px; margin: 10px; }
     header h1 { font-size: 2em; }
 }
+/* When the site is in dark mode (body gets class 'dark-mode' from base.html JS) */
+body.dark-mode .example {
+    background: #ac1dff22; /* subtle dark-green tint */
+    color: #e6f7e6;
+}
