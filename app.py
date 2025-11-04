@@ -157,12 +157,35 @@ class Ressource(db.Model):
     file_type = db.Column(db.String(20), nullable=False)
     page_count = db.Column(db.Integer, default=0)
     likes = db.Column(db.Integer, default=0)
+    year_of_study = db.Column(db.String(20), nullable=False, default='1')  # Nouveau champ
+    field_of_study = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', backref=db.backref('ressources', lazy=True))
 
     @property
     def user_avatar(self):
-        return self.user.avatar_url
+        return self.user.profile.avatar_path if self.user and self.user.profile else None
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'subject': self.subject,
+            'file_url': self.file_url,
+            'download_url': self.download_url or self.file_url,
+            'file_type': self.file_type,
+            'page_count': self.page_count,
+            'likes': self.likes,
+            'year_of_study': self.year_of_study,
+            'field_of_study': self.field_of_study,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'user': {
+                'id': self.user.id,
+                'username': self.user.username,
+                'avatar': self.user_avatar
+            } if self.user else None
+        }
 
 class Discussion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -172,6 +195,8 @@ class Discussion(db.Model):
     content = db.Column(db.Text, nullable=False)
     likes = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    year_of_study = db.Column(db.String(20), nullable=True)
+    field_of_study = db.Column(db.String(100), nullable=True)
     user = db.relationship('User', backref=db.backref('discussions', lazy=True))
 
     @property
@@ -224,6 +249,8 @@ class Quiz(db.Model):
     time_limit = db.Column(db.Integer, default=0)
     is_public = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    year_of_study = db.Column(db.String(20), nullable=True)
+    field_of_study = db.Column(db.String(100), nullable=True)
     user = db.relationship('User', backref=db.backref('quizzes', lazy=True))
     questions = db.relationship('Question', backref='quiz', cascade="all, delete-orphan")
     attempts = db.relationship('QuizAttempt', backref='quiz', cascade="all, delete-orphan")
@@ -245,6 +272,8 @@ class Flashcard(db.Model):
     description = db.Column(db.Text)
     is_public = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    year_of_study = db.Column(db.String(20), nullable=True)
+    field_of_study = db.Column(db.String(100), nullable=True)
     user = db.relationship('User', backref=db.backref('flashcards', lazy=True))
 
 class FlashcardItem(db.Model):
@@ -676,7 +705,9 @@ def share_ressource():
                 file_url=file_url,
                 download_url=download_url,
                 file_type=ext,
-                page_count=page_count
+                page_count=page_count,
+                year_of_study=current_user.profile.year_of_study,
+                field_of_study=current_user.profile.field_of_study
             )
             db.session.add(new_ressource)
             uploaded_count += 1
@@ -911,7 +942,6 @@ def api_my_notes():
         logger.error(f"Erreur lors du chargement des notes: {e}")
         return jsonify({
             "success": False,
-            "error": str(e),
             "notes": [],
             "count": 0
         }), 500
@@ -921,47 +951,14 @@ def api_my_notes():
 def api_ressources():
     if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
         return jsonify([])
-    current_year = current_user.profile.year_of_study
-    current_field = current_user.profile.field_of_study
-
-    ressources = Ressource.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field
-    ).options(joinedload(Ressource.user)).all()
-
-    saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
-
-    return jsonify([{
-        "id": r.id,
-        "user_id": r.user_id,
-        "title": r.title,
-        "subject": r.subject,
-        "file_type": r.file_type,
-        "likes": r.likes,
-    "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "user_avatar": r.user.avatar_url,
-        "username": r.user.username,
-        "file_url": r.file_url,
-        "download_url": r.download_url,
-        "is_saved": r.id in saved_ids,
-        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm','youtube'],
-        "page_count": r.page_count
-    } for r in ressources])
-
-@app.route('/api/videos')
-@login_required
-def api_videos():
-    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
-        return jsonify([])
     
     current_year = current_user.profile.year_of_study
     current_field = current_user.profile.field_of_study
 
-    video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm','youtube']
-    videos = Ressource.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field,
-        Ressource.file_type.in_(video_types)
+    # Récupérer les ressources de l'année en cours
+    ressources = Ressource.query.filter(
+        Ressource.field_of_study == current_field,
+        Ressource.year_of_study == current_year
     ).options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
 
     saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
@@ -971,13 +968,46 @@ def api_videos():
         "subject": r.subject,
         "file_type": r.file_type,
         "likes": r.likes,
-    "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "year_of_study": r.year_of_study,
+        "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "user_avatar": r.user.avatar_url,
         "username": r.user.username,
         "file_url": r.file_url,
-        "download_url": r.download_url,
+        "download_url": r.download_url or r.file_url,
         "is_saved": r.id in saved_ids
-    } for r in videos])
+    } for r in ressources])
+
+@app.route('/api/anciennes_ressources')
+@login_required
+def api_anciennes_ressources():
+    if not current_user.profile or not current_user.profile.year_of_study or not current_user.profile.field_of_study:
+        return jsonify([])
+    
+    current_year = current_user.profile.year_of_study
+    current_field = current_user.profile.field_of_study
+
+    # Récupérer les ressources des années précédentes
+    ressources = Ressource.query.filter(
+        Ressource.field_of_study == current_field,
+        Ressource.year_of_study != current_year
+    ).options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
+
+    saved_ids = {sr.ressource_id for sr in SavedRessource.query.filter_by(user_id=current_user.id).all()}
+    
+    return jsonify([{
+        "id": r.id,
+        "title": r.title,
+        "subject": r.subject,
+        "file_type": r.file_type,
+        "likes": r.likes,
+        "year_of_study": r.year_of_study,
+        "created_at": r.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "user_avatar": r.user.avatar_url,
+        "username": r.user.username,
+        "file_url": r.file_url,
+        "download_url": r.download_url or r.file_url,
+        "is_saved": r.id in saved_ids
+    } for r in ressources])
 
 @app.route('/api/discussions', methods=['GET'])
 @login_required
@@ -986,9 +1016,9 @@ def api_discussions():
         return jsonify([])
     current_year = current_user.profile.year_of_study
     current_field = current_user.profile.field_of_study
-    query = Discussion.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field
+    query = Discussion.query.filter(
+        Discussion.year_of_study == current_year,
+        Discussion.field_of_study == current_field
     ).options(
         joinedload(Discussion.user),
         joinedload(Discussion.comments)
@@ -1034,6 +1064,8 @@ def create_discussion():
         title=title,
         subject=subject,
         content=content
+        ,year_of_study=current_user.profile.year_of_study,
+        field_of_study=current_user.profile.field_of_study
     )
     db.session.add(new_discussion)
     db.session.commit()
@@ -1406,9 +1438,9 @@ def api_quizzes():
     current_year = current_user.profile.year_of_study
     current_field = current_user.profile.field_of_study
 
-    quizzes = Quiz.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field,
+    quizzes = Quiz.query.filter(
+        Quiz.year_of_study == current_year,
+        Quiz.field_of_study == current_field,
         Quiz.is_public == True
     ).options(joinedload(Quiz.user)).order_by(Quiz.created_at.desc()).all()
 
@@ -1473,9 +1505,9 @@ def api_flashcards():
     current_year = current_user.profile.year_of_study
     current_field = current_user.profile.field_of_study
 
-    flashcards = Flashcard.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field,
+    flashcards = Flashcard.query.filter(
+        Flashcard.year_of_study == current_year,
+        Flashcard.field_of_study == current_field,
         Flashcard.is_public == True
     ).options(joinedload(Flashcard.user)).order_by(Flashcard.created_at.desc()).all()
 
@@ -1531,9 +1563,9 @@ def api_quizzes_search():
     sort = request.args.get('sort', 'recent')
     subject = request.args.get('subject', '')
     
-    query = Quiz.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field,
+    query = Quiz.query.filter(
+        Quiz.year_of_study == current_year,
+        Quiz.field_of_study == current_field,
         Quiz.is_public == True
     ).options(joinedload(Quiz.user))
     
@@ -1586,9 +1618,9 @@ def api_flashcards_search():
     sort = request.args.get('sort', 'recent')
     subject = request.args.get('subject', '')
     
-    query = Flashcard.query.join(User).join(Profile).filter(
-        Profile.year_of_study == current_year,
-        Profile.field_of_study == current_field,
+    query = Flashcard.query.filter(
+        Flashcard.year_of_study == current_year,
+        Flashcard.field_of_study == current_field,
         Flashcard.is_public == True
     ).options(joinedload(Flashcard.user))
     
@@ -1765,6 +1797,8 @@ def create_quiz():
             description=data.get('description', ''),
             time_limit=data.get('time_limit', 0),
             is_public=data.get('is_public', True)
+            ,year_of_study=(current_user.profile.year_of_study if current_user.profile else None)
+            ,field_of_study=(current_user.profile.field_of_study if current_user.profile else None)
         )
         
         db.session.add(new_quiz)
@@ -1825,6 +1859,8 @@ def create_flashcard():
             subject=data['subject'],
             description=data.get('description', ''),
             is_public=data.get('is_public', True)
+            ,year_of_study=(current_user.profile.year_of_study if current_user.profile else None)
+            ,field_of_study=(current_user.profile.field_of_study if current_user.profile else None)
         )
         
         db.session.add(new_flashcard)
@@ -2126,7 +2162,9 @@ def api_public_create_quiz():
             subject=data['subject'],
             description=data.get('description', ''),
             time_limit=data.get('time_limit', 0),
-            is_public=data.get('is_public', True)
+            is_public=data.get('is_public', True),
+            year_of_study=(target_user.profile.year_of_study if target_user.profile else None),
+            field_of_study=(target_user.profile.field_of_study if target_user.profile else None)
         )
         
         db.session.add(new_quiz)
@@ -2238,7 +2276,9 @@ def api_public_create_flashcard():
             title=data['title'],
             subject=data['subject'],
             description=data.get('description', ''),
-            is_public=data.get('is_public', True)
+            is_public=data.get('is_public', True),
+            year_of_study=(target_user.profile.year_of_study if target_user.profile else None),
+            field_of_study=(target_user.profile.field_of_study if target_user.profile else None)
         )
         
         db.session.add(new_flashcard)
@@ -2370,7 +2410,9 @@ def api_public_batch_create_quizzes():
                 subject=quiz_data['subject'],
                 description=quiz_data.get('description', ''),
                 time_limit=quiz_data.get('time_limit', 0),
-                is_public=quiz_data.get('is_public', True)
+                is_public=quiz_data.get('is_public', True),
+                year_of_study=(target_user.profile.year_of_study if target_user.profile else None),
+                field_of_study=(target_user.profile.field_of_study if target_user.profile else None)
             )
             
             db.session.add(new_quiz)
@@ -2459,7 +2501,9 @@ def api_public_batch_create_flashcards():
                 title=flashcard_data['title'],
                 subject=flashcard_data['subject'],
                 description=flashcard_data.get('description', ''),
-                is_public=flashcard_data.get('is_public', True)
+                is_public=flashcard_data.get('is_public', True),
+                year_of_study=(target_user.profile.year_of_study if target_user.profile else None),
+                field_of_study=(target_user.profile.field_of_study if target_user.profile else None)
             )
             
             db.session.add(new_flashcard)
@@ -2567,6 +2611,53 @@ def api_quiz_notifications():
         "quiz_title": n.quiz.title if n.quiz else None,
         "flashcard_title": n.flashcard.title if n.flashcard else None
     } for n in notifications])
+
+
+@app.cli.command('backfill_post_fields')
+def backfill_post_fields():
+    """Backfill des champs year_of_study / field_of_study pour les posts existants.
+    Utiliser : FLASK_APP=app.py flask backfill_post_fields
+    """
+    updated = { 'ressources':0, 'discussions':0, 'quizzes':0, 'flashcards':0 }
+    try:
+        # Ressources
+        for r in Ressource.query.filter((Ressource.field_of_study == None) | (Ressource.field_of_study == '')).all():
+            profile = r.user.profile if r.user else None
+            if profile:
+                r.field_of_study = profile.field_of_study
+                if not r.year_of_study:
+                    r.year_of_study = profile.year_of_study
+                updated['ressources'] += 1
+
+        # Discussions
+        for d in Discussion.query.filter((Discussion.field_of_study == None) | (Discussion.field_of_study == '')).all():
+            profile = d.user.profile if d.user else None
+            if profile:
+                d.field_of_study = profile.field_of_study
+                d.year_of_study = profile.year_of_study
+                updated['discussions'] += 1
+
+        # Quizzes
+        for q in Quiz.query.filter((Quiz.field_of_study == None) | (Quiz.field_of_study == '')).all():
+            profile = q.user.profile if q.user else None
+            if profile:
+                q.field_of_study = profile.field_of_study
+                q.year_of_study = profile.year_of_study
+                updated['quizzes'] += 1
+
+        # Flashcards
+        for f in Flashcard.query.filter((Flashcard.field_of_study == None) | (Flashcard.field_of_study == '')).all():
+            profile = f.user.profile if f.user else None
+            if profile:
+                f.field_of_study = profile.field_of_study
+                f.year_of_study = profile.year_of_study
+                updated['flashcards'] += 1
+
+        db.session.commit()
+        print('Backfill terminé :', updated)
+    except Exception as e:
+        db.session.rollback()
+        print('Erreur pendant backfill :', e)
 
 @app.route('/api/quiz_notifications/read/<int:notification_id>', methods=['POST'])
 @login_required
