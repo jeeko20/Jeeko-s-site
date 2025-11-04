@@ -88,7 +88,7 @@
   {% if profile %}
   <div class="profile-details">
     <img src="{{ profile.avatar_path if profile.avatar_path else 'https://via.placeholder.com/150' }}" alt="Photo de profil" />
-    <h2>{{ profile.complete_name }}</h2>
+    <h2>{{ profile.complete_name  }}</h2>
     <span>{{ profile.year_of_study }} année - {{ get_field_display_name(profile.field_of_study, profile.custom_field) }}</span>
   </div>
   <p>{{ profile.bio }}</p>
@@ -99,7 +99,7 @@
       src="https://media.istockphoto.com/id/1386479313/photo/happy-millennial-afro-american-business-woman-posing-isolated-on-white.jpg?s=1024x1024&w=is&k=20&c=5OK7djfD3cnNmQ-DR0iQzF-vmA-iTNN1TbuEyCG1DfA="
       alt="Photo de profil"
     />
-    <h2>User</h2>
+    <h2>{{current_user.username}}</h2>
   </div>
   <p>
     Lorem ipsum dolor sit amet consectetur adipisicing elit. Cum inventore
@@ -210,7 +210,7 @@
       name="complete_name"
       placeholder="Votre nom complet"
       required
-      value="{{profile.complete_name}}"
+      value="{{profile.complete_name or current_user.username }}"
     />
 
     <label for="email">Email :</label>
@@ -220,7 +220,7 @@
       name="email"
       placeholder="exemple@mail.com"
       required
-      value="{{profile.email}}"
+      value="{{profile.email or current_user.email}}"
     />
 
     <!-- NOUVEAU : Sélection de la filière -->

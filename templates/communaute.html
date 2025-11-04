@@ -303,9 +303,6 @@
     <button class="tab" data-page="partages">
       <i class="fas fa-folder-open"></i> Partages recentes
     </button>
-    <button class="tab" data-page="anciennes-ressources">
-      <i class="fas fa-folder-open"></i> Anciennes ressources
-    </button>
   <!-- global view removed -->
     <button class="tab" onclick="window.location.href='/videos'" 
     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -422,80 +419,10 @@
   <section id="partages" class="page">
     <div class="discussion">
       <div class="info-discussion">
-        <!-- Onglets de navigation -->
-        <div class="tabs" style="margin-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
-          <button class="tab-button active" data-tab="recentes">Ressources récentes</button>
-          <button class="tab-button" data-tab="anciennes">Anciennes ressources</button>
-        </div>
-        
-        <!-- Contenu des onglets -->
-        <div id="recentes-tab" class="tab-content" style="display: block;">
-          <!-- Menu de tri et recherche pour les ressources récentes -->
-          <div class="tri-bar">
-            <label for="sort">Trier par :</label>
-            <select id="sort">
-              <option value="date-desc">Date (récent → ancien)</option>
-              <option value="date-asc">Date (ancien → récent)</option>
-              <option value="file_type-asc">Type (A-Z)</option>
-              <option value="file_type-desc">Type (Z-A)</option>
-              <option value="likes-desc">Likes (plus aimés)</option>
-            </select>
-            <div>
-              <input type="text" id="search" placeholder="Rechercher un titre ou un sujet...">
-            </div>
-          </div>
-
-          <!-- Liste dynamique des ressources récentes -->
-          <div id="ressource-list-wrapper">
-            <div id="ressource-list"></div>
-            <div id="ressources-pagination"></div>
-          </div>
-        </div>
-        
-        <!-- Contenu de l'onglet des anciennes ressources (initialement caché) -->
-        <div id="anciennes-tab" class="tab-content" style="display: none;">
-          <!-- Le contenu de cette section sera chargé dynamiquement lorsqu'on clique sur l'onglet -->
-        <div class="action-rapide">
-          <h2>Actions rapides</h2>
-          <ul>
-            <li class="share-ressource">Partager une ressource</li>
-            <li><a href="{{ url_for('communaute') }}" style="color: black; text-decoration: none;">Poser une question</a></li>
-            <li class="join-group">Rejoindre un groupe</li>
-          </ul>
-        </div>
-
-        <div class="sujet-populaire">
-          <h2>Sujets populaires</h2>
-          <ul>
-            <li><span>Optimisation C++</span><span>24</span></li>
-            <li><span>CSS Grid</span><span>18</span></li>
-            <li><span>Algorithme de tri</span><span>15</span></li>
-            <li><span>Gestion mémoire</span><span>12</span></li>
-            <li><span>JavaScript async</span><span>10</span></li>
-          </ul>
-        </div>
-
-        <div class="statistique">
-          <h2>Statistiques</h2>
-          <ul>
-            <li><span>Membres actifs</span><span>24</span></li>
-            <li><span>Discussions ouvertes</span><span>18</span></li>
-            <li><span>Ressources partagées</span><span>15</span></li>
-            <li><span>Messages aujourd'hui</span><span>12</span></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-  
-   <!-- Anciennes ressources -->
-  <section id="anciennes-ressources" class="page">
-    <div class="discussion">
-      <div class="info-discussion">
         <!-- Menu de tri et recherche -->
         <div class="tri-bar">
-          <label for="anciennes-sort">Trier par :</label>
-          <select id="anciennes-sort">
+          <label for="sort">Trier par :</label>
+          <select id="sort">
             <option value="date-desc">Date (récent → ancien)</option>
             <option value="date-asc">Date (ancien → récent)</option>
             <option value="file_type-asc">Type (A-Z)</option>
@@ -503,21 +430,15 @@
             <option value="likes-desc">Likes (plus aimés)</option>
           </select>
           <div>
-            <input type="text" id="anciennes-search" placeholder="Rechercher un titre ou un sujet...">
+            <input type="text" id="search" placeholder="Rechercher un titre ou un sujet...">
           </div>
-        </div>
-        
-        <!-- Liste dynamique des anciennes ressources -->
-        <div id="anciennes-ressource-list-wrapper">
-          <div id="anciennes-ressources-list"></div>
-          <div id="anciennes-ressources-pagination"></div>
         </div>
 
         <!-- Liste dynamique -->
         <!-- IMPORTANT: Le rendu des ressources (grid de cartes) est maintenant géré par renderPaginated + renderRessources -->
-        <div id="anciennes-ressource-list-wrapper">
-          <div id="anciennes-ressource-list"></div>
-          <div id="anciennes-ressources-pagination"></div> <!-- Pagination placée ici -->
+        <div id="ressource-list-wrapper">
+          <div id="ressource-list"></div>
+          <div id="ressources-pagination"></div> <!-- Pagination placée ici -->
         </div>
       </div>
 
@@ -732,71 +653,42 @@
   // =============== CHARGEMENT DES RESSOURCES ===============
   async function loadRessources() {
     try {
-      const res = await fetch('/api/ressources');
-      ressources = await res.json();
-            
-      // 🔥 REGROUPEMENT DES RESSOURCES
-      ressources = groupRessourcesByTitle(ressources);
-      
-      filteredRessources = [...ressources];
-      
-      // Mettre à jour compteur
-      document.getElementById('total-ressources').textContent = ressources.length || 0;
+  const res = await fetch('/api/ressources');
+  ressources = await res.json();
+        
+        // 🔥 REGROUPEMENT DES RESSOURCES
+        ressources = groupRessourcesByTitle(ressources);
+        
+        filteredRessources = [...ressources];
+        
+        // Mettre à jour compteur
+        document.getElementById('total-ressources').textContent = ressources.length || 0;
 
-      // Afficher la première page
-      renderPaginatedRessources(filteredRessources, currentPageRessources, 'ressource-list');
-      
-      // Après chargement, vérifier si on doit scroller
-      setTimeout(handleHashOnLoad, 500);
-    } catch (err) {
-      console.error('Erreur loadRessources:', err);
-      document.getElementById('ressource-list').innerHTML = '<p style="color:red; text-align:center;">Erreur lors du chargement des ressources récentes.</p>';
-    }
-  }
-
-  // =============== CHARGEMENT DES ANCIENNES RESSOURCES ===============
-  async function loadAnciennesRessources() {
-    try {
-      const res = await fetch('/api/anciennes_ressources');
-      const anciennesRessources = await res.json();
-      
-      // 🔥 REGROUPEMENT DES RESSOURCES
-      const groupedAnciennesRessources = groupRessourcesByTitle(anciennesRessources);
-      
-      // Afficher les ressources dans le conteneur approprié
-      if (groupedAnciennesRessources.length === 0) {
-        document.getElementById('anciennes-ressources-list').innerHTML = 
-          '<p style="text-align:center; color:#666; padding:20px;">Aucune ancienne ressource disponible pour le moment.</p>';
-      } else {
         // Afficher la première page
-        renderPaginatedRessources(groupedAnciennesRessources, 1, 'anciennes-ressources-list');
-      }
+        renderPaginatedRessources(filteredRessources, currentPageRessources);
+        
+        // Après chargement, vérifier si on doit scroller
+        setTimeout(handleHashOnLoad, 500);
     } catch (err) {
-      console.error('Erreur loadAnciennesRessources:', err);
-      document.getElementById('anciennes-ressources-list').innerHTML = 
-        '<p style="color:red; text-align:center;">Erreur lors du chargement des anciennes ressources.</p>';
+        console.error('Erreur loadRessources:', err);
+        document.getElementById('ressource-list').innerHTML = '<p style="color:red; text-align:center;">Erreur lors du chargement des ressources.</p>';
     }
-  }
+}
 
   // =============== FONCTIONS DE RENDU POUR RESSOURCES ===============
-  function renderPaginatedRessources(list, page, containerId = 'ressource-list') {
+  function renderPaginatedRessources(list, page) {
     currentPageRessources = page;
     const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
     const start = (page - 1) * ITEMS_PER_PAGE;
     const paginated = list.slice(start, start + ITEMS_PER_PAGE);
 
     // Rendu des cartes
-    renderRessources(paginated, containerId);
-
-    // Déterminer l'ID du conteneur de pagination en fonction du conteneur de ressources
-    const paginationContainerId = containerId === 'anciennes-ressources-list' 
-      ? 'anciennes-ressources-pagination' 
-      : 'ressources-pagination';
+    renderRessources(paginated, 'ressource-list');
 
     // Rendu de la pagination
     renderPagination(totalPages, page, (newPage) => {
-      renderPaginatedRessources(list, newPage, containerId);
-    }, paginationContainerId);
+      renderPaginatedRessources(list, newPage);
+    }, 'ressources-pagination');
   }
 
   function renderRessources(list, containerId) {
@@ -999,63 +891,25 @@ document.addEventListener('click', function(e) {
   document.getElementById('sort')?.addEventListener('change', (e) => {
     currentPageRessources = 1;
     const v = e.target.value;
+    if (!ressources) return;
     
-    switch(v) {
-      case 'date-desc':
-        filteredRessources.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        break;
-      case 'date-asc':
-        filteredRessources.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        break;
-      case 'file_type-asc':
-        filteredRessources.sort((a, b) => a.file_type.localeCompare(b.file_type));
-        break;
-      case 'file_type-desc':
-        filteredRessources.sort((a, b) => b.file_type.localeCompare(a.file_type));
-        break;
-      case 'likes-desc':
-        filteredRessources.sort((a, b) => b.likes - a.likes);
-        break;
+    filteredRessources = [...ressources];
+    
+    if (v === 'date-desc') {
+      filteredRessources.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (v === 'date-asc') {
+      filteredRessources.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (v === 'file_type-asc') {
+      filteredRessources.sort((a, b) => (a.file_type || '').localeCompare(b.file_type || ''));
+    } else if (v === 'file_type-desc') {
+      filteredRessources.sort((a, b) => (b.file_type || '').localeCompare(a.file_type || ''));
+    } else if (v === 'likes-desc') {
+      filteredRessources.sort((a, b) => (b.likes || 0) - (a.likes || 0));
     }
     
-    renderPaginatedRessources(filteredRessources, 1, 'ressource-list');
+    renderPaginatedRessources(filteredRessources, currentPageRessources);
   });
 
-  document.getElementById('anciennes-sort')?.addEventListener('change', (e) => {
-    currentPageRessources = 1;
-    const v = e.target.value;
-    
-    // Vérifier si des anciennes ressources sont déjà chargées
-    if (!window.anciennesRessources || window.anciennesRessources.length === 0) return;
-    
-    const sortedRessources = [...window.anciennesRessources];
-    
-    switch(v) {
-      case 'date-desc':
-        sortedRessources.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        break;
-      case 'date-asc':
-        sortedRessources.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        break;
-      case 'file_type-asc':
-        sortedRessources.sort((a, b) => a.file_type.localeCompare(b.file_type));
-        break;
-      case 'file_type-desc':
-        sortedRessources.sort((a, b) => b.file_type.localeCompare(a.file_type));
-        break;
-      case 'likes-desc':
-        sortedRessources.sort((a, b) => b.likes - a.likes);
-        break;
-    }
-    
-    // Mettre à jour la liste des anciennes ressources triées
-    window.anciennesRessources = sortedRessources;
-    
-    // Re-rendre les ressources triées
-    renderPaginatedRessources(sortedRessources, 1, 'anciennes-ressources-list');
-  });
-
-  // Gestion de la recherche pour les ressources récentes
   document.getElementById('search')?.addEventListener('input', (e) => {
     currentPageRessources = 1;
     const term = e.target.value.toLowerCase();
@@ -1064,21 +918,7 @@ document.addEventListener('click', function(e) {
       (r.subject || '').toLowerCase().includes(term) ||
       (r.file_type || '').toLowerCase().includes(term)
     );
-    renderPaginatedRessources(filteredRessources, currentPageRessources, 'ressource-list');
-  });
-
-  // Gestion de la recherche pour les anciennes ressources
-  document.getElementById('anciennes-search')?.addEventListener('input', (e) => {
-    if (!window.anciennesRessources) return;
-    
-    const term = e.target.value.toLowerCase();
-    const filtered = window.anciennesRessources.filter(r =>
-      (r.title || '').toLowerCase().includes(term) ||
-      (r.subject || '').toLowerCase().includes(term) ||
-      (r.file_type || '').toLowerCase().includes(term)
-    );
-    
-    renderPaginatedRessources(filtered, 1, 'anciennes-ressources-list');
+    renderPaginatedRessources(filteredRessources, currentPageRessources);
   });
 
   // =============== DISCUSSIONS ===============
@@ -1506,62 +1346,6 @@ document.addEventListener('click', function(e) {
       pages.forEach(page => page.classList.remove("active"));
       const target = tab.getAttribute("data-page");
       document.getElementById(target).classList.add("active");
-    });
-  });
-
-  // =============== GESTION DES ONGLETS ===============
-  // Gestion des onglets principaux (Discussion, Partages, etc.)
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-      const page = this.getAttribute('data-page');
-      
-      // Masquer toutes les pages
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      // Désactiver tous les onglets
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      
-      // Activer la page et l'onglet sélectionnés
-      document.getElementById(page).classList.add('active');
-      this.classList.add('active');
-      
-      // Si c'est l'onglet des partages, charger les ressources
-      if (page === 'partages') {
-        loadRessources();
-      }
-      // Si c'est l'onglet des anciennes ressources, les charger
-      else if (page === 'anciennes-ressources') {
-        loadAnciennesRessources();
-      }
-    });
-  });
-  
-  // Gestion des onglets secondaires (Ressources récentes / Anciennes ressources)
-  document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', function() {
-      const tabId = this.getAttribute('data-tab');
-      
-      // Désactiver tous les boutons d'onglet
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      // Masquer tous les contenus d'onglet
-      document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-      
-      // Activer le bouton cliqué
-      this.classList.add('active');
-      
-      // Afficher le contenu correspondant
-      if (tabId === 'recentes') {
-        document.getElementById('recentes-tab').style.display = 'block';
-        // S'assurer que les ressources récentes sont chargées
-        if (ressources.length === 0) {
-          loadRessources();
-        }
-      } else if (tabId === 'anciennes') {
-        document.getElementById('anciennes-tab').style.display = 'block';
-        // Charger les anciennes ressources si ce n'est pas déjà fait
-        if (!window.anciennesRessources) {
-          loadAnciennesRessources();
-        }
-      }
     });
   });
 
