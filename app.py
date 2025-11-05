@@ -985,8 +985,43 @@ def api_ressources():
         "username": r.user.username,
         "file_url": r.file_url,
         "download_url": r.download_url or r.file_url,
+        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm', 'youtube'],
         "is_saved": r.id in saved_ids
     } for r in ressources])
+
+
+@app.route('/api/videos')
+def api_videos():
+    """Retourne la liste des vidéos (Cloudinary + YouTube) au format JSON.
+
+    Cette route est publique (pas de login requis) pour permettre l'affichage sur la page /videos.
+    """
+    try:
+        # Types considérés comme vidéos (cloudinary raw/video or youtube)
+        video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'youtube']
+
+        videos = Ressource.query.filter(Ressource.file_type.in_(video_types))
+        videos = videos.options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
+
+        result = []
+        for v in videos:
+            result.append({
+                'id': v.id,
+                'title': v.title,
+                'subject': v.subject,
+                'file_type': v.file_type,
+                'file_url': v.file_url,
+                'download_url': v.download_url or v.file_url,
+                'created_at': v.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'user_avatar': v.user.avatar_url if v.user else None,
+                'username': v.user.username if v.user else None,
+                'likes': v.likes
+            })
+
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"❌ Erreur récupération vidéos API: {e}")
+        return jsonify([]), 500
 
 @app.route('/api/anciennes_ressources')
 @login_required
@@ -1226,7 +1261,7 @@ def api_saved_ressources():
         "page_count": s.ressource.page_count,
         "user_avatar": s.ressource.user.avatar_url,
         "username": s.ressource.user.username,
-        "is_video": s.ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm']
+        "is_video": s.ressource.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm', 'youtube']
     } for s in saved])
 
 @app.route('/api/my_ressources')
@@ -1244,7 +1279,7 @@ def api_my_ressources():
         "file_url": r.file_url,
         "download_url": r.download_url,
         "page_count": r.page_count,
-        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm']
+        "is_video": r.file_type in ['mp4', 'mov', 'avi', 'mkv', 'webm', 'youtube']
     } for r in ressources])
 
 @app.route('/api/discussion/<int:discussion_id>/comments', methods=['GET'])
@@ -2958,6 +2993,12 @@ def share_youtube_video():
                 
                 db.session.commit()
                 logger.info(f"✅ {len(users_same_year_and_field)} notifications YouTube créées avec succès")
+
+            # Envoyer notification WhatsApp via Green API pour la vidéo YouTube (lien watch_url)
+            try:
+                notify_new_file(new_ressource.title, current_user.username, 'youtube', link=watch_url)
+            except Exception as _e:
+                logger.warning(f"Impossible d'envoyer la notification WhatsApp pour la vidéo YouTube: {_e}")
 
             flash("✅ Vidéo uploadée sur YouTube et partagée !", "success")
             return redirect(url_for('videos'))

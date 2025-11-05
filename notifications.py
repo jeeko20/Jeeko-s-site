@@ -1,10 +1,31 @@
+import os
 import requests
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-GREEN_API_URL = "https://7107.api.green-api.com/waInstance7107370344/sendMessage/64dc490fc0774c5596b2a92d009c75666faab85f5d5d4f86a2"
+# Charger .env automatiquement si python-dotenv est installé (optionnel)
+try:
+    from dotenv import load_dotenv
+    # Cherche un fichier .env à la racine du projet
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    # remonte d'un niveau si le fichier notifications.py se trouve dans un package
+    possible_env = os.path.join(project_root, '..', '.env')
+    load_dotenv()  # simple call: permet la lecture si .env est dans le cwd ou parent
+    # Si vous préférez, on peut appeler load_dotenv(possible_env)
+    logger.debug("python-dotenv trouvé : .env chargé (si présent)")
+except Exception:
+    # dotenv n'est pas installé, ce n'est pas bloquant — on utilise os.environ
+    logger.debug("python-dotenv non trouvé : lecture directe des variables d'environnement")
+
+# Lire la config depuis l'environnement (préférable pour la sécurité)
+GREEN_API_URL = os.getenv(
+    "GREEN_API_URL",
+)
+
+# Chat ID par défaut (groupe). Configurez GREEN_CHAT_ID dans .env pour le remplacer.
+GREEN_CHAT_ID = os.getenv("GREEN_CHAT_ID")
 
 
 def send_whatsapp_notification(message, title: str = None, link: str = None) -> bool:
@@ -20,7 +41,7 @@ def send_whatsapp_notification(message, title: str = None, link: str = None) -> 
         payload_message = f"{message}\n\nAccéder: {link}"
 
     payload = {
-        "chatId": "120363422109468267@g.us",
+        "chatId": GREEN_CHAT_ID,
         "message": payload_message,
         "customPreview": {
             "title": title or "Nouveau message"
