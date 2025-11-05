@@ -16,6 +16,7 @@ from cloudinary.utils import cloudinary_url
 from sqlalchemy.orm import joinedload
 from flask_compress import Compress
 import secrets
+from notifications import notify_new_quiz, notify_new_flashcard, notify_new_file
 
 # ====================
 
@@ -746,6 +747,16 @@ def share_ressource():
                     db.session.add(notification)
             
             db.session.commit()
+            
+            # Envoyer notification WhatsApp pour chaque fichier (ajoute lien si disponible)
+            # Utiliser le file_url en priorité pour ouvrir le PDF dans le navigateur (comme sur la page Communauté)
+            for new_ressource in new_ressources:
+                try:
+                    resource_link = new_ressource.file_url or new_ressource.download_url
+                    notify_new_file(new_ressource.title, current_user.username, new_ressource.file_type, link=resource_link)
+                except Exception as _e:
+                    logger.warning(f"Impossible d'envoyer notification WhatsApp pour la ressource {new_ressource.id}: {_e}")
+                
             logger.info(f"✅ {len(users_same_year_and_field) * len(new_ressources)} notifications créées avec succès")
         
         if uploaded_count > 0:
@@ -1790,6 +1801,7 @@ def create_quiz():
         data = request.get_json()
         logger.info(f"📝 Création quiz: {data['title']}")
         
+        # Créer le quiz
         new_quiz = Quiz(
             user_id=current_user.id,
             title=data['title'],
@@ -1838,6 +1850,13 @@ def create_quiz():
             
             db.session.commit()
             logger.info(f"✅ {len(users_same_year_and_field)} notifications quiz créées")
+            
+            # Envoyer notification WhatsApp (inclut un lien direct vers le quiz)
+            try:
+                quiz_link = url_for('quiz_flashcards', _external=True) + f"#quiz-{new_quiz.id}"
+                notify_new_quiz(data['title'], current_user.username, link=quiz_link)
+            except Exception as _e:
+                logger.warning(f"Impossible de générer le lien du quiz pour notification: {_e}")
         
         return jsonify({"success": True, "quiz_id": new_quiz.id})
         
@@ -1853,6 +1872,7 @@ def create_flashcard():
         data = request.get_json()
         logger.info(f"📝 Création flashcards: {data['title']}")
         
+        # Créer la flashcard
         new_flashcard = Flashcard(
             user_id=current_user.id,
             title=data['title'],
@@ -1897,6 +1917,12 @@ def create_flashcard():
             
             db.session.commit()
             logger.info(f"✅ {len(users_same_year_and_field)} notifications flashcards créées")
+            # Envoyer notification WhatsApp (inclut un lien direct vers la flashcard)
+            try:
+                flash_link = url_for('quiz_flashcards', _external=True) + f"#flashcard-{new_flashcard.id}"
+                notify_new_flashcard(data['title'], current_user.username, link=flash_link)
+            except Exception as _e:
+                logger.warning(f"Impossible de générer le lien de la flashcard pour notification: {_e}")
         
         return jsonify({"success": True, "flashcard_id": new_flashcard.id})
         
