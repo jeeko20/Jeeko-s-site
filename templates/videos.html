@@ -19,342 +19,385 @@
 <!-- Conteneur principal -->
 <div class="videos-container">
   <!-- Filtres et recherche -->
-  <div class="filters">
-    <div class="filter-group">
-      <label for="search-videos">Rechercher :</label>
-      <input type="text" id="search-videos" placeholder="Rechercher une vidéo...">
-    </div>
-    
-    <div class="filter-group">
-      <label for="sort-videos">Trier par :</label>
-      <select id="sort-videos">
-        <option value="date-desc">Plus récent</option>
-        <option value="date-asc">Plus ancien</option>
-        <option value="title-asc">Titre (A-Z)</option>
-        <option value="title-desc">Titre (Z-A)</option>
-        <option value="likes-desc">Plus populaires</option>
-      </select>
-    </div>
-    
-    <div class="filter-group">
-      <label for="subject-filter">Matière :</label>
-      <select id="subject-filter">
-        <option value="">Toutes les matières</option>
-        <option value="JavaScript">JavaScript</option>
-        <option value="HTML">HTML</option>
-        <option value="CSS">CSS</option>
-        <option value="C++">C++</option>
-        <option value="Algorithme">Algorithme</option>
-        <option value="Système">Système</option>
-        <option value="autre">Autre</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Grille de vidéos -->
-  <div id="videos-grid" class="videos-grid">
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>Chargement des vidéos...</p>
-    </div>
-  </div>
-
-  <!-- Pagination -->
-  <div id="videos-pagination" class="pagination"></div>
-</div>
-{% endblock %}
-
-{% block script %}
-<script>
-  const ITEMS_PER_PAGE = 12;
-  let allVideos = [];
-  let filteredVideos = [];
-  let currentPage = 1;
+    <div class="filters">
+      <div class="filter-group">
+        <label for="search-videos">Rechercher :</label>
+        <input type="text" id="search-videos" placeholder="Rechercher une vidéo...">
+      </div>
+      
+      <div class="filter-group">
+        <label for="sort-videos">Trier par :</label>
+        <select id="sort-videos">
+          <option value="date-desc">Plus récent</option>
+          <option value="date-asc">Plus ancien</option>
+          <option value="title-asc">Titre (A-Z)</option>
+          <option value="title-desc">Titre (Z-A)</option>
+          <option value="likes-desc">Plus populaires</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="subject-filter">Matière :</label>
+        <select id="subject-filter">
+          <option value="">Toutes les matières</option>
+          <!-- Matières seront ici -->
+        </select>
+      </div>
   
-  // Charger les vidéos
-  async function loadVideos() {
-    try {
-      showLoading();
-      const response = await fetch('/api/videos');
-      const data = await response.json();
-      allVideos = data.items || data;
-      filteredVideos = [...allVideos];
-      renderVideos();
-    } catch (error) {
-      console.error('Erreur chargement vidéos:', error);
-      document.getElementById('videos-grid').innerHTML = `
-        <div style="text-align: center; padding: 40px; color: #dc3545;">
-          <p>Erreur lors du chargement des vidéos.</p>
-          <button onclick="loadVideos()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            Réessayer
-          </button>
-        </div>
-      `;
-    }
-  }
+      <div class="filter-group">
+        <label for="year-filter">Année d'étude :</label>
+        <select id="year-filter">
+          <option value="all">Toutes les années</option>
+          <option value="1">1ère année</option>
+          <option value="2">2ème année</option>
+          <option value="3">3ème année</option>
+          <option value="4">4ème année</option>
+          <option value="5">5ème année</option>
+        </select>
+      </div>
   
-  function showLoading() {
-    document.getElementById('videos-grid').innerHTML = `
+      <div class="filter-group">
+        <label for="field-filter">Filière :</label>
+        <select id="field-filter">
+          <option value="all">Toutes les filières</option>
+          <!-- Filières seront ici -->
+        </select>
+      </div>
+    </div>
+  
+    <!-- Grille de vidéos -->
+    <div id="videos-grid" class="videos-grid">
       <div class="loading">
         <div class="spinner"></div>
         <p>Chargement des vidéos...</p>
       </div>
-    `;
-  }
+    </div>
   
-  // 🔁 Rendu mis à jour avec support YouTube + Cloudinary
-  function renderVideos() {
-    const grid = document.getElementById('videos-grid');
-    const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginatedVideos = filteredVideos.slice(start, start + ITEMS_PER_PAGE);
+    <!-- Pagination -->
+    <div id="videos-pagination" class="pagination"></div>
+  </div>
+  {% endblock %}
   
-    if (paginatedVideos.length === 0) {
-      grid.innerHTML = `
-        <div style="text-align: center; padding: 60px; color: #666; grid-column: 1 / -1;">
-          <i class="fa-solid fa-video-slash" style="font-size: 3em; margin-bottom: 16px; opacity: 0.5;"></i>
-          <h3>Aucune vidéo trouvée</h3>
-          <p>Essayez de modifier vos critères de recherche</p>
-        </div>
-      `;
-      document.getElementById('videos-pagination').innerHTML = '';
-      return;
-    }
+  {% block script %}
+  <script>
+    const ITEMS_PER_PAGE = 12;
+    let allVideos = [];
+    let filteredVideos = [];
+    let currentPage = 1;
+    
+    // Charger les vidéos en fonction des filtres
+    async function loadVideos() {
+      try {
+        showLoading();
+        const year = document.getElementById('year-filter').value;
+        const field = document.getElementById('field-filter').value;
+        
+        const url = new URL('/api/videos', window.location.origin);
+        url.searchParams.append('year', year);
+        url.searchParams.append('field', field);
   
-    let html = '';
-    paginatedVideos.forEach(video => {
-      const date = new Date(video.created_at).toLocaleDateString('fr-FR');
-      const isYouTube = video.file_type === 'youtube';
-  
-      let videoPlayerHtml = '';
-      if (isYouTube) {
-        videoPlayerHtml = `
-          <div class="video-thumbnail">
-            <iframe 
-              width="100%" 
-              height="200" 
-              src="${video.file_url}" 
-              frameborder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowfullscreen>
-            </iframe>
+        const response = await fetch(url);
+        allVideos = await response.json();
+        
+        // Appliquer les filtres côté client (recherche, tri, matière)
+        applyClientFilters();
+        
+      } catch (error) {
+        console.error('Erreur chargement vidéos:', error);
+        document.getElementById('videos-grid').innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #dc3545;">
+            <p>Erreur lors du chargement des vidéos.</p>
+            <button onclick="loadVideos()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+              Réessayer
+            </button>
           </div>
         `;
-      } else {
-        videoPlayerHtml = `
-          <div class="video-thumbnail">
-            <video preload="metadata" controls>
-              <source src="${video.file_url}" type="video/${video.file_type}">
-              Votre navigateur ne supporte pas la vidéo.
-            </video>
-            <div class="thumbnail-overlay">
-              <div class="play-button">
-                <i class="fa-solid fa-play"></i>
+      }
+    }
+  
+    // Charger les filtres dynamiques
+    async function loadDynamicFilters() {
+      try {
+        // Charger les filières
+        const fieldsRes = await fetch('/api/fields');
+        const fields = await fieldsRes.json();
+        const fieldFilter = document.getElementById('field-filter');
+        fields.forEach(field => {
+          const option = new Option(field, field);
+          fieldFilter.add(option);
+        });
+  
+        // Charger les matières (subjects)
+        const subjects = [...new Set(allVideos.map(v => v.subject))].sort();
+        const subjectFilter = document.getElementById('subject-filter');
+        subjectFilter.innerHTML = '<option value="">Toutes les matières</option>';
+        subjects.forEach(subject => {
+          const option = new Option(subject, subject);
+          subjectFilter.add(option);
+        });
+  
+      } catch (error) {
+        console.error("Erreur chargement filtres dynamiques:", error);
+      }
+    }
+    
+    function showLoading() {
+      document.getElementById('videos-grid').innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Chargement des vidéos...</p>
+        </div>
+      `;
+    }
+    
+    // Appliquer les filtres côté client
+    function applyClientFilters() {
+        currentPage = 1;
+        const searchTerm = document.getElementById('search-videos').value.toLowerCase();
+        const subject = document.getElementById('subject-filter').value;
+        const sortBy = document.getElementById('sort-videos').value;
+  
+        let tempVideos = [...allVideos];
+  
+        // 1. Filtre par recherche
+        if (searchTerm) {
+          tempVideos = tempVideos.filter(video =>
+            video.title.toLowerCase().includes(searchTerm) ||
+            video.subject.toLowerCase().includes(searchTerm) ||
+            (video.username && video.username.toLowerCase().includes(searchTerm))
+          );
+        }
+  
+        // 2. Filtre par matière
+        if (subject) {
+            tempVideos = tempVideos.filter(v => v.subject === subject);
+        }
+  
+        // 3. Tri
+        tempVideos.sort((a, b) => {
+          switch (sortBy) {
+            case 'date-desc': return new Date(b.created_at) - new Date(a.created_at);
+            case 'date-asc': return new Date(a.created_at) - new Date(b.created_at);
+            case 'title-asc': return a.title.localeCompare(b.title);
+            case 'title-desc': return b.title.localeCompare(a.title);
+            case 'likes-desc': return (b.likes || 0) - (a.likes || 0);
+            default: return 0;
+          }
+        });
+  
+        filteredVideos = tempVideos;
+        renderVideos();
+    }
+  
+    // Rendu des vidéos
+    function renderVideos() {
+      const grid = document.getElementById('videos-grid');
+      const totalPages = Math.ceil(filteredVideos.length / ITEMS_PER_PAGE);
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedVideos = filteredVideos.slice(start, start + ITEMS_PER_PAGE);
+    
+      if (paginatedVideos.length === 0) {
+        grid.innerHTML = `
+          <div style="text-align: center; padding: 60px; color: #666; grid-column: 1 / -1;">
+            <i class="fa-solid fa-video-slash" style="font-size: 3em; margin-bottom: 16px; opacity: 0.5;"></i>
+            <h3>Aucune vidéo trouvée</h3>
+            <p>Essayez de modifier vos critères de recherche</p>
+          </div>
+        `;
+        document.getElementById('videos-pagination').innerHTML = '';
+        return;
+      }
+    
+      let html = '';
+      paginatedVideos.forEach(video => {
+        const date = new Date(video.created_at).toLocaleDateString('fr-FR');
+        const isYouTube = video.file_type === 'youtube';
+    
+        let videoPlayerHtml = '';
+        if (isYouTube) {
+          videoPlayerHtml = `
+            <div class="video-thumbnail">
+              <iframe 
+                width="100%" 
+                height="200" 
+                src="${video.file_url}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+              </iframe>
+            </div>
+          `;
+        } else {
+          videoPlayerHtml = `
+            <div class="video-thumbnail">
+              <video preload="metadata" controls>
+                <source src="${video.file_url}" type="video/${video.file_type}">
+                Votre navigateur ne supporte pas la vidéo.
+              </video>
+              <div class="thumbnail-overlay">
+                <div class="play-button">
+                  <i class="fa-solid fa-play"></i>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+    
+        html += `
+          <div class="video-card" data-video-id="${video.id}">
+            ${videoPlayerHtml}
+            <div class="video-info">
+              <h3 class="video-title">${video.title}</h3>
+              <div class="video-meta">
+                <span class="video-subject">${video.subject}</span>
+                <span>${date}</span>
+              </div>
+              <div class="video-author">
+                <img src="${video.user_avatar || 'https://via.placeholder.com/150'}" 
+                     alt="Avatar" 
+                     class="author-avatar"
+                     onerror="this.src='https://via.placeholder.com/150'">
+                <span>par ${video.username}</span>
+              </div>
+              <div class="video-actions">
+                ${isYouTube 
+                  ? `<button class="btn-view" onclick="window.open('${video.download_url}', '_blank')">
+                      <i class="fa-solid fa-eye"></i> Voir sur YouTube
+                    </button>`
+                  : `<button class="btn-view" onclick="playVideo(this)">
+                      <i class="fa-solid fa-play"></i> Regarder
+                    </button>
+                    <button class="btn-download" onclick="window.open('${video.download_url || video.file_url}', '_blank')">
+                      <i class="fa-solid fa-download"></i> Télécharger
+                    </button>`
+                }
               </div>
             </div>
           </div>
         `;
-      }
-  
-      html += `
-        <div class="video-card" data-video-id="${video.id}">
-          ${videoPlayerHtml}
-          <div class="video-info">
-            <h3 class="video-title">${video.title}</h3>
-            <div class="video-meta">
-              <span class="video-subject">${video.subject}</span>
-              <span>${date}</span>
-            </div>
-            <div class="video-author">
-              <img src="${video.user_avatar || 'https://via.placeholder.com/150'}" 
-                   alt="Avatar" 
-                   class="author-avatar"
-                   onerror="this.src='https://via.placeholder.com/150'">
-              <span>par ${video.username}</span>
-            </div>
-            <div class="video-actions">
-              ${isYouTube 
-                ? `<button class="btn-view" onclick="window.open('${video.download_url}', '_blank')">
-                    <i class="fa-solid fa-eye"></i> Voir sur YouTube
-                  </button>`
-                : `<button class="btn-view" onclick="playVideo(this)">
-                    <i class="fa-solid fa-play"></i> Regarder
-                  </button>
-                  <button class="btn-download" onclick="window.open('${video.download_url || video.file_url}', '_blank')">
-                    <i class="fa-solid fa-download"></i> Télécharger
-                  </button>`
-              }
-            </div>
-          </div>
-        </div>
-      `;
-    });
-  
-    grid.innerHTML = html;
-    renderPagination(totalPages);
+      });
     
-    // ⏱️ Toujours appeler scrollToVideo après rendu
-    setTimeout(scrollToVideo, 100);
-  }
-  
-  // 🔍 Fonction de scroll vers la vidéo (garde-la !)
-  function scrollToVideo() {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#video-')) {
-      const videoId = hash.replace('#video-', '');
-      const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
-      
-      if (videoElement) {
-        setTimeout(() => {
-          videoElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          videoElement.style.boxShadow = '0 0 0 3px #007bff';
-          videoElement.style.borderRadius = '10px';
-          videoElement.style.transition = 'box-shadow 0.3s ease';
-          
+      grid.innerHTML = html;
+      renderPagination(totalPages);
+      setTimeout(scrollToVideo, 100);
+    }
+    
+    function scrollToVideo() {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#video-')) {
+        const videoId = hash.replace('#video-', '');
+        const videoElement = document.querySelector(`[data-video-id="${videoId}"]`);
+        
+        if (videoElement) {
           setTimeout(() => {
-            videoElement.style.boxShadow = '0 0 0 3px #007bff, 0 0 20px rgba(0, 123, 255, 0.5)';
-          }, 300);
-          setTimeout(() => {
+            videoElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             videoElement.style.boxShadow = '0 0 0 3px #007bff';
-          }, 600);
-          setTimeout(() => {
-            videoElement.style.boxShadow = '';
-          }, 3000);
-        }, 500);
-      }
-    }
-  }
-  
-  // ▶️ Fonction play/pause (uniquement pour Cloudinary)
-  function playVideo(button) {
-    const videoCard = button.closest('.video-card');
-    const video = videoCard.querySelector('video');
-    const overlay = videoCard.querySelector('.thumbnail-overlay');
-    
-    if (video && video.paused) {
-      video.play();
-      overlay.style.opacity = '0';
-    } else if (video) {
-      video.pause();
-      overlay.style.opacity = '1';
-    }
-  }
-  
-  // 🧠 Initialisation avec hashchange
-  document.addEventListener('DOMContentLoaded', function() {
-    // 🔗 Écoute les changements d'URL (ex: #video-42)
-    window.addEventListener('hashchange', scrollToVideo);
-  
-    // ▶️ Clic sur le bouton play
-    document.addEventListener('click', function(e) {
-      if (e.target.closest('.play-button')) {
-        const videoCard = e.target.closest('.video-card');
-        const video = videoCard.querySelector('video');
-        const overlay = videoCard.querySelector('.thumbnail-overlay');
-        if (video) {
-          video.play();
-          overlay.style.opacity = '0';
+            videoElement.style.borderRadius = '10px';
+            videoElement.style.transition = 'box-shadow 0.3s ease';
+            
+            setTimeout(() => {
+              videoElement.style.boxShadow = '0 0 0 3px #007bff, 0 0 20px rgba(0, 123, 255, 0.5)';
+            }, 300);
+            setTimeout(() => {
+              videoElement.style.boxShadow = '0 0 0 3px #007bff';
+            }, 600);
+            setTimeout(() => {
+              videoElement.style.boxShadow = '';
+            }, 3000);
+          }, 500);
         }
       }
-    });
-  
-    // 🔄 Remettre l'overlay à la fin (uniquement pour <video>)
-    document.addEventListener('ended', function(e) {
-      if (e.target.tagName === 'VIDEO') {
-        const videoCard = e.target.closest('.video-card');
-        const overlay = videoCard.querySelector('.thumbnail-overlay');
-        if (overlay) overlay.style.opacity = '1';
+    }
+    
+    function playVideo(button) {
+      const videoCard = button.closest('.video-card');
+      const video = videoCard.querySelector('video');
+      const overlay = videoCard.querySelector('.thumbnail-overlay');
+      
+      if (video && video.paused) {
+        video.play();
+        overlay.style.opacity = '0';
+      } else if (video) {
+        video.pause();
+        overlay.style.opacity = '1';
       }
-    }, true);
-  });
-  
-  // Pagination (inchangée)
-  function renderPagination(totalPages) {
-    const container = document.getElementById('videos-pagination');
-    if (totalPages <= 1) {
-      container.innerHTML = '';
-      return;
     }
-  
-    let html = '<div class="pagination">';
-    if (currentPage > 1) {
-      html += `<button onclick="changePage(${currentPage - 1})">&laquo; Précédent</button>`;
-    }
-  
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-  
-    for (let i = startPage; i <= endPage; i++) {
-      html += i === currentPage 
-        ? `<span class="current-page">${i}</span>` 
-        : `<button onclick="changePage(${i})">${i}</button>`;
-    }
-  
-    if (currentPage < totalPages) {
-      html += `<button onclick="changePage(${currentPage + 1})">Suivant &raquo;</button>`;
-    }
-    html += '</div>';
-    container.innerHTML = html;
-  }
-  
-  function changePage(page) {
-    currentPage = page;
-    renderVideos();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  
-  // Filtres (inchangés)
-  function setupFilters() {
-    document.getElementById('search-videos').addEventListener('input', (e) => {
-      currentPage = 1;
-      const term = e.target.value.toLowerCase();
-      filteredVideos = allVideos.filter(video =>
-        video.title.toLowerCase().includes(term) ||
-        video.subject.toLowerCase().includes(term) ||
-        video.username.toLowerCase().includes(term)
-      );
-      renderVideos();
-    });
-  
-    document.getElementById('sort-videos').addEventListener('change', (e) => {
-      currentPage = 1;
-      const sortBy = e.target.value;
-      filteredVideos.sort((a, b) => {
-        switch (sortBy) {
-          case 'date-desc': return new Date(b.created_at) - new Date(a.created_at);
-          case 'date-asc': return new Date(a.created_at) - new Date(b.created_at);
-          case 'title-asc': return a.title.localeCompare(b.title);
-          case 'title-desc': return b.title.localeCompare(a.title);
-          case 'likes-desc': return (b.likes || 0) - (a.likes || 0);
-          default: return 0;
+    
+    function setupEventListeners() {
+      window.addEventListener('hashchange', scrollToVideo);
+    
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.play-button')) {
+          const videoCard = e.target.closest('.video-card');
+          const video = videoCard.querySelector('video');
+          const overlay = videoCard.querySelector('.thumbnail-overlay');
+          if (video) {
+            video.play();
+            overlay.style.opacity = '0';
+          }
         }
       });
-      renderVideos();
-    });
+    
+      document.addEventListener('ended', function(e) {
+        if (e.target.tagName === 'VIDEO') {
+          const videoCard = e.target.closest('.video-card');
+          const overlay = videoCard.querySelector('.thumbnail-overlay');
+          if (overlay) overlay.style.opacity = '1';
+        }
+      }, true);
   
-    document.getElementById('subject-filter').addEventListener('change', (e) => {
-      currentPage = 1;
-      const subject = e.target.value;
-      if (!subject) {
-        filteredVideos = [...allVideos];
-      } else if (subject === 'autre') {
-        const predefined = ['javascript', 'html', 'css', 'c++', 'algorithme', 'système'];
-        filteredVideos = allVideos.filter(v => !predefined.includes(v.subject.toLowerCase()));
-      } else {
-        filteredVideos = allVideos.filter(v => v.subject.toLowerCase() === subject.toLowerCase());
+      // Event listeners pour les filtres
+      document.getElementById('search-videos').addEventListener('input', applyClientFilters);
+      document.getElementById('sort-videos').addEventListener('change', applyClientFilters);
+      document.getElementById('subject-filter').addEventListener('change', applyClientFilters);
+      document.getElementById('year-filter').addEventListener('change', loadVideos);
+      document.getElementById('field-filter').addEventListener('change', loadVideos);
+    }
+    
+    function renderPagination(totalPages) {
+      const container = document.getElementById('videos-pagination');
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
       }
+    
+      let html = '<div class="pagination">';
+      if (currentPage > 1) {
+        html += `<button onclick="changePage(${currentPage - 1})">&laquo; Précédent</button>`;
+      }
+    
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+    
+      for (let i = startPage; i <= endPage; i++) {
+        html += i === currentPage 
+          ? `<span class="current-page">${i}</span>` 
+          : `<button onclick="changePage(${i})">${i}</button>`;
+      }
+    
+      if (currentPage < totalPages) {
+        html += `<button onclick="changePage(${currentPage + 1})">Suivant &raquo;</button>`;
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    
+    function changePage(page) {
+      currentPage = page;
       renderVideos();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Démarrage
+    document.addEventListener('DOMContentLoaded', async () => {
+      setupEventListeners();
+      await loadVideos(); // Charger les vidéos une première fois
+      await loadDynamicFilters(); // Charger les filtres dynamiques
     });
-  }
+    </script>
+  {% endblock %}
   
-  // Démarrage
-  document.addEventListener('DOMContentLoaded', () => {
-    loadVideos();
-    setupFilters();
-  });
-  </script>
-{% endblock %}

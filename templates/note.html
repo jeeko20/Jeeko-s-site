@@ -137,6 +137,8 @@
   .btn-view:hover { background: #0069d9; }
   .btn-download { background: #28a745; color: white; }
   .btn-download:hover { background: #218838; }
+  .btn-delete { background: #dc3545; color: white; }
+  .btn-delete:hover { background: #c82333; }
 
   /* =============== STYLE PAGINATION =============== */
   .pagination {
@@ -412,8 +414,12 @@
 
     <label for="tri">Trier par :</label>
     <select name="tri" id="tri">
-      <option value="date">Date</option>
-      <option value="subject">Matière</option>
+      <option value="date-desc">Plus récent</option>
+      <option value="date-asc">Plus ancien</option>
+      <option value="title-asc">Titre (A-Z)</option>
+      <option value="title-desc">Titre (Z-A)</option>
+      <option value="subject-asc">Matière (A-Z)</option>
+      <option value="subject-desc">Matière (Z-A)</option>
     </select>
   </div>
 
@@ -444,43 +450,157 @@ let savedRessources = [];
 let currentPageMy = 1;
 let currentPageSaved = 1;
 
+// Fonction de suppression d'une ressource
+async function deleteRessource(id) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette ressource ?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/ressource/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Recharger les données après la suppression
+            await loadAllData();
+            alert('Ressource supprimée avec succès');
+        } else {
+            alert('Erreur lors de la suppression de la ressource');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la suppression de la ressource');
+    }
+}
+
+// Fonction de tri des ressources
+function sortRessources(ressources, sortBy) {
+    return [...ressources].sort((a, b) => {
+        switch(sortBy) {
+            case 'date-desc':
+                return new Date(b.created_at) - new Date(a.created_at);
+            case 'date-asc':
+                return new Date(a.created_at) - new Date(b.created_at);
+            case 'title-asc':
+                return a.title.localeCompare(b.title);
+            case 'title-desc':
+                return b.title.localeCompare(a.title);
+            case 'subject-asc':
+                return a.subject.localeCompare(b.subject);
+            case 'subject-desc':
+                return b.subject.localeCompare(a.subject);
+            default:
+                return 0;
+        }
+    });
+}
+
+let originalMyRessources = [];
+let originalSavedRessources = [];
+
 async function loadAllData() {
     try {
         // Charger mes ressources
         const myRes = await fetch('/api/my_ressources');
-        let myRessources = await myRes.json();
-        myRessources = groupRessourcesByTitle(myRessources);
-        renderPaginatedMy(myRessources, currentPageMy);
+        let fetchedMyRessources = await myRes.json();
+        originalMyRessources = groupRessourcesByTitle(fetchedMyRessources);
 
-        document.getElementById('total-notes').textContent = myRessources.length;
-        document.getElementById('total-shared').textContent = myRessources.length;
-
-        // 🔥 SOLUTION SIMPLE : Charger TOUTES les ressources de la communauté
-        const allRes = await fetch('/api/ressources');
-        const allRessources = await allRes.json();
-        const allGrouped = groupRessourcesByTitle(allRessources);
-        
         // Charger les IDs des ressources sauvegardées
         const savedRes = await fetch('/api/saved_ressources');
         const savedList = await savedRes.json();
         const savedIds = new Set(savedList.map(s => s.id));
         
+        // 🔥 SOLUTION SIMPLE : Charger TOUTES les ressources de la communauté pour filtrer les sauvegardées
+        const allRes = await fetch('/api/ressources');
+        const allRessources = await allRes.json();
+        const allGrouped = groupRessourcesByTitle(allRessources);
+        
         // Filtrer pour garder seulement les ressources groupées qui sont sauvegardées
-        const savedRessources = allGrouped.filter(group => {
+        originalSavedRessources = allGrouped.filter(group => {
             // Vérifier si au moins un fichier de ce groupe est sauvegardé
             return group.files.some(file => savedIds.has(file.id));
         });
 
-        renderPaginatedSaved(savedRessources, currentPageSaved);
-        document.getElementById('total-saved').textContent = savedRessources.length;
+        // Appliquer les filtres et le tri après le chargement initial
+        applyFilters();
+
+        // Mettre à jour les statistiques
+        document.getElementById('total-notes').textContent = originalMyRessources.length + originalSavedRessources.length;
+        document.getElementById('total-shared').textContent = originalMyRessources.length;
+        document.getElementById('total-saved').textContent = originalSavedRessources.length;
 
         // Compter les matières uniques
-        const subjects = [...new Set(myRessources.map(r => r.subject))];
-        document.getElementById('total-subjects').textContent = subjects.length;
+        const allSubjects = new Set();
+        originalMyRessources.forEach(r => allSubjects.add(r.subject));
+        originalSavedRessources.forEach(r => allSubjects.add(r.subject));
+        document.getElementById('total-subjects').textContent = allSubjects.size;
 
     } catch (err) {
-        console.error("Erreur:", err);
+        console.error("Erreur lors du chargement des données:", err);
+        // Gérer l'affichage d'erreur si nécessaire
     }
+}
+
+function applyFilters() {
+    const searchTerm = document.getElementById('search').value.toLowerCase().trim();
+    const subjectFilter = document.getElementById('matiere').value;
+    const sortBy = document.getElementById('tri').value;
+    
+    // Filtrer mes ressources
+    let filteredMy = [...originalMyRessources]; // Travailler sur une copie
+    if (searchTerm !== '') {
+        filteredMy = filteredMy.filter(ressource => {
+            return ressource.title.toLowerCase().includes(searchTerm) ||
+                   ressource.subject.toLowerCase().includes(searchTerm);
+        });
+    }
+    
+    if (subjectFilter !== '') {
+        filteredMy = filteredMy.filter(ressource => {
+            const ressourceSubjectLower = ressource.subject.toLowerCase();
+            if (subjectFilter === 'autre') {
+                const predefined = ['javascript', 'html', 'css', 'algorithme', 'c++', 'systeme'];
+                return !predefined.includes(ressourceSubjectLower);
+            } else {
+                return ressourceSubjectLower === subjectFilter.toLowerCase();
+            }
+        });
+    }
+    
+    // Trier
+    filteredMy = sortRessources(filteredMy, sortBy);
+    
+    // Filtrer les ressources sauvegardées
+    let filteredSaved = [...originalSavedRessources]; // Travailler sur une copie
+    if (searchTerm !== '') {
+        filteredSaved = filteredSaved.filter(ressource => {
+            return ressource.title.toLowerCase().includes(searchTerm) ||
+                   ressource.subject.toLowerCase().includes(searchTerm);
+        });
+    }
+    
+    if (subjectFilter !== '') {
+        filteredSaved = filteredSaved.filter(ressource => {
+            const ressourceSubjectLower = ressource.subject.toLowerCase();
+            if (subjectFilter === 'autre') {
+                const predefined = ['javascript', 'html', 'css', 'algorithme', 'c++', 'systeme'];
+                return !predefined.includes(ressourceSubjectLower);
+            } else {
+                return ressourceSubjectLower === subjectFilter.toLowerCase();
+            }
+        });
+    }
+
+    // Trier les sauvegardées
+    filteredSaved = sortRessources(filteredSaved, sortBy);
+
+    // Réinitialiser les pages et afficher
+    currentPageMy = 1;
+    currentPageSaved = 1;
+    
+    renderPaginatedMy(filteredMy, currentPageMy);
+    renderPaginatedSaved(filteredSaved, currentPageSaved);
 }
 
 function renderPaginatedMy(list, page) {
@@ -578,6 +698,12 @@ function renderRessources(list, containerId) {
                     `}
           <button class="btn-download" onclick="downloadRessource(${r.id})">
             <i class="fa-solid fa-download"></i> Télécharger
+          </button>
+          ${containerId === 'my-ressources-container' ? `
+          <button class="btn-delete" onclick="deleteRessource(${r.id})">
+            <i class="fa-solid fa-trash"></i> Supprimer
+          </button>
+          ` : ''}
           </button>
                 </div>
             </div>`;
@@ -780,56 +906,6 @@ function setupFilters() {
   }
 }
 
-function applyFilters() {
-  const matiere = document.getElementById('matiere')?.value || '';
-  const tri = document.getElementById('tri')?.value || 'date';
-  const search = document.getElementById('search')?.value.toLowerCase() || '';
-
-  // Filtrer mes ressources
-  let filteredMy = myRessources.filter(r => {
-    const matchesMatiere = !matiere || 
-                           matiere === 'autre' ? 
-                           !['javascript', 'HTML', 'CSS', 'Algorithme', 'C++', 'systeme'].includes(r.subject.toLowerCase()) :
-                           r.subject.toLowerCase() === matiere.toLowerCase();
-    const matchesSearch = !search || 
-      r.title.toLowerCase().includes(search) || 
-      r.subject.toLowerCase().includes(search);
-    return matchesMatiere && matchesSearch;
-  });
-
-  // Trier
-  if (tri === 'date') {
-    filteredMy.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  } else if (tri === 'subject') {
-    filteredMy.sort((a, b) => a.subject.localeCompare(b.subject));
-  }
-
-  // Filtrer les ressources sauvegardées
-  let filteredSaved = savedRessources.filter(r => {
-    const matchesMatiere = !matiere || 
-                           matiere === 'autre' ? 
-                           !['javascript', 'HTML', 'CSS', 'Algorithme', 'C++', 'systeme'].includes(r.subject.toLowerCase()) :
-                           r.subject.toLowerCase() === matiere.toLowerCase();
-    const matchesSearch = !search || 
-      r.title.toLowerCase().includes(search) || 
-      r.subject.toLowerCase().includes(search);
-    return matchesMatiere && matchesSearch;
-  });
-
-  // Trier les sauvegardées
-  if (tri === 'date') {
-    filteredSaved.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  } else if (tri === 'subject') {
-    filteredSaved.sort((a, b) => a.subject.localeCompare(b.subject));
-  }
-
-  // Réinitialiser les pages et afficher
-  currentPageMy = 1;
-  currentPageSaved = 1;
-  
-  renderPaginatedMy(filteredMy, currentPageMy);
-  renderPaginatedSaved(filteredSaved, currentPageSaved);
-}
 // Navigation entre onglets
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -1243,8 +1319,7 @@ async function unsaveNote(noteId) {
         if (response.ok) {
             showNotification('✅ Note retirée des sauvegardes', 'success');
             // Recharger les données
-            loadNotesStats();
-            loadMyNotes();
+            await loadAllData();
         } else {
             throw new Error('Erreur lors de la suppression');
         }
@@ -1271,14 +1346,6 @@ function showNotesError() {
     }
 }
 
-// Chargement initial
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Chargement des statistiques des notes...');
-    loadNotesStats();
-    loadMyNotes();
-    
-    // Recharger les stats toutes les 30 secondes (optionnel)
-    setInterval(loadNotesStats, 30000);
-});
+
 </script>
 {% endblock %}

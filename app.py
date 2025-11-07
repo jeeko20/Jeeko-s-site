@@ -17,6 +17,7 @@ from sqlalchemy.orm import joinedload
 from flask_compress import Compress
 import secrets
 from notifications import notify_new_quiz, notify_new_flashcard, notify_new_file
+from sqlalchemy import or_
 
 # ====================
 
@@ -957,6 +958,17 @@ def api_my_notes():
             "count": 0
         }), 500
 
+@app.route('/api/fields')
+def api_fields():
+    """Returns a list of unique fields of study from resources."""
+    try:
+        fields = db.session.query(Ressource.field_of_study).distinct().all()
+        field_list = [field[0] for field in fields if field[0]]
+        return jsonify(sorted(field_list))
+    except Exception as e:
+        logger.error(f"❌ Erreur récupération filières API: {e}")
+        return jsonify([]), 500
+
 @app.route('/api/ressources')
 @login_required
 def api_ressources():
@@ -968,7 +980,7 @@ def api_ressources():
 
     # Récupérer les ressources de l'année en cours
     ressources = Ressource.query.filter(
-        Ressource.field_of_study == current_field,
+        or_(Ressource.field_of_study == current_field, Ressource.field_of_study == None, Ressource.field_of_study == ''),
         Ressource.year_of_study == current_year
     ).options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
 
@@ -991,17 +1003,25 @@ def api_ressources():
 
 
 @app.route('/api/videos')
+@login_required
 def api_videos():
-    """Retourne la liste des vidéos (Cloudinary + YouTube) au format JSON.
+    """Retourne la liste des vidéos (Cloudinary + YouTube) au format JSON."""
+    
+    year_filter = request.args.get('year', 'all')
+    field_filter = request.args.get('field', 'all')
 
-    Cette route est publique (pas de login requis) pour permettre l'affichage sur la page /videos.
-    """
     try:
-        # Types considérés comme vidéos (cloudinary raw/video or youtube)
         video_types = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'youtube']
+        
+        query = Ressource.query.filter(Ressource.file_type.in_(video_types))
 
-        videos = Ressource.query.filter(Ressource.file_type.in_(video_types))
-        videos = videos.options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
+        if year_filter != 'all':
+            query = query.filter(Ressource.year_of_study == year_filter)
+        
+        if field_filter != 'all':
+            query = query.filter(Ressource.field_of_study == field_filter)
+
+        videos = query.options(joinedload(Ressource.user)).order_by(Ressource.created_at.desc()).all()
 
         result = []
         for v in videos:
@@ -2287,6 +2307,13 @@ def api_public_create_quiz():
 
                 db.session.commit()
                 logger.info(f"✅ {len(users_same_year_and_field)} notifications quiz créées via API")
+                # Envoyer notification WhatsApp via Green API (lien direct vers le quiz)
+                try:
+                    quiz_link = url_for('quiz_flashcards', _external=True) + f"#quiz-{new_quiz.id}"
+                    notify_new_quiz(new_quiz.title, target_user.username, link=quiz_link)
+                except Exception as _e:
+                    logger.warning(f"Impossible d'envoyer la notification WhatsApp pour le quiz via API: {_e}")
+            
         except Exception as _e:
             # Ne pas faire échouer la création principale si la notification échoue
             db.session.rollback()
@@ -2377,6 +2404,12 @@ def api_public_create_flashcard():
 
                 db.session.commit()
                 logger.info(f"✅ {len(users_same_year_and_field)} notifications flashcards créées via API")
+                # Envoyer notification WhatsApp via Green API (lien direct vers la flashcard)
+                try:
+                    flash_link = url_for('quiz_flashcards', _external=True) + f"#flashcard-{new_flashcard.id}"
+                    notify_new_flashcard(new_flashcard.title, target_user.username, link=flash_link)
+                except Exception as _e:
+                    logger.warning(f"Impossible d'envoyer la notification WhatsApp pour la flashcard via API: {_e}")
         except Exception as _e:
             db.session.rollback()
             logger.error(f"⚠️ Erreur lors de la création des notifications flashcards API: {_e}")

@@ -1611,7 +1611,19 @@ function createSingleMediaHtml(file, ressourceId, isInCarousel = false) {
     const containerClass = isInCarousel ? 'carousel-media' : '';
     const { file_url, file_type, is_video } = file;
 
-    if (is_video || ['mp4','mov','avi','mkv','webm'].includes(file_type)) {
+    if (file_type === 'youtube') {
+        return `
+            <div class="${containerClass}">
+                <iframe 
+                    width="100%" 
+                    height="200" 
+                    src="${file_url}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>`;
+    } else if (is_video || ['mp4','mov','avi','mkv','webm'].includes(file_type)) {
         return `
             <div class="${containerClass}" style="cursor: pointer;" onclick="window.location.href='/videos#video-${ressourceId}'">
                 <div class="carousel-icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
