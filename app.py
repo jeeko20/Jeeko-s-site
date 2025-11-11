@@ -86,7 +86,7 @@ cloudinary.config(
 
 ALLOWED_EXTENSIONS = {
     'png', 'jpg', 'jpeg', 'gif',     # images
-    'pdf', 'doc', 'docx',            # documents
+    'pdf', 'doc', 'docx', 'zip',           # documents
     'mp4', 'mov', 'avi', 'mkv', 'webm'  # vidéos
 }
 
@@ -643,8 +643,10 @@ def share_ressource():
                 continue
 
             is_video = ext in {'mp4', 'mov', 'avi', 'mkv', 'webm'}
+            # Traiter les documents ET archives ZIP comme "raw" pour Cloudinary
             is_document = ext in {'pdf', 'doc', 'docx'}
-            resource_type = 'video' if is_video else ('raw' if is_document else 'image')
+            is_archive = ext in {'zip'}
+            resource_type = 'video' if is_video else ('raw' if (is_document or is_archive) else 'image')
 
             page_count = 0
             if ext == 'pdf':
@@ -1463,6 +1465,119 @@ public_routes = [
     "contact",
     "systeme"
 ]
+
+import zipfile
+from io import BytesIO
+
+def get_zip_structure(file_content):
+    """Extrait la structure d'un fichier ZIP"""
+    try:
+        with zipfile.ZipFile(BytesIO(file_content), 'r') as zip_ref:
+            file_list = zip_ref.namelist()
+            
+            # Créer une structure hiérarchique
+            structure = {"type": "folder", "name": "root", "children": []}
+            
+            for file_path in file_list:
+                if file_path.endswith('/'):  # Dossier
+                    continue
+                
+                parts = file_path.split('/')
+                current_level = structure["children"]
+                
+                for i, part in enumerate(parts):
+                    if i == len(parts) - 1:  # Fichier
+                        current_level.append({
+                            "type": "file",
+                            "name": part,
+                            "path": file_path,
+                            "size": zip_ref.getinfo(file_path).file_size
+                        })
+                    else:  # Dossier
+                        folder = next((item for item in current_level if item.get("name") == part and item.get("type") == "folder"), None)
+                        if not folder:
+                            folder = {
+                                "type": "folder", 
+                                "name": part, 
+                                "children": []
+                            }
+                            current_level.append(folder)
+                        current_level = folder["children"]
+            
+            return structure
+    except Exception as e:
+        logger.error(f"Erreur extraction structure ZIP: {e}")
+        return None
+
+@app.route('/api/ressource/<int:ressource_id>/zip_structure')
+@login_required
+def get_zip_structure_api(ressource_id):
+    """API pour récupérer la structure d'un fichier ZIP"""
+    ressource = Ressource.query.get_or_404(ressource_id)
+    
+    try:
+        # Télécharger le fichier ZIP
+        response = requests.get(ressource.download_url or ressource.file_url, timeout=30)
+        response.raise_for_status()
+        
+        structure = get_zip_structure(response.content)
+        
+        if structure:
+            return jsonify({
+                "success": True,
+                "structure": structure,
+                "ressource_title": ressource.title
+            })
+        else:
+            return jsonify({"success": False, "error": "Impossible d'extraire la structure"}), 500
+            
+    except Exception as e:
+        logger.error(f"Erreur récupération structure ZIP: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/ressource/<int:ressource_id>/zip_file')
+@login_required
+def get_zip_file_content(ressource_id):
+    """API pour récupérer le contenu d'un fichier spécifique dans un ZIP"""
+    file_path = request.args.get('path')
+    if not file_path:
+        return jsonify({"error": "Chemin du fichier manquant"}), 400
+    
+    ressource = Ressource.query.get_or_404(ressource_id)
+    
+    try:
+        # Télécharger le fichier ZIP
+        response = requests.get(ressource.download_url or ressource.file_url, timeout=30)
+        response.raise_for_status()
+        
+        with zipfile.ZipFile(BytesIO(response.content), 'r') as zip_ref:
+            if file_path in zip_ref.namelist():
+                file_content = zip_ref.read(file_path)
+                
+                # Déterminer le type MIME
+                mime_type = "application/octet-stream"
+                if file_path.lower().endswith(('.txt', '.md')):
+                    mime_type = "text/plain"
+                elif file_path.lower().endswith(('.html', '.htm')):
+                    mime_type = "text/html"
+                elif file_path.lower().endswith('.css'):
+                    mime_type = "text/css"
+                elif file_path.lower().endswith('.js'):
+                    mime_type = "application/javascript"
+                elif file_path.lower().endswith('.json'):
+                    mime_type = "application/json"
+                elif file_path.lower().endswith('.pdf'):
+                    mime_type = "application/pdf"
+                elif file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                    mime_type = f"image/{file_path.split('.')[-1].lower()}"
+                
+                return Response(file_content, mimetype=mime_type)
+            else:
+                return jsonify({"error": "Fichier non trouvé dans l'archive"}), 404
+                
+    except Exception as e:
+        logger.error(f"Erreur récupération fichier ZIP: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/sitemap.xml", methods=['GET'])
 def sitemap():

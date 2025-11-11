@@ -625,7 +625,78 @@ function renderPaginatedSaved(list, page) {
   }, 'saved-ressources-container', 'saved-pagination');
 }
 
-function renderRessources(list, containerId) {
+ // Fonction pour déterminer le type d'affichage
+function getDisplayType(files) {
+    if (!files || files.length === 0) return 'single';
+    
+    const imageCount = files.filter(f => 
+        f.file_type && ['png','jpg','jpeg','gif'].includes(f.file_type.toLowerCase())
+    ).length;
+    
+    const totalCount = files.length;
+    
+    console.log('Analyse fichiers:', { imageCount, totalCount, files });
+    
+    // Si seulement des images ET plus d'une image -> carousel
+    if (imageCount === totalCount && totalCount > 1) {
+        return 'carousel';
+    }
+    // Si mélange d'images et autres fichiers -> modal
+    else if (imageCount > 0 && totalCount > 1) {
+        return 'modal';
+    }
+    // Si seulement d'autres types de fichiers ET plus d'un fichier -> modal
+    else if (totalCount > 1) {
+        return 'modal';
+    }
+    // Si un seul fichier -> affichage simple
+    else {
+        return 'single';
+    }
+}
+// Fonction modifiée pour créer le HTML média
+function createMediaHtml(files, ressourceId) {
+    const displayType = getDisplayType(files);
+    
+    switch(displayType) {
+        case 'carousel':
+            // Uniquement des images -> carousel
+            return `
+                <div class="ressource-media">
+                    ${createCarouselHtml(files, ressourceId)}
+                </div>`;
+        
+        case 'modal':
+            // Mélange ou autres fichiers -> premier fichier + badge modal
+            const firstFile = files[0];
+            return `
+                <div class="ressource-media" style="position: relative;">
+                    ${createSingleMediaHtml(firstFile, ressourceId, false)}
+                    <div class="multi-file-badge" onclick="openTreeModal(${ressourceId}, false)" style="cursor: pointer;">
+                        <i class="fa-solid fa-folder-open"></i> 
+                        ${files.length} fichiers
+                    </div>
+                </div>`;
+        
+        case 'single':
+            // Un seul fichier -> affichage simple
+            const singleFile = files[0];
+            const isZip = singleFile.file_type === 'zip';
+            
+            if (isZip) {
+                return `
+                    <div class="ressource-media" onclick="openTreeModal(${ressourceId}, true)" style="cursor: pointer;">
+                        ${createSingleMediaHtml(singleFile, ressourceId, false)}
+                    </div>`;
+            } else {
+                return `
+                    <div class="ressource-media">
+                        ${createSingleMediaHtml(singleFile, ressourceId, false)}
+                    </div>`;
+            }
+    }
+}
+ function renderRessources(list, containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     
@@ -645,20 +716,8 @@ function renderRessources(list, containerId) {
         const bookmarkIconClass = isSaved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
         const bookmarkColor = isSaved ? '#007bff' : '#ccc';
 
-        // 🔥 AFFICHAGE INTELLIGENT (CAROUSEL OU SIMPLE)
-        let mediaHtml = '';
-        if (r.is_multiple) {
-            mediaHtml = `
-                <div class="ressource-media">
-                    ${createCarouselHtml(r.files, r.id)}
-                </div>`;
-        } else {
-            const singleFile = r.files[0];
-            mediaHtml = `
-                <div class="ressource-media">
-                    ${createSingleMediaHtml(singleFile, r.id, false)}
-                </div>`;
-        }
+        // 🔥 NOUVELLE LOGIQUE : Utiliser createMediaHtml
+        const mediaHtml = createMediaHtml(r.files, r.id);
 
         grid.innerHTML += `
             <div class="ressources-list" data-ressource-id="${r.id}">
@@ -692,27 +751,99 @@ function renderRessources(list, containerId) {
                             <i class="fa-solid fa-video"></i> Voir la vidéo
                         </button>
                     ` : `
-                        <button class="btn-view" onclick="window.open('${r.files[0].file_url}', '_blank')">
+                        <button class="btn-view" onclick="handleViewClick(${r.id}, ${r.files.length > 1})">
                             <i class="fa-solid fa-eye"></i> Voir
                         </button>
                     `}
-          <button class="btn-download" onclick="downloadRessource(${r.id})">
-            <i class="fa-solid fa-download"></i> Télécharger
-          </button>
-          ${containerId === 'my-ressources-container' ? `
-          <button class="btn-delete" onclick="deleteRessource(${r.id})">
-            <i class="fa-solid fa-trash"></i> Supprimer
-          </button>
-          ` : ''}
-          </button>
+                    <button class="btn-download" onclick="downloadRessource(${r.id})">
+                        <i class="fa-solid fa-download"></i> Télécharger
+                    </button>
                 </div>
             </div>`;
     });
-
-    // Initialiser les carousels après le rendu
-    setTimeout(initializeCarousels, 100);
 }
 
+// Fonction pour gérer le clic sur le bouton "Voir"
+function handleViewClick(ressourceId, hasMultipleFiles) {
+    if (hasMultipleFiles) {
+        // Ouvrir le modal d'exploration
+        openTreeModal(ressourceId, false);
+    } else {
+        // Ouvrir le fichier unique directement
+        const ressource = ressources.find(r => r.id === ressourceId) || 
+                         filteredRessources.find(r => r.id === ressourceId);
+        if (ressource && ressource.files.length === 1) {
+            const file = ressource.files[0];
+            if (file.is_video) {
+                window.location.href = `/videos#video-${ressourceId}`;
+            } else {
+                window.open(file.file_url, '_blank');
+            }
+        }
+    }
+}
+
+// Fonction pour afficher les fichiers multiples dans le modal
+function renderMultipleFilesModal(files, ressourceTitle) {
+    showTreeModal(ressourceTitle, false);
+    
+    const treeContainer = document.getElementById('tree-container');
+    treeContainer.innerHTML = '';
+    
+    files.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'tree-item file';
+        
+        const fileType = file.file_type || 'file';
+        const icon = getFileIcon(fileType);
+        const fileName = file.title || `Fichier ${index + 1}.${fileType}`;
+        
+        item.innerHTML = `
+            ${icon}
+            <span>${fileName}</span>
+            <small style="margin-left: auto; color: #6c757d;">
+                ${file.page_count ? `${file.page_count} pages` : ''}
+            </small>
+        `;
+        
+        item.addEventListener('click', () => {
+            if (file.is_video || ['mp4','mov','avi','mkv','webm'].includes(fileType)) {
+                window.location.href = `/videos#video-${currentTreeRessource}`;
+            } else if (fileType === 'zip') {
+                // Si c'est un ZIP dans une ressource multiple, charger sa structure
+                loadZipStructureFromFile(file, ressourceTitle);
+            } else {
+                // Ouvrir le fichier directement
+                window.open(file.file_url || file.download_url, '_blank');
+            }
+        });
+        
+        treeContainer.appendChild(item);
+    });
+}
+// Fonction pour charger la structure d'un fichier ZIP spécifique
+async function loadZipStructureFromFile(file, ressourceTitle) {
+    try {
+        const response = await fetch(file.download_url || file.file_url);
+        const zipContent = await response.arrayBuffer();
+        
+        const structure = getZipStructure(new Uint8Array(zipContent));
+        if (structure) {
+            currentZipStructure = structure;
+            renderTreeStructure(currentZipStructure);
+            
+            // Mettre à jour le titre du modal
+            const modalTitle = document.querySelector('.tree-modal-header h3');
+            if (modalTitle) {
+                modalTitle.textContent = `${ressourceTitle} - ${file.file_type.toUpperCase()}`;
+            }
+        }
+    } catch (error) {
+        console.error('Erreur chargement ZIP:', error);
+        alert('Erreur lors du chargement du fichier ZIP');
+    }
+}
+// Wire delete ressource actions (delegated since elements may be re-rendered)
 
 function renderPagination(totalPages, currentPage, onPageChange, containerId, paginationId) {
   // Trouver ou créer le conteneur de pagination
@@ -1347,5 +1478,515 @@ function showNotesError() {
 }
 
 
+// Variables globales
+let currentTreeRessource = null;
+let currentZipStructure = null;
+
+// Fonction pour ouvrir le modal d'arborescence
+// Fonction modifiée pour ouvrir le modal
+function openTreeModal(ressourceId, isZip = false) {
+    currentTreeRessource = ressourceId;
+    
+    // Récupérer les informations de la ressource en cherchant dans
+    // plusieurs collections possibles (note: 'ressources' n'existe pas
+    // dans ce template — on utilise les tableaux groupés locaux).
+    let ressource = null;
+
+    // 1) Variables potentiellement présentes (sécurisées avec typeof)
+    if (typeof ressources !== 'undefined' && ressources) {
+        ressource = ressources.find(r => r.id === ressourceId) || null;
+    }
+    if (!ressource && typeof filteredRessources !== 'undefined' && filteredRessources) {
+        ressource = filteredRessources.find(r => r.id === ressourceId) || null;
+    }
+
+    // 2) Rechercher dans les données locales de la page (mes / sauvegardées)
+    if (!ressource && typeof originalMyRessources !== 'undefined' && originalMyRessources) {
+        ressource = originalMyRessources.find(r => r.id === ressourceId) || null;
+    }
+    if (!ressource && typeof originalSavedRessources !== 'undefined' && originalSavedRessources) {
+        ressource = originalSavedRessources.find(r => r.id === ressourceId) || null;
+    }
+
+    // 3) Si toujours introuvable, rediriger vers la page serveur qui affiche
+    // l'arborescence (route '/ressource/group/<id>'), plutôt que planter.
+    if (!ressource) {
+        window.location.href = `/ressource/group/${ressourceId}`;
+        return;
+    }
+
+    if (isZip) {
+        loadZipStructure(ressourceId);
+    } else {
+        // Afficher les fichiers multiples dans le modal
+        renderMultipleFilesModal(ressource.files, ressource.title);
+    }
+}
+
+// Fonction pour analyser la structure ZIP côté frontend
+function getZipStructure(zipContent) {
+    try {
+        // Cette fonction nécessite la bibliothèque JSZip
+        if (typeof JSZip !== 'undefined') {
+            const zip = new JSZip();
+            return zip.loadAsync(zipContent).then(zip => {
+                const structure = {"type": "folder", "name": "root", "children": []};
+                const files = [];
+                
+                zip.forEach((relativePath, zipEntry) => {
+                    if (!zipEntry.dir) {
+                        files.push({
+                            path: relativePath,
+                            name: relativePath.split('/').pop(),
+                            size: zipEntry._data.uncompressedSize
+                        });
+                    }
+                });
+                
+                // Organiser en structure hiérarchique
+                files.forEach(file => {
+                    const parts = file.path.split('/');
+                    let currentLevel = structure.children;
+                    
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        if (i === parts.length - 1) {
+                            // Fichier
+                            currentLevel.push({
+                                type: "file",
+                                name: part,
+                                path: file.path,
+                                size: file.size
+                            });
+                        } else {
+                            // Dossier
+                            let folder = currentLevel.find(item => 
+                                item.type === "folder" && item.name === part
+                            );
+                            if (!folder) {
+                                folder = {
+                                    type: "folder",
+                                    name: part,
+                                    children: []
+                                };
+                                currentLevel.push(folder);
+                            }
+                            currentLevel = folder.children;
+                        }
+                    }
+                });
+                
+                return structure;
+            });
+        } else {
+            console.warn('JSZip non disponible');
+            return null;
+        }
+    } catch (error) {
+        console.error('Erreur analyse ZIP:', error);
+        return null;
+    }
+}
+// Fonction pour charger la structure ZIP
+async function loadZipStructure(ressourceId) {
+    try {
+        const response = await fetch(`/api/ressource/${ressourceId}/zip_structure`);
+        const result = await response.json();
+        
+        if (result.success) {
+            currentZipStructure = result.structure;
+            showTreeModal(result.ressource_title, true);
+            renderTreeStructure(currentZipStructure);
+        } else {
+            alert('Erreur lors du chargement de la structure ZIP');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement de la structure ZIP');
+    }
+}
+
+// Fonction pour charger les fichiers multiples
+async function loadMultipleFiles(ressourceId) {
+    // Récupérer les informations de la ressource
+    const ressource = ressources.find(r => r.id === ressourceId) || 
+                     filteredRessources.find(r => r.id === ressourceId);
+    
+    if (ressource && ressource.is_multiple) {
+        showTreeModal(ressource.title, false);
+        renderMultipleFiles(ressource.files);
+    }
+}
+
+// Fonction pour afficher le modal
+function showTreeModal(title, isZip) {
+    const modalHtml = `
+        <div class="tree-modal">
+            <div class="tree-modal-content">
+                <div class="tree-modal-header">
+                    <h3>${title} ${isZip ? '(ZIP)' : ''}</h3>
+                    <div>
+                        ${isZip ? `
+                            <button class="zip-download-btn" onclick="downloadRessource(${currentTreeRessource})">
+                                <i class="fa-solid fa-download"></i>
+                                Télécharger le ZIP
+                            </button>
+                        ` : ''}
+                        <button class="close-tree-modal" style="margin-left: 10px; background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-times"></i> Fermer
+                        </button>
+                    </div>
+                </div>
+                <div class="tree-modal-body">
+                    <div class="tree-sidebar">
+                        <div id="tree-container"></div>
+                    </div>
+                    <div class="tree-viewer">
+                        <div id="file-content-container">
+                            <p style="text-align: center; color: #6c757d; margin-top: 50px;">
+                                Sélectionnez un fichier pour afficher son contenu
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Gestionnaire pour fermer le modal
+    document.querySelector('.close-tree-modal').addEventListener('click', closeTreeModal);
+    document.querySelector('.tree-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeTreeModal();
+    });
+}
+
+// Fonction pour rendre l'arborescence ZIP
+function renderTreeStructure(structure, container = null, level = 0) {
+    const treeContainer = container || document.getElementById('tree-container');
+    treeContainer.innerHTML = '';
+    
+    const renderNode = (node, parentElement) => {
+        const item = document.createElement('div');
+        item.className = `tree-item ${node.type} ${node.type === 'folder' ? 'folder' : 'file'}`;
+        item.style.paddingLeft = `${level * 20 + 10}px`;
+        
+        const icon = node.type === 'folder' ? 
+            '<i class="fa-solid fa-folder"></i>' : 
+            '<i class="fa-solid fa-file"></i>';
+        
+        item.innerHTML = `
+            ${icon}
+            <span>${node.name}</span>
+            ${node.type === 'file' ? `<small style="margin-left: auto; color: #6c757d;">${formatFileSize(node.size)}</small>` : ''}
+        `;
+        
+        if (node.type === 'file') {
+            item.addEventListener('click', () => loadFileContent(node.path, node.name));
+        } else if (node.type === 'folder' && node.children) {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const wasExpanded = this.classList.contains('expanded');
+                
+                // Retirer l'expansion de tous les éléments
+                document.querySelectorAll('.tree-item.folder').forEach(el => {
+                    el.classList.remove('expanded');
+                });
+                
+                if (!wasExpanded) {
+                    this.classList.add('expanded');
+                    renderChildren(node.children, this, level + 1);
+                }
+            });
+        }
+        
+        parentElement.appendChild(item);
+    };
+    
+    if (structure.children) {
+        structure.children.forEach(child => renderNode(child, treeContainer));
+    } else {
+        renderNode(structure, treeContainer);
+    }
+}
+
+// Fonction pour rendre les enfants d'un dossier
+function renderChildren(children, parentElement, level) {
+    // Supprimer les enfants existants
+    const existingChildren = parentElement.nextElementSibling;
+    if (existingChildren && existingChildren.classList.contains('tree-children')) {
+        existingChildren.remove();
+    }
+    
+    const childrenContainer = document.createElement('div');
+    childrenContainer.className = 'tree-children';
+    
+    children.forEach(child => {
+        const renderNode = (node) => {
+            const item = document.createElement('div');
+            item.className = `tree-item ${node.type} ${node.type === 'folder' ? 'folder' : 'file'}`;
+            item.style.paddingLeft = `${level * 20 + 10}px`;
+            
+            const icon = node.type === 'folder' ? 
+                '<i class="fa-solid fa-folder"></i>' : 
+                '<i class="fa-solid fa-file"></i>';
+            
+            item.innerHTML = `
+                ${icon}
+                <span>${node.name}</span>
+                ${node.type === 'file' ? `<small style="margin-left: auto; color: #6c757d;">${formatFileSize(node.size)}</small>` : ''}
+            `;
+            
+            if (node.type === 'file') {
+                item.addEventListener('click', () => loadFileContent(node.path, node.name));
+            } else if (node.type === 'folder' && node.children) {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const wasExpanded = this.classList.contains('expanded');
+                    
+                    if (!wasExpanded) {
+                        this.classList.add('expanded');
+                        renderChildren(node.children, this, level + 1);
+                    } else {
+                        this.classList.remove('expanded');
+                        const nextSibling = this.nextElementSibling;
+                        if (nextSibling && nextSibling.classList.contains('tree-children')) {
+                            nextSibling.remove();
+                        }
+                    }
+                });
+            }
+            
+            childrenContainer.appendChild(item);
+        };
+        
+        renderNode(child);
+    });
+    
+    parentElement.after(childrenContainer);
+}
+
+// Fonction pour rendre les fichiers multiples (non-ZIP)
+function renderMultipleFiles(files) {
+    const treeContainer = document.getElementById('tree-container');
+    treeContainer.innerHTML = '';
+    
+    files.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'tree-item file';
+        
+        const fileType = file.file_type || 'file';
+        const icon = getFileIcon(fileType);
+        
+        item.innerHTML = `
+            ${icon}
+            <span>Fichier ${index + 1}.${fileType}</span>
+            <small style="margin-left: auto; color: #6c757d;">
+                ${file.page_count ? `${file.page_count} pages` : ''}
+            </small>
+        `;
+        
+        item.addEventListener('click', () => {
+            if (file.is_video) {
+                window.location.href = `/videos#video-${currentTreeRessource}`;
+            } else {
+                window.open(file.file_url, '_blank');
+            }
+        });
+        
+        treeContainer.appendChild(item);
+    });
+}
+
+// Fonction pour charger le contenu d'un fichier
+async function loadFileContent(filePath, fileName) {
+    const contentContainer = document.getElementById('file-content-container');
+    contentContainer.innerHTML = '<p style="text-align: center;">Chargement...</p>';
+    
+    try {
+        const response = await fetch(`/api/ressource/${currentTreeRessource}/zip_file?path=${encodeURIComponent(filePath)}`);
+        
+        if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.startsWith('image/')) {
+                // Afficher l'image
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                contentContainer.innerHTML = `
+                    <div class="file-content">
+                        <h4>${fileName}</h4>
+                        <img src="${url}" alt="${fileName}" style="max-width: 100%;">
+                        <div style="margin-top: 15px;">
+                            <button onclick="window.open('${url}')" class="btn-view">
+                                <i class="fa-solid fa-expand"></i> Ouvrir en plein écran
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (contentType && (contentType.includes('text/') || contentType.includes('application/json'))) {
+                // Afficher le texte
+                const text = await response.text();
+                contentContainer.innerHTML = `
+                    <div class="file-content">
+                        <h4>${fileName}</h4>
+                        <pre class="text-content">${escapeHtml(text)}</pre>
+                    </div>
+                `;
+            } else {
+                // Télécharger pour les autres types
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                contentContainer.innerHTML = `
+                    <div class="file-content">
+                        <h4>${fileName}</h4>
+                        <p>Ce type de fichier ne peut pas être prévisualisé.</p>
+                        <button onclick="downloadFileFromUrl('${url}', '${fileName}')" class="btn-download">
+                            <i class="fa-solid fa-download"></i> Télécharger
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            contentContainer.innerHTML = '<p style="color: red;">Erreur lors du chargement du fichier</p>';
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        contentContainer.innerHTML = '<p style="color: red;">Erreur lors du chargement du fichier</p>';
+    }
+}
+
+// Fonctions utilitaires
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getFileIcon(fileType) {
+    const type = (fileType || '').toLowerCase();
+    const icons = {
+        'pdf': '<i class="fa-solid fa-file-pdf" style="color: #e74c3c;"></i>',
+        'zip': '<i class="fa-solid fa-file-zipper" style="color: #f39c12;"></i>',
+        'doc': '<i class="fa-solid fa-file-word" style="color: #2b579a;"></i>',
+        'docx': '<i class="fa-solid fa-file-word" style="color: #2b579a;"></i>',
+        'png': '<i class="fa-solid fa-file-image" style="color: #3498db;"></i>',
+        'jpg': '<i class="fa-solid fa-file-image" style="color: #3498db;"></i>',
+        'jpeg': '<i class="fa-solid fa-file-image" style="color: #3498db;"></i>',
+        'gif': '<i class="fa-solid fa-file-image" style="color: #3498db;"></i>',
+        'mp4': '<i class="fa-solid fa-file-video" style="color: #9b59b6;"></i>',
+        'mov': '<i class="fa-solid fa-file-video" style="color: #9b59b6;"></i>',
+        'avi': '<i class="fa-solid fa-file-video" style="color: #9b59b6;"></i>',
+        'mkv': '<i class="fa-solid fa-file-video" style="color: #9b59b6;"></i>',
+        'webm': '<i class="fa-solid fa-file-video" style="color: #9b59b6;"></i>',
+        'txt': '<i class="fa-solid fa-file-lines" style="color: #2ecc71;"></i>',
+        'md': '<i class="fa-solid fa-file-lines" style="color: #2ecc71;"></i>',
+        'html': '<i class="fa-solid fa-file-code" style="color: #e67e22;"></i>',
+        'css': '<i class="fa-solid fa-file-code" style="color: #e67e22;"></i>',
+        'js': '<i class="fa-solid fa-file-code" style="color: #e67e22;"></i>',
+        'json': '<i class="fa-solid fa-file-code" style="color: #e67e22;"></i>'
+    };
+    
+    return icons[type] || '<i class="fa-solid fa-file" style="color: #95a5a6;"></i>';
+}
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function downloadFileFromUrl(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function closeTreeModal() {
+    const modal = document.querySelector('.tree-modal');
+    if (modal) {
+        modal.remove();
+    }
+    currentTreeRessource = null;
+    currentZipStructure = null;
+}
+
+function createSingleMediaHtml(file, ressourceId, isInCarousel = false) {
+    const containerClass = isInCarousel ? 'carousel-media' : '';
+    const { file_url, file_type, is_video, page_count } = file;
+
+    // Déterminer le type de fichier
+    const actualFileType = file_type || 'file';
+    
+    if (actualFileType === 'youtube') {
+        return `
+            <div class="${containerClass}">
+                <iframe 
+                    width="100%" 
+                    height="200" 
+                    src="${file_url}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>`;
+    } else if (is_video || ['mp4','mov','avi','mkv','webm'].includes(actualFileType)) {
+        return `
+            <div class="${containerClass}" style="cursor: pointer;" onclick="window.location.href='/videos#video-${ressourceId}'">
+                <div class="carousel-icon-placeholder" style="padding: 25px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+                    <i class="fa-solid fa-video" style="font-size: 2.5em; margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: 500;">📹 Vidéo disponible</p>
+                    <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.9;">Cliquez pour voir dans la page Vidéos</p>
+                </div>
+            </div>`;
+    } else if (['png','jpg','jpeg','gif'].includes(actualFileType)) {
+        return `
+            <div class="${containerClass}">
+                <img src="${file_url}" alt="Image" 
+                     loading="lazy" 
+                     style="width: 100%; height: 100%; object-fit: contain;"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij5JbWFnZTwvdGV4dD48L3N2Zz4='">
+            </div>`;
+    } else if (actualFileType === 'pdf') {
+        return `
+            <div class="${containerClass}">
+                <div class="carousel-icon-placeholder">
+                    <i class="fa-solid fa-file-pdf" style="color: #e74c3c; font-size: 2.5em; margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: 500;">Document PDF</p>
+                    ${page_count ? `<small style="margin-top: 8px;">${page_count} pages</small>` : ''}
+                </div>
+            </div>`;
+    } else if (actualFileType === 'zip') {
+        return `
+            <div class="${containerClass}">
+                <div class="carousel-icon-placeholder">
+                    <i class="fa-solid fa-file-zipper" style="color: #f39c12; font-size: 2.5em; margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: 500;">Archive ZIP</p>
+                    <small style="margin-top: 8px;">Cliquez pour explorer</small>
+                </div>
+            </div>`;
+    } else if (['doc', 'docx'].includes(actualFileType)) {
+        return `
+            <div class="${containerClass}">
+                <div class="carousel-icon-placeholder">
+                    <i class="fa-solid fa-file-word" style="color: #2b579a; font-size: 2.5em; margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: 500;">Document Word</p>
+                </div>
+            </div>`;
+    } else {
+        return `
+            <div class="${containerClass}">
+                <div class="carousel-icon-placeholder">
+                    <i class="fa-solid fa-file-lines" style="color: #6c757d; font-size: 2.5em; margin-bottom: 12px;"></i>
+                    <p style="margin: 0; font-weight: 500;">${actualFileType.toUpperCase()}</p>
+                </div>
+            </div>`;
+    }
+}
 </script>
 {% endblock %}
