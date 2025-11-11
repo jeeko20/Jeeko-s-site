@@ -813,13 +813,97 @@ function renderMultipleFilesModal(files, ressourceTitle) {
                 // Si c'est un ZIP dans une ressource multiple, charger sa structure
                 loadZipStructureFromFile(file, ressourceTitle);
             } else {
-                // Ouvrir le fichier directement
-                window.open(file.file_url || file.download_url, '_blank');
+                // Si c'est un fichier texte (js, json, c, etc.) -> prévisualiser
+                const TEXT_FILE_TYPES = ['txt','md','json','js','ts','py','c','cpp','java','xml','csv','html','css','scss','less','yaml','yml','ini','sh','bat','rs','go','rb','php','sql'];
+                if (TEXT_FILE_TYPES.includes((fileType || '').toLowerCase())) {
+                    previewRemoteFile(file.download_url || file.file_url, fileName, fileType);
+                } else {
+                    // Ouvrir le fichier directement
+                    window.open(file.file_url || file.download_url, '_blank');
+                }
             }
         });
         
         treeContainer.appendChild(item);
     });
+}
+// Prévisualiser un fichier distant (essaye fetch direct puis bascule sur le proxy serveur si CORS)
+async function previewRemoteFile(url, filename, fileType) {
+    const contentContainer = document.getElementById('file-content-container');
+    contentContainer.innerHTML = '<p style="text-align:center">Chargement...</p>';
+
+    // Helper pour afficher texte
+    const showText = (text) => {
+        contentContainer.innerHTML = `
+            <div class="file-content">
+                <h4>${filename}</h4>
+                <pre class="text-content">${escapeHtml(text)}</pre>
+            </div>`;
+    };
+
+    try {
+        // Essayer fetch direct (peut échouer à cause du CORS)
+        const resp = await fetch(url);
+        if (resp.ok) {
+            const ct = resp.headers.get('content-type') || '';
+            if (ct.startsWith('image/')) {
+                const blob = await resp.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                contentContainer.innerHTML = `
+                    <div class="file-content">
+                        <h4>${filename}</h4>
+                        <img src="${blobUrl}" alt="${filename}" style="max-width:100%" />
+                    </div>`;
+                return;
+            }
+
+            if (ct.includes('text') || ct.includes('json') || filename.match(/\.(js|json|py|c|cpp|java|xml|css|html|md|txt|sh|sql)$/i)) {
+                const text = await resp.text();
+                showText(text);
+                return;
+            }
+
+            // Pour les autres types, proposer d'ouvrir dans un nouvel onglet
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            contentContainer.innerHTML = `
+                <div class="file-content">
+                    <h4>${filename}</h4>
+                    <p>Ce type de fichier ne peut pas être prévisualisé. <a href="${blobUrl}" target="_blank">Ouvrir / Télécharger</a></p>
+                </div>`;
+            return;
+        }
+    } catch (err) {
+        console.warn('Fetch direct failed (CORS?):', err);
+    }
+
+    // Fallback : utiliser le proxy serveur /api/ressources/download
+    try {
+        const proxyResp = await fetch('/api/ressources/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ files: [url], title: filename || '' })
+        });
+        if (!proxyResp.ok) throw new Error('Proxy failed');
+        const blob = await proxyResp.blob();
+        const mime = blob.type || '';
+        if (mime.startsWith('image/')) {
+            const bUrl = URL.createObjectURL(blob);
+            contentContainer.innerHTML = `
+                <div class="file-content">
+                    <h4>${filename}</h4>
+                    <img src="${bUrl}" alt="${filename}" style="max-width:100%" />
+                </div>`;
+            return;
+        }
+        // Lire en texte si possible
+        const text = await blob.text();
+        showText(text);
+        return;
+    } catch (err) {
+        console.error('Proxy preview failed:', err);
+        contentContainer.innerHTML = '<p style="color:red; text-align:center;">Impossible de prévisualiser ce fichier.</p>';
+    }
 }
 // Fonction pour charger la structure d'un fichier ZIP spécifique
 async function loadZipStructureFromFile(file, ressourceTitle) {
