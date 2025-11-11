@@ -39,6 +39,4 @@ session.*
 note.txt
 file.html
 instance/
-create_quiz_flashcard.py
-flashcard_histoire.json
-quiz_mathematique.json
+force_reset_db.py
