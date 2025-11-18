@@ -90,7 +90,7 @@ cloudinary.config(
 
 ALLOWED_EXTENSIONS = {
     'png', 'jpg', 'jpeg', 'gif',     # images
-    'pdf', 'doc', 'docx', 'zip',           # documents
+    'pdf', 'doc', 'docx', 'zip', "txt","epub","html","js","c","c++","css",".py","txt",          # documents
     'mp4', 'mov', 'avi', 'mkv', 'webm'  # vidéos
 }
 
